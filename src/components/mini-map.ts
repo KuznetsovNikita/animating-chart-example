@@ -1,19 +1,17 @@
-import { Action, JsonData, Settings } from '../data';
-import Lens from './lens';
+import { DataService, JsonData } from '../data';
+import { drawLens } from './lens';
 
 
-export default class MiniMap {
-    constructor(
-        jsonData: JsonData,
-        settings: Settings,
-        dispatcher: (action: Action) => void,
-        private element = document.createElement('div'),
-        private canvas = new MiniMapCanvas(jsonData, element, settings),
-        private lens = new Lens(jsonData, element, settings, dispatcher),
-    ) {
-        document.body.appendChild(this.element);
-        this.element.id = 'mini-map';
-    }
+export function drawMiniMap(
+    jsonData: JsonData,
+    settings: DataService,
+) {
+    const element = document.createElement('div');
+    document.body.appendChild(element);
+    element.id = 'mini-map';
+
+    new MiniMapCanvas(jsonData, element, settings);
+    drawLens(jsonData, element, settings);
 }
 
 
@@ -21,7 +19,7 @@ class MiniMapCanvas {
     constructor(
         jsonData: JsonData,
         element: HTMLDivElement,
-        private settings: Settings,
+        private settings: DataService,
         private canvas = document.createElement('canvas'),
     ) {
         element.appendChild(this.canvas);

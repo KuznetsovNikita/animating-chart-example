@@ -1,10 +1,10 @@
-import { JsonData, Settings, TimeRange } from '../data';
+import { DataService, JsonData } from '../data';
 
 export default class Chart {
 
     constructor(
         private jsonData: JsonData,
-        private settings: Settings,
+        private settings: DataService,
         private canvas = document.createElement('canvas'),
     ) {
         document.body.appendChild(this.canvas);
@@ -14,15 +14,13 @@ export default class Chart {
         canvas.setAttribute('height', height.toString());
 
         this.drawCharts();
-    }
 
-    setTimeRange(timeRange: TimeRange) {
-        this.settings.timeRange = timeRange;
+        settings.onTimeTangeChange(() => {
+            const context = this.canvas.getContext('2d');
+            context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        const context = this.canvas.getContext('2d');
-        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        this.drawCharts();
+            this.drawCharts();
+        })
     }
 
     drawCharts() {

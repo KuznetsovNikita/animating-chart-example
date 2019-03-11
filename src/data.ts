@@ -22,19 +22,28 @@ export interface TimeRange {
     end: number;
 }
 
-export interface Settings {
-    viewport: Viewport,
-    miniMap: Viewport,
-    lines: number,
-    timeRange: TimeRange,
-}
 
+export class DataService {
 
-export type Action = ChangeTimeRangeAction;
+    private timeChangeWatchers: ((timeRange: TimeRange) => void)[] = [];
 
-interface ChangeTimeRangeAction {
-    kind: 'time-range';
-    data: TimeRange;
+    constructor(
+        public viewport: Viewport,
+        public miniMap: Viewport,
+        public lines: number,
+        public timeRange: TimeRange,
+    ) {
+
+    }
+
+    onTimeTangeChange(act: (timeRange: TimeRange) => void) {
+        this.timeChangeWatchers.push(act);
+    }
+
+    setTimeRange(timeRange: TimeRange) {
+        this.timeRange = timeRange;
+        this.timeChangeWatchers.forEach(act => act(timeRange))
+    }
 }
 
 

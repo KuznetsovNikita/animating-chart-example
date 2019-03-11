@@ -1,5 +1,6 @@
 body {
-    width: 300px;
+    width: 500px;
+    margin: 50px auto;
 }
 
 #mini-map {
@@ -26,11 +27,4 @@ body {
     top: 0;
     height: 100%;
     cursor: ew-resize;
-}
-.left {
-    left: 0;
-}
-
-.right {
-    right: 0;
 }

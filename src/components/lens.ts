@@ -1,72 +1,93 @@
-import { Action, JsonData, Settings } from "../data";
+import { DataService, JsonData, TimeRange } from "../data";
 
 
-export default class Lens {
-    constructor(
-        jsonData: JsonData,
-        element: HTMLDivElement,
-        settings: Settings,
-        dispatcher: (action: Action) => void,
-        private lens = document.createElement('div'),
-    ) {
-        element.appendChild(this.lens);
-        lens.className = 'lens';
+export function drawLens(
+    jsonData: JsonData,
+    element: HTMLDivElement,
+    settings: DataService,
+) {
+    const lens = document.createElement('div');
+    element.appendChild(lens);
+    lens.className = 'lens';
 
-        const [_, ...timestamps] = jsonData.columns.find(([type]) => type === 'x');
+    const left = document.createElement('span');
+    lens.appendChild(left);
+    left.style.left = '0px';
 
-        const start = timestamps[0];
-        const end = timestamps[timestamps.length - 1];
+    const right = document.createElement('span');
+    lens.appendChild(right);
+    right.style.right = '0px';
 
-        const { miniMap: { width }, timeRange } = settings;
+    const [_, ...timestamps] = jsonData.columns.find(([type]) => type === 'x');
 
-        const dX = width / (end - start);
+    const start = timestamps[0];
+    const end = timestamps[timestamps.length - 1];
 
+    const { miniMap: { width }, timeRange } = settings;
 
-        let styleWidth = (timeRange.end - timeRange.start) * dX;
-        let styleLeft = (timeRange.start - start) * dX;
+    const dX = width / (end - start);
 
-        lens.style.width = Math.floor(styleWidth) + 'px';
-        lens.style.left = Math.floor(styleLeft) + 'px';
+    const setStyle = (range: TimeRange) => {
+        lens.style.width = Math.floor((range.end - range.start) * dX) + 'px';
+        lens.style.left = Math.floor((range.start - start) * dX) + 'px';
+    }
+    // set initial style
+    setStyle(timeRange);
 
-        lens.onmousedown = function (startEvent) {
-            const startX = startEvent.offsetX;
+    // update style on change
+    settings.onTimeTangeChange(setStyle);
 
-            function moveAt(event: MouseEvent) {
-                if (event.target != lens) return;
-                const newStyleLeft = Math.min(Math.max(styleLeft + event.offsetX - startX, 0), width - styleWidth);
-                if (newStyleLeft === styleLeft) return;
-                styleLeft = newStyleLeft;
-                lens.style.left = Math.floor(styleLeft) + 'px';
+    lens.onmousedown = (startEvent) => {
+        const target = startEvent.target;
+        const startX = startEvent.clientX;
+        const startWidth = (settings.timeRange.end - settings.timeRange.start) * dX;
+        const startLeft = (settings.timeRange.start - start) * dX;
 
-                dispatcher({
-                    kind: 'time-range', data: {
-                        start: Math.floor(start + styleLeft / dX),
-                        end: Math.floor(start + (styleLeft + styleWidth) / dX),
-                    }
-                })
-            }
+        const moveAt = (event: MouseEvent) => {
+            switch (target) {
+                case left: {
+                    const left = Math.min(Math.max(startLeft + event.clientX - startX, 0), startLeft + startWidth);
+                    if (left === startLeft) return;
 
-            let lastUpdateCall: number;
-            document.onmousemove = (e) => {
-                if (lastUpdateCall) cancelAnimationFrame(lastUpdateCall)
-                lastUpdateCall = requestAnimationFrame(() => moveAt(e));
-            }
+                    settings.setTimeRange({
+                        start: Math.floor(start + left / dX),
+                        end: settings.timeRange.end,
+                    });
+                    break;
+                }
+                case right: {
+                    const newWidth = Math.min(width - startLeft, Math.max(0, startWidth + event.clientX - startX))
+                    if (newWidth === startWidth) return;
 
-            lens.onmouseup = lens.onmouseleave = function () {
-                document.onmousemove = null;
-                lens.onmouseup = null;
-                lens.onmouseleave = null;
+                    settings.setTimeRange({
+                        start: settings.timeRange.start,
+                        end: Math.floor(start + (startLeft + newWidth) / dX),
+                    });
+                    break;
+                }
+                default: {
+                    const left = Math.min(Math.max(startLeft + event.clientX - startX, 0), width - startWidth);
+                    if (left === startLeft) return;
+
+                    settings.setTimeRange({
+                        start: Math.floor(start + left / dX),
+                        end: Math.floor(start + (left + startWidth) / dX),
+                    });
+                    break;
+                }
             }
         }
 
-        const left = document.createElement('span');
-        lens.appendChild(left);
+        let lastUpdateCall: number;
+        document.onmousemove = (event) => {
+            if (lastUpdateCall) cancelAnimationFrame(lastUpdateCall)
+            lastUpdateCall = requestAnimationFrame(() => moveAt(event));
+        }
 
-        left.className = 'left';
-
-        const right = document.createElement('span');
-        lens.appendChild(right);
-
-        right.className = 'right';
+        lens.onmouseup = () => {
+            document.onmousemove = null;
+            lens.onmouseup = null;
+        }
     }
 }
+
