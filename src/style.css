@@ -36,14 +36,16 @@ body {
 
 .checkbox {
     display: inline-block;
-    height: 50px;
+    height: 44px;
     line-height: 30px;
     border-radius: 25px;
     border: 1px solid #ebf0f3;
-    padding: 9px 18px 9px 9px;
+    padding: 6px 18px 6px 8px;
     color: #565b5d;
     box-sizing: border-box;
     cursor: pointer;
+    font-family: Arial;
+    font-size: 16px;
 }
 
 .checkbox + .checkbox {

@@ -20,7 +20,7 @@ class Container {
 }
 
 function init() {
-    const jsonData = (chart_data as any as JsonData[])[4];
+    const jsonData = (chart_data as any as JsonData[])[0];
     const [_, ...timestamps] = jsonData.columns.find(([type]) => type === 'x');
 
     const viewport = { width: 500, height: 500 };

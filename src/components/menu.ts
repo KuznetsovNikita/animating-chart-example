@@ -54,19 +54,19 @@ function drawIcon(color: string) {
     circle.style.fill = color;
     circle.setAttribute("cx", '15');
     circle.setAttribute("cy", '15');
-    circle.setAttribute("r", '15');
+    circle.setAttribute("r", '13');
 
     const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
     svg.appendChild(polyline);
     polyline.classList.add('check-mark');
-    polyline.setAttribute("points", '8,15 13,20 22,11');
+    polyline.setAttribute("points", '9,15.5 13,19.5 20,11.5');
 
     const cover = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     svg.appendChild(cover);
     cover.classList.add('cover');
     cover.setAttribute("cx", '15');
     cover.setAttribute("cy", '15');
-    cover.setAttribute("r", '14');
+    cover.setAttribute("r", '12');
 
     return svg;
 }
