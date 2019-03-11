@@ -15,12 +15,15 @@ export default class Chart {
 
         this.drawCharts();
 
-        settings.onTimeTangeChange(() => {
-            const context = this.canvas.getContext('2d');
-            context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        settings.onTimeRangeChange(this.redraw);
+        settings.onVisibilityChange(this.redraw);
+    }
 
-            this.drawCharts();
-        })
+    redraw = () => {
+        const context = this.canvas.getContext('2d');
+        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.drawCharts();
     }
 
     drawCharts() {
@@ -39,9 +42,11 @@ export default class Chart {
         const columns = this.jsonData.columns.reduce((result, [type, ...values]) => {
             if (type === 'x') return result;
 
-            result[type] = values.slice(startIndex, endIndex);
+            if (this.settings.visibility[type]) {
+                result[type] = values.slice(startIndex, endIndex);
 
-            max = Math.max(max, ...result[type]);
+                max = Math.max(max, ...result[type]);
+            }
 
             return result;
         }, {});

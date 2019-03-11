@@ -17,7 +17,7 @@ export function drawMiniMap(
 
 class MiniMapCanvas {
     constructor(
-        jsonData: JsonData,
+        private jsonData: JsonData,
         element: HTMLDivElement,
         private settings: DataService,
         private canvas = document.createElement('canvas'),
@@ -29,6 +29,15 @@ class MiniMapCanvas {
         canvas.setAttribute('height', height.toString());
 
         this.drawMiniMap(jsonData)
+
+        settings.onVisibilityChange(this.redraw);
+    }
+
+    redraw = () => {
+        const context = this.canvas.getContext('2d');
+        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.drawMiniMap(this.jsonData);
     }
 
     drawMiniMap(jsonData: JsonData) {
@@ -40,10 +49,11 @@ class MiniMapCanvas {
                 times = values;
                 return result;
             }
+            if (this.settings.visibility[type]) {
+                result[type] = values;
 
-            result[type] = values;
-
-            max = Math.max(max, ...values);
+                max = Math.max(max, ...values);
+            }
 
             return result;
         }, {});

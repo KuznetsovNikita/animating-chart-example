@@ -4,6 +4,7 @@ body {
 }
 
 #mini-map {
+    margin-top: 20px;
     position: relative;
     height: 50px;
 }
@@ -27,4 +28,50 @@ body {
     top: 0;
     height: 100%;
     cursor: ew-resize;
+}
+
+#menu {
+    margin-top: 20px;
+}
+
+.checkbox {
+    display: inline-block;
+    height: 50px;
+    line-height: 30px;
+    border-radius: 25px;
+    border: 1px solid #ebf0f3;
+    padding: 9px 18px 9px 9px;
+    color: #565b5d;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.checkbox + .checkbox {
+    margin-left: 20px;
+}
+
+.checkbox svg {
+    display: block;
+    float: left;
+    margin-right: 10px;
+}
+
+.check-mark {
+  fill:none;
+  stroke:white;
+  stroke-width:2;
+  stroke-linecap: round;
+}
+
+
+.cover {
+    fill: white;
+    transform: scale(1);
+    transform-origin: center center;
+    
+    transition: transform .3s ease;
+}
+
+.checkbox.as-check .cover {
+    transform: scale(0);
 }

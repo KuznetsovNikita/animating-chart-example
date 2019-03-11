@@ -35,7 +35,7 @@ export function drawLens(
     setStyle(timeRange);
 
     // update style on change
-    settings.onTimeTangeChange(setStyle);
+    settings.onTimeRangeChange(setStyle);
 
     lens.onmousedown = (startEvent) => {
         const target = startEvent.target;
