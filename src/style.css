@@ -1,0 +1,36 @@
+body {
+    width: 300px;
+}
+
+#mini-map {
+    position: relative;
+    height: 50px;
+}
+
+.lens {
+    position: absolute;
+    height: 100%;
+    border: 2px solid #0000ff69;
+    border-right-width: 0;
+    border-left-width: 0;
+    box-sizing: border-box;
+    width: 70px;
+    top: 0;
+    left: 0;
+}
+
+.lens span {
+    background-color: #0000ff69;
+    position: absolute;
+    width: 5px;
+    top: 0;
+    height: 100%;
+    cursor: ew-resize;
+}
+.left {
+    left: 0;
+}
+
+.right {
+    right: 0;
+}
