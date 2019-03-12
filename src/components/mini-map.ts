@@ -49,13 +49,21 @@ class MiniMapSvg {
             );
         }
 
-        settings.onVisibilityChange(key => {
-            this.polylines[key].polyline.classList.toggle('invisible');
-            this.drawCharts(this.settings.toMiniMapData());
+        settings.onVisibilityChange((key, value) => {
+            if (value) {
+                this.drawCharts(
+                    this.settings.toMiniMapData(),
+                    () => this.polylines[key].polyline.classList.remove('invisible'),
+                );
+            }
+            else {
+                this.polylines[key].polyline.classList.add('invisible')
+                this.drawCharts(this.settings.toMiniMapData());
+            }
         });
     }
 
-    drawCharts(data: ChartData) {
+    drawCharts(data: ChartData, callback?: () => void) {
 
         if (this.lastUpdateCall) {
             cancelAnimationFrame(this.lastUpdateCall);
@@ -64,10 +72,10 @@ class MiniMapSvg {
         this.targetMax = data.max;
         this.deltaMax = this.targetMax - this.currentMax;
 
-        this.scale(data);
+        this.scale(data, callback);
     }
 
-    scale(data: ChartData) {
+    scale(data: ChartData, callback?: () => void) {
         this.lastUpdateCall = requestAnimationFrame(() => {
 
             for (let key in data.columns) {
@@ -77,14 +85,14 @@ class MiniMapSvg {
                 );
             }
 
-            if (this.currentMax === this.targetMax) return;
+            if (this.currentMax === this.targetMax) return callback && callback();
 
             const absMax = Math.abs(this.deltaMax);
             for (let i = 0; i < absMax * this.settings.animationSpeed; i++) {
                 this.currentMax += this.deltaMax / absMax;
                 if (this.currentMax === this.targetMax) break;
             }
-            return this.scale(data);
+            return this.scale(data, callback);
         });
     }
 

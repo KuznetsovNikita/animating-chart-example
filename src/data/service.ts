@@ -54,7 +54,7 @@ export class DataService {
         this.visibilityWatchers.forEach(act => act(key, this.visibility[key]))
     }
 
-    onVisibilityChange(act: (key: string) => void) {
+    onVisibilityChange(act: (key: string, value: boolean) => void) {
         this.visibilityWatchers.push(act);
     }
 
