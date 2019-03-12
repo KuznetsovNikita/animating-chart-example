@@ -3,7 +3,7 @@ import { drawMenu } from './components/menu';
 import { drawMiniMap } from './components/mini-map';
 import * as chart_data from './data/chart_data.json';
 import { DataService, Dict, JsonData } from './data/service';
-import './style.css';
+import './style/index.css';
 
 
 class Container {
@@ -19,7 +19,7 @@ class Container {
 }
 
 function init() {
-    const jsonData = (chart_data as any as JsonData[])[0];
+    const jsonData = (chart_data as any as JsonData[])[4];
     const [_, ...timestamps] = jsonData.columns.find(([type]) => type === 'x');
 
     const viewport = { width: 500, height: 500 };

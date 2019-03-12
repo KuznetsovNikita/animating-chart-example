@@ -95,6 +95,28 @@ export class DataService {
             colors: this.jsonData.colors
         }
     }
+
+    useLines(
+        max: number,
+        use: (value: number, height: number, width: number, index: number) => void
+    ): void {
+        const last = Math.floor(max / 10) * 10;
+        const { height, width } = this.viewport;
+        const dy = last / this.lines;
+        const dx = toDeltaX(height, max);
+
+        let i = 0;
+        for (let label = 0; label <= last; label += dy) {
+            const x = height - label * dx;
+            use(label, x, width, i);
+            i++;
+        }
+    }
+}
+
+function toDeltaX(height: number, max: number) {
+    // padding top
+    return (height - 20) / max;
 }
 
 

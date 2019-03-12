@@ -1,0 +1,40 @@
+.checkbox {
+    display: inline-block;
+    height: 44px;
+    line-height: 30px;
+    border-radius: 25px;
+    border: 1px solid #ebf0f3;
+    padding: 6px 18px 6px 8px;
+    color: #565b5d;
+    box-sizing: border-box;
+    cursor: pointer;
+    font-family: sans-serif;
+    font-weight: 300;
+    font-size: 16px;
+
+    margin-right: 20px;
+
+    svg {
+        display: block;
+        float: left;
+        margin-right: 10px;
+    }
+
+    .check-mark {
+        fill:none;
+        stroke:white;
+        stroke-width:2;
+        stroke-linecap: round;
+    }
+
+    .cover {
+        fill: white;
+        transform: scale(1);
+        transform-origin: center center;
+        transition: transform .3s ease;
+    }
+
+    &.as-check .cover {
+        transform: scale(0);
+    }
+}
