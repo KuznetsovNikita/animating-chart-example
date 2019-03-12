@@ -1,5 +1,7 @@
-import { DataService, JsonData } from '../data/service';
+import { TimeRange, Viewport } from 'src/data/models';
+import { ChartData, DataService, Dict } from '../data/service';
 import { drawLens } from './lens';
+import { createPolyline, Polyline } from './polyline';
 
 
 export function drawMiniMap(
@@ -9,84 +11,107 @@ export function drawMiniMap(
     document.body.appendChild(element);
     element.id = 'mini-map';
 
-    new MiniMapCanvas(element, settings);
+    new MiniMapSvg(element, settings);
     drawLens(element, settings);
 }
 
 
-class MiniMapCanvas {
+class MiniMapSvg {
+
+    currentMax: number;
+    targetMax: number;
+
+    deltaMax: number;
+
+    lastUpdateCall: number;
+
+    polylines: Dict<Polyline> = {};
+
     constructor(
         element: HTMLDivElement,
         private settings: DataService,
-        private canvas = document.createElement('canvas'),
+        private svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
     ) {
-        element.appendChild(this.canvas);
+        element.appendChild(this.svg);
 
         const { width, height } = this.settings.miniMap;
-        canvas.setAttribute('width', width.toString());
-        canvas.setAttribute('height', height.toString());
+        svg.setAttribute('width', width.toString());
+        svg.setAttribute('height', height.toString());
 
-        this.drawMiniMap(settings.jsonData)
+        const data = this.settings.toMiniMapData();
+        this.currentMax = data.max;
 
-        settings.onVisibilityChange(this.redraw);
-    }
-
-    redraw = () => {
-        const context = this.canvas.getContext('2d');
-        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        this.drawMiniMap(this.settings.jsonData);
-    }
-
-    drawMiniMap(jsonData: JsonData) {
-
-        let max = 0;
-        let times: number[];
-        const columns = jsonData.columns.reduce((result, [type, ...values]) => {
-            if (type === 'x') {
-                times = values;
-                return result;
-            }
-            if (this.settings.visibility[type]) {
-                result[type] = values;
-
-                max = Math.max(max, ...values);
-            }
-
-            return result;
-        }, {});
-
-
-        for (let key in columns) {
-            this.drawChart(
-                max, columns[key], times,
-                jsonData.colors[key],
+        for (let key in data.columns) {
+            this.drawPolyline(
+                key, this.currentMax, data.columns[key],
+                data.times, data.colors[key],
+                data.timeRange, data.viewport,
             );
         }
+
+        settings.onVisibilityChange(key => {
+            this.polylines[key].polyline.classList.toggle('invisible');
+            this.drawCharts(this.settings.toMiniMapData());
+        });
     }
 
-    drawChart(
-        max: number, values: number[],
-        times: number[], color: string,
-    ) {
-        const ctx = this.canvas.getContext('2d');
+    drawCharts(data: ChartData) {
 
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = color;
-
-        const { height, width } = this.settings.miniMap;
-        const start = times[0];
-        const end = times[times.length - 1];
-
-        const dx = height / max;
-        const dy = width / (end - start);
-
-        ctx.beginPath();
-        ctx.moveTo((times[0] - start) * dy, height - values[0] * dx);
-        for (let i = 1; i < values.length; i++) {
-            ctx.lineTo((times[i] - start) * dy, height - values[i] * dx);
+        if (this.lastUpdateCall) {
+            cancelAnimationFrame(this.lastUpdateCall);
         }
-        ctx.stroke();
+
+        this.targetMax = data.max;
+        this.deltaMax = this.targetMax - this.currentMax;
+
+        this.scale(data);
+    }
+
+    scale(data: ChartData) {
+        this.lastUpdateCall = requestAnimationFrame(() => {
+
+            for (let key in data.columns) {
+                this.redrawPoliline(
+                    key, this.currentMax, data.columns[key], data.times,
+                    data.timeRange, data.viewport,
+                );
+            }
+
+            if (this.currentMax === this.targetMax) return;
+
+            const absMax = Math.abs(this.deltaMax);
+            for (let i = 0; i < absMax * this.settings.animationSpeed; i++) {
+                this.currentMax += this.deltaMax / absMax;
+                if (this.currentMax === this.targetMax) break;
+            }
+            return this.scale(data);
+        });
+    }
+
+
+    drawPolyline(
+        key: string, max: number, values: number[],
+        times: number[], color: string,
+        timeRange: TimeRange, viewport: Viewport,
+    ) {
+        const poliline = createPolyline(color, 'mini-map-chart');
+
+        this.svg.appendChild(poliline.polyline);
+        poliline.setPoints(
+            max, values, times, timeRange, viewport,
+        );
+
+        this.polylines[key] = poliline;
+    }
+
+    redrawPoliline(
+        key: string, max: number, values: number[], times: number[],
+        timeRange: TimeRange, viewport: Viewport,
+    ) {
+        this.polylines[key].setPoints(
+            max, values, times,
+            timeRange, viewport,
+        );
     }
 }
 

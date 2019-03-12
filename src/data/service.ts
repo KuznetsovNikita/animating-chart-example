@@ -18,9 +18,13 @@ export interface ChartData {
     columns: Dict<number[]>;
     times: number[];
     colors: Dict<string>;
+    timeRange: TimeRange;
+    viewport: Viewport;
 }
 
 export class DataService {
+
+    public animationSpeed = 0.1;
 
     private timeChangeWatchers: ((timeRange: TimeRange) => void)[] = [];
     private visibilityWatchers: ((key: string, value: boolean) => void)[] = [];
@@ -54,6 +58,37 @@ export class DataService {
         this.visibilityWatchers.push(act);
     }
 
+    toMiniMapData(): ChartData {
+        let max = 0;
+        let times: number[];
+        const columns = this.jsonData.columns
+            .reduce((result, [type, ...values]) => {
+                if (type === 'x') {
+                    times = values;
+                    return result;
+                }
+                if (this.visibility[type]) {
+                    result[type] = values;
+
+                    max = Math.max(max, ...values);
+                }
+
+                return result;
+            }, {});
+
+        return {
+            max,
+            columns,
+            times,
+            colors: this.jsonData.colors,
+            timeRange: {
+                start: times[0],
+                end: times[times.length - 1],
+            },
+            viewport: this.miniMap,
+        }
+    }
+
     toChartData(): ChartData {
         const { start, end } = this.timeRange;
 
@@ -83,7 +118,9 @@ export class DataService {
             max,
             columns,
             times,
-            colors: this.jsonData.colors
+            colors: this.jsonData.colors,
+            timeRange: this.timeRange,
+            viewport: this.viewport,
         }
     }
 

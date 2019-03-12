@@ -8,9 +8,9 @@ export interface Polyline {
     ) => void,
 }
 
-export function createPolyline(color: string): Polyline {
+export function createPolyline(color: string, className: string): Polyline {
     const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-    polyline.classList.add('main-chart');
+    polyline.classList.add(className);
     polyline.style.stroke = color;
 
     function setPoints(

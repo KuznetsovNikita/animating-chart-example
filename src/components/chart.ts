@@ -1,3 +1,4 @@
+import { TimeRange, Viewport } from 'src/data/models';
 import { ChartData, DataService, Dict } from '../data/service';
 import { createLine, Line } from './line';
 import { createPolyline, Polyline } from './polyline';
@@ -29,7 +30,11 @@ export default class Chart {
         this.drawLine(this.currentMax);
 
         for (let key in data.columns) {
-            this.drawPolyline(key, this.currentMax, data.columns[key], data.times, data.colors[key]);
+            this.drawPolyline(
+                key, this.currentMax, data.columns[key],
+                data.times, data.colors[key],
+                data.timeRange, data.viewport,
+            );
         }
 
         settings.onTimeRangeChange(this.redraw);
@@ -57,47 +62,54 @@ export default class Chart {
 
         this.deltaMax = this.targetMax - this.currentMax;
 
-        this.draw(data);
+        this.scale(data);
     }
 
-    draw(data: ChartData) {
+    scale(data: ChartData) {
         this.lastUpdateCall = requestAnimationFrame(() => {
 
             this.redrawLine(this.currentMax);
 
             for (let key in data.columns) {
-                this.redrawPoliline(key, this.currentMax, data.columns[key], data.times);
+                this.redrawPoliline(
+                    key, this.currentMax, data.columns[key], data.times,
+                    data.timeRange, data.viewport,
+                );
             }
 
             if (this.currentMax === this.targetMax) return;
 
             const absMax = Math.abs(this.deltaMax);
-            for (let i = 0; i < absMax * 0.1; i++) {
+            for (let i = 0; i < absMax * this.settings.animationSpeed; i++) {
                 this.currentMax += this.deltaMax / absMax;
                 if (this.currentMax === this.targetMax) break;
             }
-            return this.draw(data);
+            return this.scale(data);
         });
     }
 
-    drawPolyline(key: string, max: number, values: number[], times: number[], color: string) {
-        const poliline = createPolyline(color);
+    drawPolyline(
+        key: string, max: number, values: number[],
+        times: number[], color: string,
+        timeRange: TimeRange, viewport: Viewport,
+    ) {
+        const poliline = createPolyline(color, 'main-chart');
 
         this.svg.appendChild(poliline.polyline);
         poliline.setPoints(
-            max, values, times,
-            this.settings.timeRange,
-            this.settings.viewport
+            max, values, times, timeRange, viewport,
         );
 
         this.polylines[key] = poliline;
     }
 
-    redrawPoliline(key: string, max: number, values: number[], times: number[]) {
+    redrawPoliline(
+        key: string, max: number, values: number[], times: number[],
+        timeRange: TimeRange, viewport: Viewport,
+    ) {
         this.polylines[key].setPoints(
             max, values, times,
-            this.settings.timeRange,
-            this.settings.viewport
+            timeRange, viewport,
         );
     }
 
