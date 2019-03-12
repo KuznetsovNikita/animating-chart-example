@@ -1,8 +1,8 @@
-import * as chart_data from './chart_data.json';
 import Chart from './components/chart';
 import { drawMenu } from './components/menu';
 import { drawMiniMap } from './components/mini-map';
-import { DataService, Dict, JsonData } from './data';
+import * as chart_data from './data/chart_data.json';
+import { DataService, Dict, JsonData } from './data/service';
 import './style.css';
 
 
@@ -10,12 +10,11 @@ class Container {
     chart: Chart;
 
     constructor(
-        private settings: DataService,
-        jsonData: JsonData,
+        settings: DataService,
     ) {
-        this.chart = new Chart(jsonData, settings)
-        drawMiniMap(jsonData, settings);
-        drawMenu(jsonData, settings);
+        this.chart = new Chart(settings)
+        drawMiniMap(settings);
+        drawMenu(settings);
     }
 }
 
@@ -34,9 +33,9 @@ function init() {
         visibility[key] = true;
     }
 
-    const settings = new DataService(viewport, miniMap, 5, timeRange, visibility);
+    const settings = new DataService(viewport, miniMap, 5, timeRange, jsonData, visibility);
 
-    new Container(settings, jsonData);
+    new Container(settings);
 }
 
 window.onload = init;

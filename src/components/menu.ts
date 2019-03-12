@@ -1,8 +1,7 @@
-import { DataService, JsonData } from "src/data";
+import { DataService } from "src/data/service";
 
 
 export function drawMenu(
-    jsonData: JsonData,
     settings: DataService,
 ) {
     const element = document.createElement('div');
@@ -11,8 +10,10 @@ export function drawMenu(
 
     for (let key in settings.visibility) {
         element.appendChild(drawCheckbox(
-            key, settings.visibility[key], jsonData.colors[key],
-            jsonData.names[key], settings
+            key, settings.visibility[key],
+            settings.jsonData.colors[key],
+            settings.jsonData.names[key],
+            settings
         ));
     }
 

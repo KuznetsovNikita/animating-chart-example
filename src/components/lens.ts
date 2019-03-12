@@ -1,8 +1,7 @@
-import { DataService, JsonData, TimeRange } from "../data";
+import { DataService, TimeRange } from "../data/service";
 
 
 export function drawLens(
-    jsonData: JsonData,
     element: HTMLDivElement,
     settings: DataService,
 ) {
@@ -18,7 +17,7 @@ export function drawLens(
     lens.appendChild(right);
     right.style.right = '0px';
 
-    const [_, ...timestamps] = jsonData.columns.find(([type]) => type === 'x');
+    const [_, ...timestamps] = settings.jsonData.columns.find(([type]) => type === 'x');
 
     const start = timestamps[0];
     const end = timestamps[timestamps.length - 1];

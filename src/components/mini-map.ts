@@ -1,23 +1,21 @@
-import { DataService, JsonData } from '../data';
+import { DataService, JsonData } from '../data/service';
 import { drawLens } from './lens';
 
 
 export function drawMiniMap(
-    jsonData: JsonData,
     settings: DataService,
 ) {
     const element = document.createElement('div');
     document.body.appendChild(element);
     element.id = 'mini-map';
 
-    new MiniMapCanvas(jsonData, element, settings);
-    drawLens(jsonData, element, settings);
+    new MiniMapCanvas(element, settings);
+    drawLens(element, settings);
 }
 
 
 class MiniMapCanvas {
     constructor(
-        private jsonData: JsonData,
         element: HTMLDivElement,
         private settings: DataService,
         private canvas = document.createElement('canvas'),
@@ -28,7 +26,7 @@ class MiniMapCanvas {
         canvas.setAttribute('width', width.toString());
         canvas.setAttribute('height', height.toString());
 
-        this.drawMiniMap(jsonData)
+        this.drawMiniMap(settings.jsonData)
 
         settings.onVisibilityChange(this.redraw);
     }
@@ -37,7 +35,7 @@ class MiniMapCanvas {
         const context = this.canvas.getContext('2d');
         context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        this.drawMiniMap(this.jsonData);
+        this.drawMiniMap(this.settings.jsonData);
     }
 
     drawMiniMap(jsonData: JsonData) {
