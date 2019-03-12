@@ -1,3 +1,4 @@
+import { TimeRange, Viewport } from "./models";
 
 type Tuple = [string, ...Array<number>];
 
@@ -10,16 +11,6 @@ export interface JsonData {
     types: Dict<string>;
     names: Dict<string>;
     colors: Dict<string>;
-}
-
-export interface Viewport {
-    width: number;
-    height: number;
-}
-
-export interface TimeRange {
-    start: number;
-    end: number;
 }
 
 export interface ChartData {

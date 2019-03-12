@@ -1,4 +1,5 @@
-import { DataService, TimeRange } from "../data/service";
+import { TimeRange } from "src/data/models";
+import { DataService } from "src/data/service";
 
 
 export function drawLens(

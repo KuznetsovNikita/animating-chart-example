@@ -1,13 +1,18 @@
-import { ChartData, DataService, Dict, TimeRange, Viewport } from '../data/service';
+import { ChartData, DataService, Dict } from '../data/service';
+import { createLine, Line } from './line';
+import { createPolyline, Polyline } from './polyline';
 
 export default class Chart {
 
-    private currentMax: number;
-    private targetMax: number;
+    currentMax: number;
+    targetMax: number;
 
-    private deltaMax: number;
+    deltaMax: number;
 
-    private lastUpdateCall: number;
+    lastUpdateCall: number;
+
+    lines: Line[] = [];
+    polylines: Dict<Polyline> = {};
 
     constructor(
         private settings: DataService,
@@ -57,6 +62,7 @@ export default class Chart {
 
     draw(data: ChartData) {
         this.lastUpdateCall = requestAnimationFrame(() => {
+
             this.redrawLine(this.currentMax);
 
             for (let key in data.columns) {
@@ -66,7 +72,7 @@ export default class Chart {
             if (this.currentMax === this.targetMax) return;
 
             const absMax = Math.abs(this.deltaMax);
-            for (let i = 0; i < absMax * 0.07; i++) {
+            for (let i = 0; i < absMax * 0.1; i++) {
                 this.currentMax += this.deltaMax / absMax;
                 if (this.currentMax === this.targetMax) break;
             }
@@ -74,10 +80,8 @@ export default class Chart {
         });
     }
 
-    polylines: Dict<Polyline> = {};
-
     drawPolyline(key: string, max: number, values: number[], times: number[], color: string) {
-        const poliline = cratePolyline(color);
+        const poliline = createPolyline(color);
 
         this.svg.appendChild(poliline.polyline);
         poliline.setPoints(
@@ -97,7 +101,7 @@ export default class Chart {
         );
     }
 
-    lines: Line[] = [];
+
     drawLine(max: number) {
         this.settings.useLines(max, (value, height, width) => {
             const line = createLine(value, height, width);
@@ -112,84 +116,4 @@ export default class Chart {
             this.lines[i].setValue(value, height)
         });
     }
-}
-
-const padding = 5;
-
-interface Line {
-    line: SVGLineElement,
-    text: SVGTextElement,
-    setValue: (value: number, height: number) => void,
-}
-
-function createLine(
-    value: number,
-    height: number,
-    width: number,
-): Line {
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.classList.add('line');
-    line.setAttribute('x1', padding.toString());
-    line.setAttribute('x2', (width - padding).toString());
-    line.setAttribute('y1', height.toString());
-    line.setAttribute('y2', height.toString());
-
-    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.classList.add('line-text');
-    text.setAttribute('x', padding.toString());
-    text.setAttribute('y', (height - 10).toString());
-    text.textContent = value.toString();
-
-    function setValue(newValue: number, newHeight: number) {
-        line.setAttribute('y1', newHeight.toString());
-        line.setAttribute('y2', newHeight.toString());
-        text.textContent = newValue.toString();
-        text.setAttribute('y', (newHeight - 8).toString());
-    }
-
-    return {
-        line, text, setValue,
-    }
-}
-
-interface Polyline {
-    polyline: SVGPolylineElement,
-    setPoints: (
-        max: number, values: number[], times: number[],
-        imeRange: TimeRange, viewport: Viewport,
-    ) => void,
-}
-
-function cratePolyline(color: string): Polyline {
-    const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-    polyline.classList.add('main-chart');
-    polyline.style.stroke = color;
-
-    function setPoints(
-        max: number, values: number[], times: number[],
-        timeRange: TimeRange, viewport: Viewport,
-    ) {
-        const { start, end } = timeRange;
-        const { height, width } = viewport;
-
-        const dx = toDeltaX(height, max);
-        const dy = width / (end - start);
-
-        let points: string[] = [];
-        for (let i = 0; i < values.length; i++) {
-            points.push(`${(times[i] - start) * dy},${height - values[i] * dx}`);
-        }
-        polyline.setAttribute("points", points.join(' '));
-    }
-
-    return {
-        polyline,
-        setPoints,
-    }
-}
-
-
-function toDeltaX(height: number, max: number) {
-    // padding top
-    return (height - 20) / max;
 }
