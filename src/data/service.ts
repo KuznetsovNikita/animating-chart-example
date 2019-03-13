@@ -24,10 +24,7 @@ export interface ChartData {
 
 export class DataService {
 
-    public animationSpeed = 0.1;
-
-    private timeChangeWatchers: ((timeRange: TimeRange) => void)[] = [];
-    private visibilityWatchers: ((key: string, value: boolean) => void)[] = [];
+    public animationSpeed = 0.15; // % per frame
 
     constructor(
         public viewport: Viewport,
@@ -40,6 +37,7 @@ export class DataService {
 
     }
 
+    private timeChangeWatchers: ((timeRange: TimeRange) => void)[] = [];
     onTimeRangeChange(act: (timeRange: TimeRange) => void) {
         this.timeChangeWatchers.push(act);
     }
@@ -49,6 +47,7 @@ export class DataService {
         this.timeChangeWatchers.forEach(act => act(timeRange))
     }
 
+    private visibilityWatchers: ((key: string, value: boolean) => void)[] = [];
     toggleVisibility(key: string) {
         this.visibility[key] = !this.visibility[key];
         this.visibilityWatchers.forEach(act => act(key, this.visibility[key]))
@@ -56,6 +55,43 @@ export class DataService {
 
     onVisibilityChange(act: (key: string, value: boolean) => void) {
         this.visibilityWatchers.push(act);
+    }
+
+    toChartData(): ChartData {
+        const { start, end } = this.timeRange;
+
+        const [_, ...timestamps] = this.jsonData.columns.find(([type]) => type === 'x');
+
+        let startIndex = timestamps.findIndex(time => time >= start) - 1;
+        if (startIndex === -1) startIndex = 0;
+        let endIndex = timestamps.findIndex(time => time > end) + 1;
+        if (endIndex === 0) endIndex = timestamps.length;
+
+        const times = timestamps.slice(startIndex, endIndex);
+
+        let max = 0;
+        const columns = this.jsonData.columns.reduce((result, [type, ...values]) => {
+            if (type === 'x') return result;
+
+            const column = values.slice(startIndex, endIndex);
+
+            result[type] = column
+
+            if (this.visibility[type]) {
+                max = Math.max(max, ...column);
+            }
+
+            return result;
+        }, {} as Dict<number[]>);
+
+        return {
+            max,
+            columns,
+            times,
+            colors: this.jsonData.colors,
+            timeRange: this.timeRange,
+            viewport: this.viewport,
+        }
     }
 
     toMiniMapData(): ChartData {
@@ -86,58 +122,6 @@ export class DataService {
                 end: times[times.length - 1],
             },
             viewport: this.miniMap,
-        }
-    }
-
-    toChartData(): ChartData {
-        const { start, end } = this.timeRange;
-
-        const [_, ...timestamps] = this.jsonData.columns.find(([type]) => type === 'x');
-
-        let startIndex = timestamps.findIndex(time => time >= start) - 1;
-        if (startIndex === -1) startIndex = 0;
-        let endIndex = timestamps.findIndex(time => time > end) + 1;
-        if (endIndex === 0) endIndex = timestamps.length;
-
-        const times = timestamps.slice(startIndex, endIndex);
-
-        let max = 0;
-        const columns = this.jsonData.columns.reduce((result, [type, ...values]) => {
-            if (type === 'x') return result;
-
-            if (this.visibility[type]) {
-                result[type] = values.slice(startIndex, endIndex);
-
-                max = Math.max(max, ...result[type]);
-            }
-
-            return result;
-        }, {} as Dict<number[]>);
-
-        return {
-            max,
-            columns,
-            times,
-            colors: this.jsonData.colors,
-            timeRange: this.timeRange,
-            viewport: this.viewport,
-        }
-    }
-
-    useLines(
-        max: number,
-        use: (value: number, height: number, width: number, index: number) => void
-    ): void {
-        const last = Math.floor(max / 10) * 10;
-        const { height, width } = this.viewport;
-        const dy = last / this.lines;
-        const dx = height / max;
-
-        let i = 0;
-        for (let label = 0; label <= last; label += dy) {
-            const x = height - label * dx;
-            use(label, x, width, i);
-            i++;
         }
     }
 }

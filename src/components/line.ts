@@ -1,38 +1,46 @@
 
-const padding = 5;
+export class Line {
+    constructor(
+        private svg: SVGGElement,
+        public value: number,
+        height: number,
+        width: number,
+        className: string,
+        public g = document.createElementNS("http://www.w3.org/2000/svg", "g"),
+    ) {
 
-export interface Line {
-    line: SVGLineElement,
-    text: SVGTextElement,
-    setValue: (value: number, height: number) => void,
-}
+        this.g.classList.add('line');
+        className && this.g.classList.add(className);
+        this.setHeight(height);
 
-export function createLine(
-    value: number,
-    height: number,
-    width: number,
-): Line {
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.classList.add('line');
-    line.setAttribute('x1', padding.toString());
-    line.setAttribute('x2', (width - padding).toString());
-    line.setAttribute('y1', height.toString());
-    line.setAttribute('y2', height.toString());
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
 
-    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.classList.add('line-text');
-    text.setAttribute('x', padding.toString());
-    text.setAttribute('y', (height - 10).toString());
-    text.textContent = value.toString();
+        line.setAttribute('x1', '5');
+        line.setAttribute('x2', (width - 5).toString());
+        line.setAttribute('y1', '-1');
+        line.setAttribute('y2', '-1');
 
-    function setValue(newValue: number, newHeight: number) {
-        line.setAttribute('y1', newHeight.toString());
-        line.setAttribute('y2', newHeight.toString());
-        text.textContent = newValue.toString();
-        text.setAttribute('y', (newHeight - 8).toString());
+        text.setAttribute('x', '5');
+        text.setAttribute('y', '-10');
+        text.textContent = value.toString();
+
+        g.appendChild(line);
+        g.appendChild(text);
+
+        svg.appendChild(g);
     }
 
-    return {
-        line, text, setValue,
+    setHeight(height: number) {
+        if (this.g != null) {
+            this.g.setAttribute('transform', `translate(0,${height})`);
+        }
+    }
+
+    destroy() {
+        if (this.g != null) {
+            this.svg.removeChild(this.g);
+            this.g = null;
+        }
     }
 }

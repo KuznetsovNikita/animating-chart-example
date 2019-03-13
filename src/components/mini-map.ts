@@ -68,9 +68,8 @@ class MiniMapSvg {
 
     drawCharts(data: ChartData, callback?: () => void) {
 
-        if (this.lastUpdateCall) {
-            cancelAnimationFrame(this.lastUpdateCall);
-        }
+        if (this.lastUpdateCall) cancelAnimationFrame(this.lastUpdateCall);
+        if (data.max === 0) return;
 
         this.targetMax = data.max;
         this.deltaMax = this.targetMax - this.currentMax;
