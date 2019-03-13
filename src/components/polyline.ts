@@ -23,11 +23,12 @@ export function createPolyline(color: string, className: string): Polyline {
         const dx = height / max;
         const dy = width / (end - start);
 
-        let points: string[] = [];
+        let points = '';
         for (let i = 0; i < values.length; i++) {
-            points.push(`${(times[i] - start) * dy},${height - values[i] * dx}`);
+            if (i != 0) points += ' ';
+            points += `${(times[i] - start) * dy},${height - values[i] * dx}`;
         }
-        polyline.setAttribute("points", points.join(' '));
+        polyline.setAttribute("points", points);
     }
 
     return {

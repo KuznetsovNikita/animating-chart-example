@@ -59,7 +59,7 @@ export function drawLens(
         function moveAt(clientX: number) {
             switch (target) {
                 case left: {
-                    const left = Math.min(Math.max(startLeft + clientX - startX, 0), startLeft + startWidth);
+                    const left = Math.min(Math.max(startLeft + clientX - startX, 0), startLeft + startWidth - 20);
                     if (left === startLeft) return;
 
                     settings.setTimeRange({
@@ -69,7 +69,7 @@ export function drawLens(
                     break;
                 }
                 case right: {
-                    const newWidth = Math.min(width - startLeft, Math.max(0, startWidth + clientX - startX))
+                    const newWidth = Math.min(width - startLeft, Math.max(20, startWidth + clientX - startX))
                     if (newWidth === startWidth) return;
 
                     settings.setTimeRange({
