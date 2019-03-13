@@ -1,22 +1,25 @@
 import { DataService } from "src/data/service";
 
 
-export function drawMenu(
-    settings: DataService,
-) {
-    const element = document.createElement('div');
-    document.body.appendChild(element);
-    element.id = 'menu';
+export class Menu {
+    constructor(
+        container: HTMLDivElement,
+        settings: DataService,
+        public element = document.createElement('div')
+    ) {
+        container.appendChild(element);
+        element.id = 'menu';
 
-    for (let key in settings.visibility) {
-        element.appendChild(drawCheckbox(
-            key, settings.visibility[key],
-            settings.jsonData.colors[key],
-            settings.jsonData.names[key],
-            settings
-        ));
+        for (let key in settings.visibility) {
+            element.appendChild(drawCheckbox(
+                key, settings.visibility[key],
+                settings.jsonData.colors[key],
+                settings.jsonData.names[key],
+                settings
+            ));
+        }
+
     }
-
 }
 
 function drawCheckbox(

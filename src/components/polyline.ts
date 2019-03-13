@@ -20,7 +20,7 @@ export function createPolyline(color: string, className: string): Polyline {
         const { start, end } = timeRange;
         const { height, width } = viewport;
 
-        const dx = toDeltaX(height, max);
+        const dx = height / max;
         const dy = width / (end - start);
 
         let points: string[] = [];
@@ -34,10 +34,4 @@ export function createPolyline(color: string, className: string): Polyline {
         polyline,
         setPoints,
     }
-}
-
-
-function toDeltaX(height: number, max: number) {
-    // padding top
-    return (height - 20) / max;
 }

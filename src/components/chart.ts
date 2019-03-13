@@ -16,10 +16,11 @@ export default class Chart {
     polylines: Dict<Polyline> = {};
 
     constructor(
+        element: HTMLDivElement,
         private settings: DataService,
         private svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
     ) {
-        document.body.appendChild(this.svg);
+        element.appendChild(this.svg);
 
         const { width, height } = this.settings.viewport;
         svg.setAttribute('width', width.toString());

@@ -1,29 +1,22 @@
-import Chart from './components/chart';
-import { drawMenu } from './components/menu';
-import { drawMiniMap } from './components/mini-map';
+import { Container } from './components/container';
 import * as chart_data from './data/chart_data.json';
 import { DataService, Dict, JsonData } from './data/service';
 import './style/index.css';
-
-
-class Container {
-    chart: Chart;
-
-    constructor(
-        settings: DataService,
-    ) {
-        this.chart = new Chart(settings)
-        drawMiniMap(settings);
-        drawMenu(settings);
-    }
-}
 
 function init() {
     const jsonData = (chart_data as any as JsonData[])[0];
     const [_, ...timestamps] = jsonData.columns.find(([type]) => type === 'x');
 
-    const viewport = { width: 500, height: 500 };
-    const miniMap = { width: 500, height: 50 };
+    const w = window,
+        d = document,
+        e = d.documentElement,
+        g = d.getElementsByTagName('body')[0],
+        x = w.innerWidth || e.clientWidth || g.clientWidth;
+    const width = Math.min(x, 500);
+
+    const viewport = { width: width, height: width };
+    const miniMap = { width: width, height: 46 };
+
     const timeRange = {
         start: timestamps[Math.round(timestamps.length * 0.8)],
         end: timestamps[timestamps.length - 1],

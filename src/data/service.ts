@@ -131,7 +131,7 @@ export class DataService {
         const last = Math.floor(max / 10) * 10;
         const { height, width } = this.viewport;
         const dy = last / this.lines;
-        const dx = toDeltaX(height, max);
+        const dx = height / max;
 
         let i = 0;
         for (let label = 0; label <= last; label += dy) {
@@ -142,9 +142,5 @@ export class DataService {
     }
 }
 
-function toDeltaX(height: number, max: number) {
-    // padding top
-    return (height - 20) / max;
-}
 
 

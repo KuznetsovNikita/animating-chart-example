@@ -4,15 +4,18 @@ import { drawLens } from './lens';
 import { createPolyline, Polyline } from './polyline';
 
 
-export function drawMiniMap(
-    settings: DataService,
-) {
-    const element = document.createElement('div');
-    document.body.appendChild(element);
-    element.id = 'mini-map';
+export class MiniMap {
+    constructor(
+        container: HTMLDivElement,
+        settings: DataService,
+        public element = document.createElement('div'),
+        public miniMap = new MiniMapSvg(element, settings)
+    ) {
+        container.appendChild(element);
+        element.id = 'mini-map';
 
-    new MiniMapSvg(element, settings);
-    drawLens(element, settings);
+        drawLens(element, settings);
+    }
 }
 
 

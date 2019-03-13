@@ -10,6 +10,16 @@ export function drawLens(
     element.appendChild(lens);
     lens.className = 'lens';
 
+    const coverLeft = document.createElement('div');
+    element.appendChild(coverLeft);
+    coverLeft.className = 'cover';
+    coverLeft.style.left = '0px';
+
+    const coverRight = document.createElement('div');
+    element.appendChild(coverRight);
+    coverRight.className = 'cover';
+    coverRight.style.right = '0px';
+
     const left = document.createElement('span');
     lens.appendChild(left);
     left.style.left = '0px';
@@ -28,8 +38,13 @@ export function drawLens(
     const dX = width / (end - start);
 
     const setStyle = (range: TimeRange) => {
-        lens.style.width = Math.floor((range.end - range.start) * dX) + 'px';
-        lens.style.left = Math.floor((range.start - start) * dX) + 'px';
+        const width = Math.floor((range.end - range.start) * dX);
+        const left = Math.floor((range.start - start) * dX);
+        lens.style.width = width + 'px';
+        lens.style.left = left + 'px';
+
+        coverLeft.style.width = left + 'px';
+        coverRight.style.left = left + width + 'px';
     }
     // set initial style
     setStyle(timeRange);
@@ -37,16 +52,14 @@ export function drawLens(
     // update style on change
     settings.onTimeRangeChange(setStyle);
 
-    lens.onmousedown = (startEvent) => {
-        const target = startEvent.target;
-        const startX = startEvent.clientX;
+    function onMousedown(target: EventTarget, startX: number) {
         const startWidth = (settings.timeRange.end - settings.timeRange.start) * dX;
         const startLeft = (settings.timeRange.start - start) * dX;
 
-        const moveAt = (event: MouseEvent) => {
+        function moveAt(clientX: number) {
             switch (target) {
                 case left: {
-                    const left = Math.min(Math.max(startLeft + event.clientX - startX, 0), startLeft + startWidth);
+                    const left = Math.min(Math.max(startLeft + clientX - startX, 0), startLeft + startWidth);
                     if (left === startLeft) return;
 
                     settings.setTimeRange({
@@ -56,7 +69,7 @@ export function drawLens(
                     break;
                 }
                 case right: {
-                    const newWidth = Math.min(width - startLeft, Math.max(0, startWidth + event.clientX - startX))
+                    const newWidth = Math.min(width - startLeft, Math.max(0, startWidth + clientX - startX))
                     if (newWidth === startWidth) return;
 
                     settings.setTimeRange({
@@ -66,7 +79,7 @@ export function drawLens(
                     break;
                 }
                 default: {
-                    const left = Math.min(Math.max(startLeft + event.clientX - startX, 0), width - startWidth);
+                    const left = Math.min(Math.max(startLeft + clientX - startX, 0), width - startWidth);
                     if (left === startLeft) return;
 
                     settings.setTimeRange({
@@ -79,15 +92,51 @@ export function drawLens(
         }
 
         let lastUpdateCall: number;
-        document.onmousemove = (event) => {
+        function onMove(clientX: number) {
             if (lastUpdateCall) cancelAnimationFrame(lastUpdateCall)
-            lastUpdateCall = requestAnimationFrame(() => moveAt(event));
+            lastUpdateCall = requestAnimationFrame(() => moveAt(clientX));
         }
 
-        lens.onmouseup = () => {
-            document.onmousemove = null;
-            lens.onmouseup = null;
+        function onMouseMove(event: MouseEvent) {
+            event.stopPropagation();
+            event.preventDefault();
+            onMove(event.clientX);
         }
+        function onTouchMove(event: TouchEvent) {
+            if (event.targetTouches.length == 1) {
+                event.stopPropagation();
+                event.preventDefault();
+                onMove(event.targetTouches[0].clientX);
+            }
+        }
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("touchmove", onTouchMove);
+
+        function onEnd() {
+            document.removeEventListener("mousemove", onMouseMove);
+            document.removeEventListener("touchmove", onTouchMove);
+            lens.removeEventListener("mouseup", onEnd);
+            lens.removeEventListener("touchend", onEnd);
+        }
+
+        lens.addEventListener("mouseup", onEnd);
+        lens.addEventListener("touchend", onEnd);
     }
+
+    lens.addEventListener("mousedown", event => {
+        event.stopPropagation();
+        event.preventDefault();
+        onMousedown(event.target, event.clientX);
+    }
+
+    );
+    lens.addEventListener("touchstart", event => {
+        if (event.targetTouches.length == 1) {
+            event.stopPropagation();
+            event.preventDefault();
+            onMousedown(event.targetTouches[0].target, event.targetTouches[0].clientX);
+        }
+    });
 }
 
