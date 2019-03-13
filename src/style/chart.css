@@ -2,7 +2,7 @@
 
 .line {
     opacity: 1;
-    transition: opacity .6s ease;
+    transition: opacity .4s ease;
 
     &.transparent {
         opacity: 0;

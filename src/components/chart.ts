@@ -133,7 +133,7 @@ export default class Chart {
                 setTimeout(() => {
                     this.lines = this.lines.filter(item => item !== line);
                     line.destroy();
-                }, 600);
+                }, 400);
             });
 
             const lines = this.drawLine(this.targetMax, 'transparent');
