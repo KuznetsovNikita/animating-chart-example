@@ -22,11 +22,11 @@ export function drawLens(
 
     const left = document.createElement('span');
     lens.appendChild(left);
-    left.style.left = '0px';
+    left.style.left = '-5px';
 
     const right = document.createElement('span');
     lens.appendChild(right);
-    right.style.right = '0px';
+    right.style.right = '-5px';
 
     const [_, ...timestamps] = settings.jsonData.columns.find(([type]) => type === 'x');
 

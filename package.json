@@ -4,7 +4,8 @@
     "description": "",
     "main": "main.js",
     "scripts": {
-        "build": "webpack -d"
+        "build": "webpack -d",
+        "prod": "webpack -p"
     },
     "author": "Nikita Kuznetsov",
     "license": "ISC",
