@@ -28,12 +28,13 @@ export function drawLens(
     lens.appendChild(right);
     right.style.right = '-5px';
 
-    const [_, ...timestamps] = settings.jsonData.columns.find(([type]) => type === 'x');
-
-    const start = timestamps[0];
-    const end = timestamps[timestamps.length - 1];
-
-    const { miniMap: { viewport: { width } }, timeRange } = settings;
+    const {
+        miniMap: {
+            viewport: { width },
+            timeRange: { start, end }
+        },
+        timeRange,
+    } = settings;
 
     const dX = width / (end - start);
 
@@ -59,11 +60,11 @@ export function drawLens(
         function moveAt(clientX: number) {
             switch (target) {
                 case left: {
-                    const left = Math.min(Math.max(startLeft + clientX - startX, 0), startLeft + startWidth - 20);
-                    if (left === startLeft) return;
+                    const newLeft = Math.min(Math.max(startLeft + clientX - startX, 0), startLeft + startWidth - 20);
+                    if (newLeft === startLeft) return;
 
                     settings.setTimeRange({
-                        start: Math.floor(start + left / dX),
+                        start: Math.floor(start + newLeft / dX),
                         end: settings.timeRange.end,
                     });
                     break;
@@ -79,12 +80,12 @@ export function drawLens(
                     break;
                 }
                 default: {
-                    const left = Math.min(Math.max(startLeft + clientX - startX, 0), width - startWidth);
-                    if (left === startLeft) return;
+                    const newLeft = Math.min(Math.max(startLeft + clientX - startX, 0), width - startWidth);
+                    if (newLeft === startLeft) return;
 
                     settings.setTimeRange({
-                        start: Math.floor(start + left / dX),
-                        end: Math.floor(start + (left + startWidth) / dX),
+                        start: Math.floor(start + newLeft / dX),
+                        end: Math.floor(start + (newLeft + startWidth) / dX),
                     });
                     break;
                 }
