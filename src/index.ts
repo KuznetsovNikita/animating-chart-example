@@ -13,13 +13,7 @@ function init() {
         x = w.innerWidth || e.clientWidth || g.clientWidth;
     const width = Math.min(x, 500) - 10;
 
-    const [_, ...timestamps] = jsonData.columns[0];
-    const timeRange = {
-        start: timestamps[Math.round(timestamps.length * 0.8)],
-        end: timestamps[timestamps.length - 1],
-    };
-
-    const settings = new DataService(width, timeRange, jsonData);
+    const settings = new DataService(width, jsonData);
 
     new Container(settings);
 }

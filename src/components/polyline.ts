@@ -24,7 +24,7 @@ export class Polyline {
         const dy = width / (end - start);
 
         let points = '';
-        for (let i = indexRange.start; i < indexRange.end; i++) {
+        for (let i = indexRange.start; i <= indexRange.end; i++) {
             if (i != 0) points += ' ';
             points += `${((times[i] as number) - start) * dy},${height - (values[i] as number) * dx}`;
         }

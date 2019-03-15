@@ -1,3 +1,13 @@
+.night {
+    .checkbox {
+        color: #fafafa;
+
+        .cover {
+            fill: #222f3f;
+        }
+    }
+}
+
 .checkbox {
     display: inline-block;
     height: 44px;

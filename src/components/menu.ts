@@ -2,6 +2,7 @@ import { DataService } from "src/data/service";
 
 
 export class Menu {
+    button: ModeButton;
     constructor(
         container: HTMLDivElement,
         settings: DataService,
@@ -19,6 +20,37 @@ export class Menu {
             ));
         }
 
+        this.button = new ModeButton(element);
+    }
+}
+
+class ModeButton {
+
+    isDay: boolean;
+
+    constructor(
+        container: HTMLDivElement,
+        private button = document.createElement('div')
+    ) {
+        container.appendChild(this.button);
+        this.button.classList.add('mode');
+        this.setDay();
+
+        this.button.onclick = () => {
+            this.isDay ? this.setNight() : this.setDay();
+        };
+    }
+
+    setDay() {
+        this.isDay = true;
+        document.body.classList.remove('night');
+        this.button.innerHTML = "Switch to Night Mode";
+    }
+
+    setNight() {
+        this.isDay = false;
+        document.body.classList.add('night');
+        this.button.innerHTML = "Switch to Day Mode";
     }
 }
 

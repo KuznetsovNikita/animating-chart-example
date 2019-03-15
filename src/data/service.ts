@@ -19,6 +19,7 @@ export class DataService {
 
     public lines = 5;
 
+    public timeRange: Range;
     public indexRange: Range;
     public viewport: Viewport;
     public miniMap: MiniMap;
@@ -26,13 +27,19 @@ export class DataService {
 
     constructor(
         width: number,
-        public timeRange: Range,
         public jsonData: JsonData,
 
     ) {
+        const time = jsonData.columns[0];
+        this.timeRange = {
+            start: time[Math.max(Math.round(time.length * 0.8), 1)] as number,
+            end: time[time.length - 1] as number,
+        };
+        this.indexRange = this.toIndexRange(this.timeRange);
+
         this.viewport = {
             width,
-            height: Math.round(width * 0.9),
+            height: Math.round(width * 0.8),
         };
 
         this.miniMap = {
@@ -40,10 +47,10 @@ export class DataService {
                 width,
                 height: 46,
             },
-            indexRange: { start: 1, end: jsonData.columns[0].length - 1 },
+            indexRange: { start: 1, end: time.length - 1 },
             timeRange: {
-                start: jsonData.columns[0][1],
-                end: jsonData.columns[0][jsonData.columns[0].length - 1] as number
+                start: time[1],
+                end: time[time.length - 1] as number
             }
         }
 
@@ -51,7 +58,7 @@ export class DataService {
             this.visibility[key] = true;
         }
 
-        this.indexRange = this.toIndexRange(timeRange);
+
     }
 
     private timeChangeWatchers: ((timeRange: Range) => void)[] = [];
