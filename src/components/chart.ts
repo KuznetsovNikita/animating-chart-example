@@ -1,7 +1,7 @@
-import { TimeRange, Viewport } from 'src/data/models';
-import { ChartData, DataService, Dict } from '../data/service';
+import { Column, Dict, Range, Times, Viewport } from 'src/data/models';
+import { DataService } from '../data/service';
 import { Line } from './line';
-import { createPolyline, Polyline } from './polyline';
+import { Polyline } from './polyline';
 
 export default class Chart {
 
@@ -13,6 +13,7 @@ export default class Chart {
     lastUpdateChart: number;
 
     lines: Line[] = [];
+    linesStock: Line[] = [];
     polylines: Dict<Polyline> = {};
 
     constructor(
@@ -24,60 +25,69 @@ export default class Chart {
         element.appendChild(this.svg);
         this.svg.appendChild(this.gLines);
 
-        const { width, height } = this.settings.viewport;
+        const {
+            jsonData: { columns, colors },
+            viewport: { width, height },
+            indexRange, timeRange, viewport
+        } = this.settings;
+
         svg.setAttribute('width', width.toString());
         svg.setAttribute('height', height.toString());
 
-
-        const data = this.settings.toChartData();
-        this.currentMax = data.max;
-
+        this.currentMax = this.settings.toMaxVisibleValue(indexRange);
 
         new Line(this.gLines, 0, height, width, '');
         this.lines = this.drawLine(this.currentMax);
 
-        for (let key in data.columns) {
+        for (let i = 1; i < columns.length; i++) {
+            const key = columns[i][0];
             this.drawPolyline(
-                key, this.currentMax, data.columns[key],
-                data.times, data.colors[key],
-                data.timeRange, data.viewport,
+                key, this.currentMax, columns[i],
+                columns[0], colors[key],
+                indexRange, timeRange, viewport,
             );
         }
 
         settings.onTimeRangeChange(() => {
-            this.drawCharts(this.settings.toChartData());
+            this.drawCharts();
         });
 
         settings.onVisibilityChange((key) => {
             this.polylines[key].polyline.classList.toggle('transparent');
-            this.drawCharts(this.settings.toChartData());
+            this.drawCharts();
         });
     }
 
 
-    drawCharts(data: ChartData) {
-
+    drawCharts() {
         if (this.lastUpdateChart) cancelAnimationFrame(this.lastUpdateChart);
-        if (data.max === 0) return;
 
-        this.targetMax = data.max;
+        const max = this.settings.toMaxVisibleValue(
+            this.settings.indexRange,
+        );
+
+        if (max === 0) return;
+
+        this.targetMax = max;
         this.deltaMax = this.targetMax - this.currentMax;
 
         this.redrawLines(this.deltaMax);
-        this.scale(data);
+        this.scale();
     }
 
-    scale(data: ChartData) {
+    scale() {
         this.lastUpdateChart = requestAnimationFrame(() => {
 
-            this.lines.forEach(line => line.setHeight(
-                data.viewport.height - data.viewport.height / this.currentMax * line.value,
-            ));
+            this.scaleLines();
 
-            for (let key in data.columns) {
-                this.polylines[key].setPoints(
-                    this.currentMax, data.columns[key], data.times,
-                    data.timeRange, data.viewport,
+            const {
+                jsonData: { columns },
+                indexRange, timeRange, viewport,
+            } = this.settings;
+            for (let i = 1; i < columns.length; i++) {
+                this.polylines[columns[i][0]].setPoints(
+                    this.currentMax, columns[i], columns[0],
+                    indexRange, timeRange, viewport,
                 );
             }
 
@@ -89,20 +99,20 @@ export default class Chart {
                 if (this.currentMax === this.targetMax) break;
 
             }
-            return this.scale(data);
+            return this.scale();
         });
     }
 
     drawPolyline(
-        key: string, max: number, values: number[],
-        times: number[], color: string,
-        timeRange: TimeRange, viewport: Viewport,
+        key: string, max: number, values: Column,
+        times: Times, color: string, indexRange: Range,
+        timeRange: Range, viewport: Viewport,
     ) {
-        const poliline = createPolyline(color, 'main-chart');
+        const poliline = new Polyline(color, 'main-chart');
 
         this.svg.appendChild(poliline.polyline);
         poliline.setPoints(
-            max, values, times, timeRange, viewport,
+            max, values, times, indexRange, timeRange, viewport,
         );
 
         this.polylines[key] = poliline;
@@ -130,19 +140,29 @@ export default class Chart {
 
             this.lines.forEach(line => {
                 line.g.classList.add('transparent');
+                this.linesStock.push(line);
                 setTimeout(() => {
-                    this.lines = this.lines.filter(item => item !== line);
+                    this.linesStock = this.linesStock
+                        .filter(item => item !== line);
                     line.destroy();
                 }, 400);
-            });
+            })
 
             const lines = this.drawLine(this.targetMax, 'transparent');
-            this.lines.push(...lines);
+            this.lines = lines;
 
             requestAnimationFrame(() => {
                 lines.forEach(line => line.g.classList.remove('transparent'));
             });
         }
+    }
+
+    scaleLines() {
+        const { height } = this.settings.viewport;
+        const dx = height / this.currentMax;
+
+        this.lines.forEach(line => line.setHeight(height - dx * line.value));
+        this.linesStock.forEach(line => line.setHeight(height - dx * line.value));
     }
 }
 

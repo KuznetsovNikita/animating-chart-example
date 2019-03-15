@@ -4,7 +4,14 @@ export interface Viewport {
     height: number;
 }
 
-export interface TimeRange {
+export interface Range {
     start: number;
     end: number;
+}
+
+export type Column = [string, ...Array<number>];
+export type Times = ['x', ...Array<number>];
+
+export interface Dict<T> {
+    [key: string]: T;
 }

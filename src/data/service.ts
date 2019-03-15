@@ -1,50 +1,91 @@
-import { TimeRange, Viewport } from "./models";
-
-type Tuple = [string, ...Array<number>];
-
-export interface Dict<T> {
-    [key: string]: T;
-}
+import { Column, Dict, Range, Times, Viewport } from "./models";
 
 export interface JsonData {
-    columns: Tuple[];
+    columns: [Times, ...Array<Column>];
     types: Dict<string>;
     names: Dict<string>;
     colors: Dict<string>;
 }
 
-export interface ChartData {
-    max: number;
-    columns: Dict<number[]>;
-    times: number[];
-    colors: Dict<string>;
-    timeRange: TimeRange;
+interface MiniMap {
     viewport: Viewport;
+    indexRange: Range;
+    timeRange: Range;
 }
 
 export class DataService {
 
     public animationSpeed = 0.15; // % per frame
 
-    constructor(
-        public viewport: Viewport,
-        public miniMap: Viewport,
-        public lines: number,
-        public timeRange: TimeRange,
-        public jsonData: JsonData,
-        public visibility: Dict<boolean>,
-    ) {
+    public lines = 5;
 
+    public indexRange: Range;
+    public viewport: Viewport;
+    public miniMap: MiniMap;
+    public visibility: Dict<boolean> = {};
+
+    constructor(
+        width: number,
+        public timeRange: Range,
+        public jsonData: JsonData,
+
+    ) {
+        this.viewport = {
+            width,
+            height: Math.round(width * 0.9),
+        };
+
+        this.miniMap = {
+            viewport: {
+                width,
+                height: 46,
+            },
+            indexRange: { start: 1, end: jsonData.columns[0].length - 1 },
+            timeRange: {
+                start: jsonData.columns[0][1],
+                end: jsonData.columns[0][jsonData.columns[0].length - 1] as number
+            }
+        }
+
+        for (let key in jsonData.names) {
+            this.visibility[key] = true;
+        }
+
+        this.indexRange = this.toIndexRange(timeRange);
     }
 
-    private timeChangeWatchers: ((timeRange: TimeRange) => void)[] = [];
-    onTimeRangeChange(act: (timeRange: TimeRange) => void) {
+    private timeChangeWatchers: ((timeRange: Range) => void)[] = [];
+    onTimeRangeChange(act: (timeRange: Range) => void) {
         this.timeChangeWatchers.push(act);
     }
 
-    setTimeRange(timeRange: TimeRange) {
+    setTimeRange(timeRange: Range) {
+
         this.timeRange = timeRange;
+        this.indexRange = this.toIndexRange(timeRange);
+
         this.timeChangeWatchers.forEach(act => act(timeRange))
+    }
+
+    toIndexRange(timeRange: Range): Range {
+        const time = this.jsonData.columns[0];
+
+        let start = 1;
+        while (time[start] < timeRange.start) {
+            start++;
+        }
+        start = Math.max(start - 1, 1);
+
+        let end = time.length - 1;
+        while (time[end] > timeRange.end) {
+            end--;
+        }
+        end = Math.min(end + 1, time.length - 1);
+
+        return {
+            start,
+            end,
+        };
     }
 
     private visibilityWatchers: ((key: string, value: boolean) => void)[] = [];
@@ -57,72 +98,18 @@ export class DataService {
         this.visibilityWatchers.push(act);
     }
 
-    toChartData(): ChartData {
-        const { start, end } = this.timeRange;
-
-        const [_, ...timestamps] = this.jsonData.columns.find(([type]) => type === 'x');
-
-        let startIndex = timestamps.findIndex(time => time >= start) - 1;
-        if (startIndex === -1) startIndex = 0;
-        let endIndex = timestamps.findIndex(time => time > end) + 1;
-        if (endIndex === 0) endIndex = timestamps.length;
-
-        const times = timestamps.slice(startIndex, endIndex);
-
+    toMaxVisibleValue(indexRange: Range) {
         let max = 0;
-        const columns = this.jsonData.columns.reduce((result, [type, ...values]) => {
-            if (type === 'x') return result;
-
-            const column = values.slice(startIndex, endIndex);
-
-            result[type] = column
-
-            if (this.visibility[type]) {
-                max = Math.max(max, ...column);
+        const { start, end } = indexRange;
+        const { jsonData: { columns }, visibility } = this;
+        for (let i = 1; i < columns.length; i++) {
+            if (visibility[columns[i][0]]) {
+                for (let j = start; j <= end; j++) {
+                    max = Math.max(max, columns[i][j] as number);
+                }
             }
-
-            return result;
-        }, {} as Dict<number[]>);
-
-        return {
-            max,
-            columns,
-            times,
-            colors: this.jsonData.colors,
-            timeRange: this.timeRange,
-            viewport: this.viewport,
         }
-    }
-
-    toMiniMapData(): ChartData {
-        let max = 0;
-        let times: number[];
-        const columns = this.jsonData.columns
-            .reduce((result, [type, ...values]) => {
-                if (type === 'x') {
-                    times = values;
-                    return result;
-                }
-                if (this.visibility[type]) {
-                    result[type] = values;
-
-                    max = Math.max(max, ...values);
-                }
-
-                return result;
-            }, {});
-
-        return {
-            max,
-            columns,
-            times,
-            colors: this.jsonData.colors,
-            timeRange: {
-                start: times[0],
-                end: times[times.length - 1],
-            },
-            viewport: this.miniMap,
-        }
+        return max;
     }
 }
 

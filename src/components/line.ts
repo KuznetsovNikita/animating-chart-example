@@ -32,15 +32,11 @@ export class Line {
     }
 
     setHeight(height: number) {
-        if (this.g != null) {
-            this.g.setAttribute('transform', `translate(0,${height})`);
-        }
+        this.g.setAttribute('transform', `translate(0,${height})`);
     }
 
     destroy() {
-        if (this.g != null) {
-            this.svg.removeChild(this.g);
-            this.g = null;
-        }
+        this.svg.removeChild(this.g);
+        this.g = null;
     }
 }

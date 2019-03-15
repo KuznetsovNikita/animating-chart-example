@@ -1,4 +1,4 @@
-import { TimeRange } from "src/data/models";
+import { Range } from "src/data/models";
 import { DataService } from "src/data/service";
 
 
@@ -33,11 +33,11 @@ export function drawLens(
     const start = timestamps[0];
     const end = timestamps[timestamps.length - 1];
 
-    const { miniMap: { width }, timeRange } = settings;
+    const { miniMap: { viewport: { width } }, timeRange } = settings;
 
     const dX = width / (end - start);
 
-    const setStyle = (range: TimeRange) => {
+    const setStyle = (range: Range) => {
         const width = Math.floor((range.end - range.start) * dX);
         const left = Math.floor((range.start - start) * dX);
         lens.style.width = width + 'px';
