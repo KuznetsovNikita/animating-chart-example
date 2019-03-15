@@ -102,13 +102,12 @@ class MiniMapSvg {
                 }
             }
 
-            if (this.currentMax === this.targetMax) return;
+            if (this.currentMax === this.targetMax) return callback && callback();
 
             const absMax = Math.abs(this.deltaMax);
             for (let i = 0; i < absMax * this.settings.animationSpeed; i++) {
                 this.currentMax += this.deltaMax / absMax;
                 if (this.currentMax === this.targetMax) {
-                    callback && callback();
                     break;
                 }
             }
