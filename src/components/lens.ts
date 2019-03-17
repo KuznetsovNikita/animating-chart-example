@@ -1,7 +1,6 @@
 import { Range } from "src/data/models";
 import { DataService } from "src/data/service";
 
-
 export function drawLens(
     element: HTMLDivElement,
     settings: DataService,
@@ -111,8 +110,13 @@ export function drawLens(
             }
         }
 
-        document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("touchmove", onTouchMove);
+        document.addEventListener(
+            "mousemove", onMouseMove
+        );
+        document.addEventListener(
+            "touchmove", onTouchMove,
+            { passive: false }
+        );
 
         function onEnd() {
             document.removeEventListener("mousemove", onMouseMove);
@@ -129,15 +133,14 @@ export function drawLens(
         event.stopPropagation();
         event.preventDefault();
         onMousedown(event.target, event.clientX);
-    }
+    });
 
-    );
     lens.addEventListener("touchstart", event => {
         if (event.targetTouches.length == 1) {
             event.stopPropagation();
             event.preventDefault();
             onMousedown(event.targetTouches[0].target, event.targetTouches[0].clientX);
         }
-    });
+    }, { passive: false });
 }
 
