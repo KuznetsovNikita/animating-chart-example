@@ -1,7 +1,7 @@
-import { Column, Dict, Range, Times, Viewport } from "./models";
+import { Column, Dict, Range, TimeColumn, Viewport } from "./models";
 
 export interface JsonData {
-    columns: [Times, ...Array<Column>];
+    columns: [TimeColumn, ...Array<Column>];
     types: Dict<string>;
     names: Dict<string>;
     colors: Dict<string>;
@@ -12,6 +12,8 @@ interface MiniMap {
     indexRange: Range;
     timeRange: Range;
 }
+
+export type ChangeKind = 'left' | 'right' | 'move' | 'visible';
 
 export class DataService {
 
@@ -61,17 +63,17 @@ export class DataService {
 
     }
 
-    private timeChangeWatchers: ((timeRange: Range) => void)[] = [];
-    onTimeRangeChange(act: (timeRange: Range) => void) {
+    private timeChangeWatchers: ((kind: ChangeKind, timeRange: Range) => void)[] = [];
+    onTimeRangeChange(act: (kind: ChangeKind, timeRange: Range) => void) {
         this.timeChangeWatchers.push(act);
     }
 
-    setTimeRange(timeRange: Range) {
+    setTimeRange(kind: ChangeKind, timeRange: Range) {
 
         this.timeRange = timeRange;
         this.indexRange = this.toIndexRange(timeRange);
 
-        this.timeChangeWatchers.forEach(act => act(timeRange))
+        this.timeChangeWatchers.forEach(act => act(kind, timeRange))
     }
 
     toIndexRange(timeRange: Range): Range {

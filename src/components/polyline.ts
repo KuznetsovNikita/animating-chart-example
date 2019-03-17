@@ -1,4 +1,4 @@
-import { Column, Range, Times, Viewport } from "src/data/models";
+import { Column, Range, TimeColumn, Viewport } from "src/data/models";
 
 
 
@@ -14,7 +14,7 @@ export class Polyline {
     }
 
     setPoints(
-        max: number, values: Column, times: Times,
+        max: number, values: Column, times: TimeColumn,
         indexRange: Range, timeRange: Range, viewport: Viewport,
     ) {
         const { start, end } = timeRange;

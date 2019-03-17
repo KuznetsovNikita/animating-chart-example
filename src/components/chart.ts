@@ -1,7 +1,8 @@
-import { Column, Dict, Range, Times, Viewport } from 'src/data/models';
-import { DataService } from '../data/service';
+import { Column, Dict, Range, TimeColumn, Viewport } from 'src/data/models';
+import { ChangeKind, DataService } from '../data/service';
 import { Line } from './line';
 import { Polyline } from './polyline';
+import { Times } from './times';
 
 export default class Chart {
 
@@ -12,18 +13,22 @@ export default class Chart {
 
     lastUpdateChart: number;
 
+
     lines: Line[] = [];
     linesStock: Line[] = [];
     polylines: Dict<Polyline> = {};
 
+    times: Times;
     constructor(
         element: HTMLDivElement,
         private settings: DataService,
         private svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
         private gLines = document.createElementNS("http://www.w3.org/2000/svg", "g"),
+        private gDates = document.createElementNS("http://www.w3.org/2000/svg", "g"),
     ) {
         element.appendChild(this.svg);
         this.svg.appendChild(this.gLines);
+        this.svg.appendChild(this.gDates);
 
         const {
             jsonData: { columns, colors },
@@ -32,7 +37,9 @@ export default class Chart {
         } = this.settings;
 
         svg.setAttribute('width', width.toString());
-        svg.setAttribute('height', height.toString());
+        svg.setAttribute('height', (height + 20).toString());
+
+        this.times = new Times(this.gDates, this.settings);
 
         this.currentMax = this.settings.toMaxVisibleValue(indexRange);
 
@@ -48,19 +55,20 @@ export default class Chart {
             );
         }
 
-        settings.onTimeRangeChange(() => {
-            this.drawCharts();
+        settings.onTimeRangeChange(kind => {
+            this.drawCharts(kind);
         });
 
         settings.onVisibilityChange((key) => {
             this.polylines[key].polyline.classList.toggle('transparent');
-            this.drawCharts();
+            this.drawCharts('visible');
         });
     }
 
-
-    drawCharts() {
+    drawCharts(kind: ChangeKind) {
         if (this.lastUpdateChart) cancelAnimationFrame(this.lastUpdateChart);
+
+        this.times.redrawTimes(kind);
 
         const max = this.settings.toMaxVisibleValue(
             this.settings.indexRange,
@@ -105,7 +113,7 @@ export default class Chart {
 
     drawPolyline(
         key: string, max: number, values: Column,
-        times: Times, color: string, indexRange: Range,
+        times: TimeColumn, color: string, indexRange: Range,
         timeRange: Range, viewport: Viewport,
     ) {
         const poliline = new Polyline(color, 'main-chart');

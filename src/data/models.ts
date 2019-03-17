@@ -10,7 +10,7 @@ export interface Range {
 }
 
 export type Column = [string, ...Array<number>];
-export type Times = ['x', ...Array<number>];
+export type TimeColumn = ['x', ...Array<number>];
 
 export interface Dict<T> {
     [key: string]: T;

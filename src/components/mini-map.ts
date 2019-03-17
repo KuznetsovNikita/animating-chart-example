@@ -1,4 +1,4 @@
-import { Column, Dict, Times } from 'src/data/models';
+import { Column, Dict, TimeColumn } from 'src/data/models';
 import { DataService } from '../data/service';
 import { drawLens } from './lens';
 import { Polyline } from './polyline';
@@ -118,7 +118,7 @@ class MiniMapSvg {
 
     drawPolyline(
         key: string, max: number, values: Column,
-        times: Times, color: string,
+        times: TimeColumn, color: string,
     ) {
         const { viewport, indexRange, timeRange } = this.settings.miniMap;
         const poliline = new Polyline(color, 'mini-map-chart');

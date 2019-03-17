@@ -11,12 +11,18 @@
     line {
         stroke: #f2f4f5;
     }
-    text {
-        font: 300 14px sans-serif;
-        fill: #a6b1b8;
-    }
 }
 
+svg text, svg tspan {
+    font: 300 14px sans-serif;
+    fill: #a6b1b8;
+}
+
+.time {
+    &.invisible {
+        visibility: hidden;
+    }
+}
 
 .main-chart {
     stroke-width: 3;

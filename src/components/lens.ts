@@ -51,7 +51,7 @@ export function drawLens(
     setStyle(timeRange);
 
     // update style on change
-    settings.onTimeRangeChange(setStyle);
+    settings.onTimeRangeChange((_, range) => setStyle(range));
 
     function onMousedown(target: EventTarget, startX: number) {
         const startWidth = (settings.timeRange.end - settings.timeRange.start) * dX;
@@ -63,7 +63,7 @@ export function drawLens(
                     const newLeft = Math.min(Math.max(startLeft + clientX - startX, 0), startLeft + startWidth - 20);
                     if (newLeft === startLeft) return;
 
-                    settings.setTimeRange({
+                    settings.setTimeRange('left', {
                         start: Math.floor(start + newLeft / dX),
                         end: settings.timeRange.end,
                     });
@@ -73,7 +73,7 @@ export function drawLens(
                     const newWidth = Math.min(width - startLeft, Math.max(20, startWidth + clientX - startX))
                     if (newWidth === startWidth) return;
 
-                    settings.setTimeRange({
+                    settings.setTimeRange('right', {
                         start: settings.timeRange.start,
                         end: Math.floor(start + (startLeft + newWidth) / dX),
                     });
@@ -83,7 +83,7 @@ export function drawLens(
                     const newLeft = Math.min(Math.max(startLeft + clientX - startX, 0), width - startWidth);
                     if (newLeft === startLeft) return;
 
-                    settings.setTimeRange({
+                    settings.setTimeRange('move', {
                         start: Math.floor(start + newLeft / dX),
                         end: Math.floor(start + (newLeft + startWidth) / dX),
                     });
