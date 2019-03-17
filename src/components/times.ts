@@ -3,6 +3,7 @@ import { Time } from "./time";
 
 
 export class Times {
+    minSpace = 80;
 
     startIndex: number;
     endIndex: number;
@@ -72,17 +73,26 @@ export class Times {
         this.times[index] = undefined;
     }
 
+    drawTime = (index: number) => {
+        this.times[index] = new Time(
+            this.gDates,
+            this.toValue(index),
+            this.toLeftByIndex(index),
+        );
+    }
+
+
     maybeAddOrRemoveItem() {
         const { viewport: { width } } = this.settings;
 
         const start = this.startIndex - this.delta;
-        if (this.hasValue(start)) {
-            const left = this.toLeftByIndex(start);
-            if (left > 0) {
-                this.times[start] = new Time(this.gDates, this.toValue(start), left);
-                this.startIndex = start;
-                return;
-            }
+        if (
+            this.hasValue(start) &&
+            this.toLeftByIndex(start) > 0
+        ) {
+            this.drawTime(start);
+            this.startIndex = start;
+            return;
         }
 
         const leftStart = this.toLeftByIndex(this.startIndex);
@@ -93,13 +103,13 @@ export class Times {
         }
 
         const end = this.endIndex + this.delta;
-        if (this.hasValue(end)) {
-            const left = this.toLeftByIndex(end);
-            if (left < width) {
-                this.times[end] = new Time(this.gDates, this.toValue(end), left);
-                this.endIndex = end;
-                return;
-            }
+        if (
+            this.hasValue(end) &&
+            this.toLeftByIndex(end) < width
+        ) {
+            this.drawTime(end);
+            this.endIndex = end;
+            return;
         }
 
         const leftEnd = this.toLeftByIndex(this.endIndex);
@@ -115,7 +125,7 @@ export class Times {
         let index = this.endIndex - delta;
         if (
             this.hasValue(index) &&
-            (this.toValue(this.endIndex) - this.toValue(index)) * this.dy > 100
+            (this.toValue(this.endIndex) - this.toValue(index)) * this.dy > this.minSpace
         ) {
             let newStart = 0;
             while (index >= this.startIndex) {
@@ -131,9 +141,7 @@ export class Times {
                 }
                 else {
                     if (left > 0) {
-                        this.times[index] = new Time(
-                            this.gDates, this.toValue(index), left,
-                        );
+                        this.drawTime(index);
                         newStart = index;
                     }
                 }
@@ -152,7 +160,7 @@ export class Times {
         const index = this.endIndex - this.delta;
         if (
             this.hasValue(index) &&
-            (this.toValue(this.endIndex) - this.toValue(index)) * this.dy < 100
+            (this.toValue(this.endIndex) - this.toValue(index)) * this.dy < this.minSpace
         ) {
             let i = this.endIndex;
             let isRemove = false;
@@ -166,10 +174,7 @@ export class Times {
                 }
                 else {
                     if (!this.times[i]) {
-                        this.times[i] = new Time(
-                            this.gDates, this.toValue(i),
-                            this.toLeftByIndex(i)
-                        );
+                        this.drawTime(i);
                     }
                     newStart = i;
                 }
@@ -190,7 +195,7 @@ export class Times {
         let index = this.startIndex + delta;
         if (
             this.hasValue(index) &&
-            (this.toValue(index) - this.toValue(this.startIndex)) * this.dy > 100
+            (this.toValue(index) - this.toValue(this.startIndex)) * this.dy > this.minSpace
         ) {
             let newEnd = 0;
             while (index <= this.endIndex) {
@@ -206,9 +211,7 @@ export class Times {
                 }
                 else {
                     if (left < width) {
-                        this.times[index] = new Time(
-                            this.gDates, this.toValue(index), left,
-                        );
+                        this.drawTime(index);
                         newEnd = index;
                     }
                 }
@@ -228,7 +231,7 @@ export class Times {
         const index = this.startIndex + this.delta
         if (
             this.hasValue(index) &&
-            (this.toValue(index) - this.toValue(this.startIndex)) * this.dy < 100
+            (this.toValue(index) - this.toValue(this.startIndex)) * this.dy < this.minSpace
         ) {
 
             let i = this.startIndex;
@@ -242,9 +245,7 @@ export class Times {
                 }
                 else {
                     if (!this.times[i]) {
-                        this.times[i] = new Time(
-                            this.gDates, this.toValue(i), this.toLeftByIndex(i),
-                        );
+                        this.drawTime(i);
                     }
                     newEnd = i;
                 }
@@ -260,32 +261,32 @@ export class Times {
 
     maybeMoveStart() {
         const start = this.startIndex - this.delta;
-        if (this.hasValue(start)) {
-            const startLeft = this.toLeftByIndex(start);
-            if (startLeft > 0) {
-                this.times[start] = new Time(this.gDates, this.toValue(start), startLeft);
-                this.destroy(this.endIndex);
-                this.endIndex -= this.delta;
-                this.startIndex = start;
+        if (
+            this.hasValue(start) &&
+            this.toLeftByIndex(start) > 0
+        ) {
+            this.drawTime(start);
+            this.destroy(this.endIndex);
+            this.endIndex -= this.delta;
+            this.startIndex = start;
 
-                this.maybeMoveStart();
-            }
+            this.maybeMoveStart();
         }
     }
 
     maybeMoveEnd() {
         const { viewport: { width } } = this.settings;
         const end = this.endIndex + this.delta;
-        if (this.hasValue(end)) {
-            const left = this.toLeftByIndex(end);
-            if (left < width) {
-                this.times[end] = new Time(this.gDates, this.toValue(end), left);
-                this.destroy(this.startIndex);
-                this.startIndex += this.delta;
-                this.endIndex = end;
+        if (
+            this.hasValue(end) &&
+            this.toLeftByIndex(end) < width
+        ) {
+            this.drawTime(end);
+            this.destroy(this.startIndex);
+            this.startIndex += this.delta;
+            this.endIndex = end;
 
-                this.maybeMoveEnd();
-            }
+            this.maybeMoveEnd();
         }
     }
 
@@ -306,13 +307,14 @@ export class Times {
 
         this.dy = width / (timeRange.end - timeRange.start);
 
+        const firstSpace = 20;
         this.startIndex = indexRange.start;
-        while (this.toLeftByIndex(this.startIndex) < 25) {
+        while (this.toLeftByIndex(this.startIndex) < firstSpace) {
             this.startIndex++;
         }
 
         let deltaIndex = -1;
-        while (this.toLeftByIndex(this.startIndex + this.delta) < 100) {
+        while (this.toLeftByIndex(this.startIndex + this.delta) < this.minSpace + firstSpace) {
             deltaIndex++;
             this.delta = Math.pow(2, deltaIndex);
         }
@@ -320,13 +322,13 @@ export class Times {
         this.endIndex = this.startIndex;
         while (
             this.hasValue(this.endIndex + this.delta) &&
-            this.toLeftByIndex(this.endIndex) < width + 50
+            this.toLeftByIndex(this.endIndex) <= width
         ) {
             this.endIndex += this.delta;
         }
 
         for (let i = this.startIndex; i <= this.endIndex; i += this.delta) {
-            this.times[i] = new Time(this.gDates, this.toValue(i), this.toLeftByIndex(i));
+            this.drawTime(i);
         }
     }
 }
