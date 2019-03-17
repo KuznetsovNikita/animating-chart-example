@@ -11,7 +11,7 @@ function init() {
         e = d.documentElement,
         g = d.getElementsByTagName('body')[0],
         x = w.innerWidth || e.clientWidth || g.clientWidth;
-    const width = Math.min(x, 500) - 10;
+    const width = Math.min(x, 500);
 
     const settings = new DataService(width, jsonData);
 

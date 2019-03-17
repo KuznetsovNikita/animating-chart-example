@@ -46,7 +46,7 @@ export class DataService {
 
         this.miniMap = {
             viewport: {
-                width,
+                width: width - 10,
                 height: 46,
             },
             indexRange: { start: 1, end: time.length - 1 },

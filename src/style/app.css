@@ -8,7 +8,7 @@ html, body {
 #app {
     height: 100%;
     width: 100%;
-    padding: 0 5px 50px;
+    padding: 0 0 70px;
     box-sizing: border-box;
     position: relative;
 }
@@ -22,6 +22,7 @@ html, body {
 }
 
 #header {
+    padding: 0 5px;
     h1 {
         font: 600 21px sans-serif;
         padding: 30px 0 15px;
@@ -30,7 +31,7 @@ html, body {
 }
 
 #mini-map {
-    margin-top: 20px;
+    margin: 20px 5px 0;
     position: relative;
     height: 48px;
     padding: 1px 0;
@@ -64,12 +65,13 @@ html, body {
 
 
 #menu {
+    padding: 0 5px;
     margin-top: 20px;
 }
 
 .mode {
     cursor: pointer;
-    padding: 10px 0;
+    padding: 20px 0;
     color: #008ae9;
     text-align: center;
     font: 300 25px sans-serif;
