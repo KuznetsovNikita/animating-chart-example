@@ -16,7 +16,7 @@ export class Time {
         tspan.innerHTML = `${date.getDate()} ${month[date.getMonth()]}`;
 
         this.setLeft(left);
-        tspan.setAttribute('y', '15');
+        tspan.setAttribute('y', '18');
         tspan.setAttribute('text-anchor', 'middle');
 
         this.svg.appendChild(this.text);

@@ -1,7 +1,8 @@
 .night {
     .checkbox {
         color: #fafafa;
-
+        border-color: #2b3f51;
+    
         .cover {
             fill: #222f3f;
         }
