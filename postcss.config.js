@@ -5,5 +5,8 @@ module.exports = {
         "postcss-preset-env": {
             browsers: "cover 99.5%",
         },
+        'cssnano': {
+            preset: 'default',
+        },
     },
 };
