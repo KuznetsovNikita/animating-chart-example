@@ -1,4 +1,4 @@
-import { Container } from './components/container';
+import { drawContainer } from './components/container';
 import { DataService, JsonData } from './data/service';
 import './style/index.css';
 
@@ -17,8 +17,7 @@ function init() {
         if (rawFile.readyState === 4 && rawFile.status == 200) {
             const jsonData: JsonData = JSON.parse(rawFile.responseText)[0];
             const settings = new DataService(width, jsonData);
-            new Container(settings);
-
+            drawContainer(settings);
         }
     }
     rawFile.send(null);

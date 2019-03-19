@@ -3,178 +3,169 @@ import { ChangeKind, DataService } from '../data/service';
 import { Line, toLine } from './line';
 import { Polyline, toPolyline } from './polyline';
 import { toPopUp } from './pop-up';
-import { Times, toTimes } from './times';
-
-export default class Chart {
-
-    currentMax: number;
-    targetMax: number;
-
-    deltaMax: number;
-
-    lastUpdateChart: number;
+import { toTimes } from './times';
 
 
-    lines: Line[] = [];
-    linesStock: Line[] = [];
-    polylines: Dict<Polyline> = {};
+export function toChart(
+    element: HTMLDivElement,
+    settings: DataService,
+) {
+    let currentMax: number;
+    let targetMax: number;
 
-    times: Times;
+    let deltaMax: number;
 
-    constructor(
-        element: HTMLDivElement,
-        private settings: DataService,
-        private svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
-        private gLines = document.createElementNS("http://www.w3.org/2000/svg", "g"),
-        private gDates = document.createElementNS("http://www.w3.org/2000/svg", "g"),
-    ) {
-        element.appendChild(this.svg);
-        this.svg.appendChild(this.gLines);
-        this.svg.appendChild(this.gDates);
+    let lastUpdateChart: number;
 
-        const {
-            jsonData: { columns, colors },
-            viewport: { width, height },
-            indexRange, timeRange, viewport
-        } = this.settings;
 
-        svg.setAttribute('width', width.toString());
-        svg.setAttribute('height', (height + 20).toString());
+    let lines: Line[] = [];
+    let linesStock: Line[] = [];
+    const polylines: Dict<Polyline> = {};
 
-        this.times = toTimes(this.gDates, this.settings);
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const gLines = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const gDates = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
-        this.currentMax = this.settings.toMaxVisibleValue(indexRange);
+    element.appendChild(svg);
+    svg.appendChild(gLines);
+    svg.appendChild(gDates);
 
-        toLine(this.gLines, 0, height, width, '');
-        this.lines = this.drawLine(this.currentMax);
+    const {
+        jsonData: { columns, colors },
+        viewport: { width, height },
+        indexRange, timeRange, viewport
+    } = settings;
 
-        for (let i = 1; i < columns.length; i++) {
-            const key = columns[i][0];
-            this.drawPolyline(
-                key, this.currentMax, columns[i],
-                columns[0], colors[key],
-                indexRange, timeRange, viewport,
-            );
-        }
+    svg.setAttribute('width', width.toString());
+    svg.setAttribute('height', (height + 20).toString());
 
-        toPopUp(this.svg, this.settings, () => this.currentMax);
+    const times = toTimes(gDates, settings);
 
-        settings.onTimeRangeChange(kind => {
-            this.drawCharts(kind);
-        });
+    currentMax = settings.toMaxVisibleValue(indexRange);
 
-        settings.onVisibilityChange((key) => {
-            this.polylines[key].polyline.classList.toggle('transparent');
-            this.drawCharts('visible');
-        });
+    toLine(gLines, 0, height, width, '');
+    lines = drawLine(currentMax);
+
+    for (let i = 1; i < columns.length; i++) {
+        const key = columns[i][0];
+        drawPolyline(
+            key, currentMax, columns[i],
+            columns[0], colors[key],
+            indexRange, timeRange, viewport,
+        );
     }
 
-    drawCharts(kind: ChangeKind) {
-        if (this.lastUpdateChart) cancelAnimationFrame(this.lastUpdateChart);
+    toPopUp(svg, settings, () => currentMax);
 
-        this.times.redrawTimes(kind);
+    settings.onTimeRangeChange(kind => {
+        drawCharts(kind);
+    });
 
-        const max = this.settings.toMaxVisibleValue(
-            this.settings.indexRange,
+    settings.onVisibilityChange((key) => {
+        polylines[key].polyline.classList.toggle('transparent');
+        drawCharts('visible');
+    });
+
+    function drawCharts(kind: ChangeKind) {
+        if (lastUpdateChart) cancelAnimationFrame(lastUpdateChart);
+
+        times.redrawTimes(kind);
+
+        const max = settings.toMaxVisibleValue(
+            settings.indexRange,
         );
 
         if (max === 0) return;
 
-        this.targetMax = max;
-        this.deltaMax = this.targetMax - this.currentMax;
+        targetMax = max;
+        deltaMax = targetMax - currentMax;
 
-        this.redrawLines(this.deltaMax);
-        this.scale();
+        redrawLines(deltaMax);
+        scale();
     }
 
-    scale() {
-        this.lastUpdateChart = requestAnimationFrame(() => {
+    function scale() {
+        lastUpdateChart = requestAnimationFrame(() => {
 
-            this.scaleLines();
-
+            scaleLines();
             const {
-                jsonData: { columns },
-                indexRange, timeRange, viewport,
-            } = this.settings;
+                indexRange, timeRange,
+            } = settings;
             for (let i = 1; i < columns.length; i++) {
-                this.polylines[columns[i][0]].setPoints(
-                    this.currentMax, columns[i], columns[0],
+                polylines[columns[i][0]].setPoints(
+                    currentMax, columns[i], columns[0],
                     indexRange, timeRange, viewport,
                 );
             }
 
-            if (this.currentMax === this.targetMax) return;
+            if (currentMax === targetMax) return;
 
-            const absMax = Math.abs(this.deltaMax);
-            for (let i = 0; i < absMax * this.settings.animationSpeed; i++) {
-                this.currentMax += this.deltaMax / absMax;
-                if (this.currentMax === this.targetMax) break;
+            const absMax = Math.abs(deltaMax);
+            for (let i = 0; i < absMax * settings.animationSpeed; i++) {
+                currentMax += deltaMax / absMax;
+                if (currentMax === targetMax) break;
 
             }
-            return this.scale();
+            return scale();
         });
     }
 
-    drawPolyline(
+    function drawPolyline(
         key: string, max: number, values: Column,
         times: TimeColumn, color: string, indexRange: Range,
         timeRange: Range, viewport: Viewport,
     ) {
         const poliline = toPolyline(color, 'main-chart');
 
-        this.svg.appendChild(poliline.polyline);
+        svg.appendChild(poliline.polyline);
         poliline.setPoints(
             max, values, times, indexRange, timeRange, viewport,
         );
 
-        this.polylines[key] = poliline;
+        polylines[key] = poliline;
     }
 
-    drawLine(max: number, className: string = ''): Line[] {
-        const { height, width } = this.settings.viewport;
+    function drawLine(max: number, className: string = ''): Line[] {
         const dx = (height - 5) / max;
 
         const lastLine = Math.floor((max - 25 / dx) / 10) * 10;
-        const dOneLine = lastLine / this.settings.lines;
+        const dOneLine = lastLine / settings.lines;
 
         const lines = [];
         for (let label = dOneLine; label <= lastLine; label += dOneLine) {
             const x = height - label * dx;
 
-            lines.push(toLine(this.gLines, label, x, width, className));
+            lines.push(toLine(gLines, label, x, width, className));
         }
         return lines;
     }
 
-
-    redrawLines(deltaMax: number) {
+    function redrawLines(deltaMax: number) {
         if (deltaMax != 0) {
 
-            this.lines.forEach(line => {
+            lines.forEach(line => {
                 line.g.classList.add('transparent');
-                this.linesStock.push(line);
+                linesStock.push(line);
                 setTimeout(() => {
-                    this.linesStock = this.linesStock
+                    linesStock = linesStock
                         .filter(item => item !== line);
                     line.destroy();
                 }, 400);
             })
 
-            const lines = this.drawLine(this.targetMax, 'transparent');
-            this.lines = lines;
+            const newLines = drawLine(targetMax, 'transparent');
+            lines = newLines;
 
             requestAnimationFrame(() => {
-                lines.forEach(line => line.g.classList.remove('transparent'));
+                newLines.forEach(line => line.g.classList.remove('transparent'));
             });
         }
     }
 
-    scaleLines() {
-        const { height } = this.settings.viewport;
-        const dx = (height - 10) / this.currentMax;
+    function scaleLines() {
+        const dx = (height - 10) / currentMax;
 
-        this.lines.forEach(line => line.setHeight(height - dx * line.value));
-        this.linesStock.forEach(line => line.setHeight(height - dx * line.value));
+        lines.forEach(line => line.setHeight(height - dx * line.value));
+        linesStock.forEach(line => line.setHeight(height - dx * line.value));
     }
 }
-
