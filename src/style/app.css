@@ -1,23 +1,26 @@
+
 html {
     width: 100%;
     height:100%;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
 } 
 body {
     width: 100%;
     min-height:100%;
-    max-width: 500px;
-    margin: 0 auto;
-    overflow-x: hidden;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
 }
 
 #app {
     height: 100%;
     width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
     padding: 0 0 100px;
     box-sizing: border-box;
     position: relative;
 }
-
 
 
 #header {
@@ -56,7 +59,6 @@ body {
         height: 100%;
         background-color: rgba(233, 241, 247, 0.5);
         top: 0;
-        pointer-events: none;
     }
 }
 

@@ -133,9 +133,9 @@ export default class Chart {
 
     drawLine(max: number, className: string = ''): Line[] {
         const { height, width } = this.settings.viewport;
-        const dx = height / max;
+        const dx = (height - 5) / max;
 
-        const lastLine = Math.floor((max - 26 / dx) / 10) * 10;
+        const lastLine = Math.floor((max - 25 / dx) / 10) * 10;
         const dOneLine = lastLine / this.settings.lines;
 
         const lines = [];
@@ -172,7 +172,7 @@ export default class Chart {
 
     scaleLines() {
         const { height } = this.settings.viewport;
-        const dx = height / this.currentMax;
+        const dx = (height - 10) / this.currentMax;
 
         this.lines.forEach(line => line.setHeight(height - dx * line.value));
         this.linesStock.forEach(line => line.setHeight(height - dx * line.value));

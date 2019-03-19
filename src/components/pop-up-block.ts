@@ -5,6 +5,7 @@ interface Value {
     block: SVGGElement;
     name: SVGTextElement;
     value: SVGTextElement;
+    key: string;
 }
 
 export class PopUpBlock {
@@ -28,7 +29,7 @@ export class PopUpBlock {
         panel.appendChild(shadow);
         panel.appendChild(rect);
 
-        this.panelHeight = (25 + Math.ceil(lines.length / 2) * 40)
+        this.panelHeight = (25 + Math.ceil(lines.length / 2) * 40);
         rect.setAttribute('height', this.panelHeight.toString());
         rect.setAttribute('width', '120');
         rect.setAttribute('rx', '10');
@@ -49,11 +50,15 @@ export class PopUpBlock {
         date.setAttribute('y', '18');
         date.classList.add('date')
 
+        function blockPosition(block: SVGGElement, index: number) {
+            block.setAttribute('transform', `translate(${10 + index % 2 * 50},${20 + 40 * Math.floor(index / 2)})`);
+        }
+
         this.values = lines.map((item, index) => {
 
             const block = document.createElementNS("http://www.w3.org/2000/svg", "g");
             panel.appendChild(block);
-            block.setAttribute('transform', `translate(${10 + index % 2 * 50},${20 + 40 * Math.floor(index / 2)})`);
+            blockPosition(block, index);
 
             const value = document.createElementNS("http://www.w3.org/2000/svg", "text");
             const name = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -75,8 +80,28 @@ export class PopUpBlock {
                 block,
                 value,
                 name,
+                key: item[0],
             }
         });
+
+
+        this.setting.onVisibilityChange(key => {
+            const values: Value[] = [];
+            this.values.forEach(item => {
+                if (item.key === key) item.block.classList.toggle('invisible');
+                if (this.setting.visibility[item.key]) values.push(item);
+            });
+            if (values.length === 0) {
+                this.panel.classList.add('invisible');
+            }
+            else {
+                this.panel.classList.remove('invisible');
+                values.forEach((item, i) => blockPosition(item.block, i));
+                this.panelHeight = (25 + Math.ceil(values.length / 2) * 40);
+                rect.setAttribute('height', this.panelHeight.toString());
+                shadow.setAttribute('height', this.panelHeight.toString());
+            }
+        })
     }
 
     setData(time: number, index: number, positionX: number, offsetY: number) {
@@ -87,7 +112,10 @@ export class PopUpBlock {
         this.date.innerHTML = `${days[date.getDay()]}, ${date.getDate()} ${month[date.getMonth()]}`;
 
         this.values.forEach((item, i) => {
-            item.value.innerHTML = lines[i][index].toString();
+            let value = lines[i][index].toString();
+            item.value.innerHTML = value.length > 4
+                ? value.substr(0, value.length - 3) + 'k'
+                : value;
         });
 
         const y = offsetY > height / 2 ? 20 : height - 20 - this.panelHeight;

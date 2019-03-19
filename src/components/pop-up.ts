@@ -11,6 +11,8 @@ interface Elements {
     dots: Dot[];
     block: PopUpBlock;
 }
+
+
 export class PopUp {
 
     index: number | null = null;
@@ -50,30 +52,45 @@ export class PopUp {
             this.g.classList.add('invisible');
         }
 
+        const touchEnd = () => {
+            svg.removeEventListener('touchmove', drawPopUpByTouch);
+            cleanUp();
+        }
+
         svg.addEventListener('mousemove', event => drawPopUp(event.offsetX, event.offsetY));
         svg.addEventListener('mouseleave', cleanUp);
 
         const drawPopUpByTouch = (event: TouchEvent) => {
             if (event.targetTouches.length == 1) {
-                event.stopPropagation();
                 event.preventDefault();
-                drawPopUp(event.targetTouches[0].pageX, event.targetTouches[0].pageY);
+                event.stopPropagation();
+                const { pageX, pageY } = event.targetTouches[0];
+                drawPopUp(pageX, pageY);
             }
         }
 
         svg.addEventListener('touchstart', event => {
             if (event.targetTouches.length == 1) {
-                event.stopPropagation();
                 event.preventDefault();
+                event.stopPropagation();
+                const { pageX, pageY } = event.targetTouches[0];
+                drawPopUp(pageX, pageY);
+
                 svg.addEventListener('touchmove', drawPopUpByTouch, { passive: false });
-                drawPopUp(event.targetTouches[0].pageX, event.targetTouches[0].pageY);
             }
         }, { passive: false });
 
 
-        svg.addEventListener('touchend', () => {
-            svg.removeEventListener('touchmove', drawPopUpByTouch);
-            cleanUp();
+        svg.addEventListener('touchend', touchEnd);
+
+
+        this.setting.onVisibilityChange(key => {
+            this.elements.dots.forEach((dot, i) => {
+                if (this.setting.jsonData.columns[i + 1][0] == key) {
+                    dot.circle.classList.toggle('invisible');
+                    dot.innerCircle.classList.toggle('invisible');
+                }
+            })
         });
     }
 
@@ -143,7 +160,7 @@ export class PopUp {
         this.elements.line.setAttribute('x2', x);
 
         const max = this.toMax();
-        const dy = height / max;
+        const dy = (height - 10) / max;
 
         this.elements.dots.forEach((dot, i) => {
             const coordinates = lines[i][index] as number;

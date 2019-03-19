@@ -144,14 +144,13 @@ export function drawLens(
     }, { passive: false });
 
 
-    function disableTouchEvent(event: TouchEvent) {
-        if (event.targetTouches.length == 1) {
-            event.stopPropagation();
-            event.preventDefault();
-        }
-    }
-
-    coverRight.addEventListener('touchstart', disableTouchEvent, { passive: false });
-    coverLeft.addEventListener('touchstart', disableTouchEvent, { passive: false });
+    // function disableEvent(e: Event) {
+    //     e.stopPropagation();
+    //     e.preventDefault();
+    // }
+    // coverLeft.addEventListener('touchmove', disableEvent, { passive: false });
+    // coverLeft.addEventListener('touchstart', disableEvent, { passive: false });
+    // coverRight.addEventListener('touchmove', disableEvent, { passive: false });
+    // coverRight.addEventListener('touchstart', disableEvent, { passive: false });
 }
 

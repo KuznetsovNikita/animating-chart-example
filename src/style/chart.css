@@ -48,10 +48,11 @@ svg text, svg tspan {
 }
 
 .pop-up {
+    .invisible,
     &.invisible {
         visibility: hidden;
     }
-
+    
     .line, .rect, .shadow {
         fill: white;
         stroke: #f2f4f5;

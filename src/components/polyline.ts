@@ -20,7 +20,7 @@ export class Polyline {
         const { start, end } = timeRange;
         const { height, width } = viewport;
 
-        const dx = height / max;
+        const dx = (height - 10) / max;
         const dy = width / (end - start);
 
         let points = '';
