@@ -142,5 +142,16 @@ export function drawLens(
             onMousedown(event.targetTouches[0].target, event.targetTouches[0].clientX);
         }
     }, { passive: false });
+
+
+    function disableTouchEvent(event: TouchEvent) {
+        if (event.targetTouches.length == 1) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
+    }
+
+    coverRight.addEventListener('touchstart', disableTouchEvent, { passive: false });
+    coverLeft.addEventListener('touchstart', disableTouchEvent, { passive: false });
 }
 
