@@ -17,6 +17,7 @@ function init() {
         if (rawFile.readyState === 4 && rawFile.status == 200) {
             const jsonData: JsonData = JSON.parse(rawFile.responseText)[0];
             const settings = new DataService(width, jsonData);
+
             drawContainer(settings);
         }
     }

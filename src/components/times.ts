@@ -89,35 +89,31 @@ export function toTimes(
         const start = startIndex - delta;
         if (
             hasValue(start) &&
-            toLeftByIndex(start) > 0
+            toLeftByIndex(start) > -25
         ) {
             drawTime(start);
             startIndex = start;
-            return;
         }
 
         const leftStart = toLeftByIndex(startIndex);
-        if (leftStart < 0) {
+        if (leftStart < -25) {
             destroy(startIndex);
             startIndex = startIndex + delta;
-            return;
         }
 
         const end = endIndex + delta;
         if (
             hasValue(end) &&
-            toLeftByIndex(end) < width
+            toLeftByIndex(end) < width + 25
         ) {
             drawTime(end);
             endIndex = end;
-            return;
         }
 
         const leftEnd = toLeftByIndex(endIndex);
-        if (leftEnd > width) {
+        if (leftEnd > width + 25) {
             destroy(endIndex);
             endIndex = endIndex - delta;
-            return;
         }
     }
 
@@ -166,7 +162,7 @@ export function toTimes(
             let i = endIndex;
             let isRemove = false;
             let newStart = 0;
-            while (toLeftByIndex(i) >= -20) {
+            while (toLeftByIndex(i) >= -25) {
 
                 if (isRemove) {
                     if (times[i]) {
@@ -236,7 +232,7 @@ export function toTimes(
             let i = startIndex;
             let isRemove = false;
             let newEnd = 0;
-            while (toLeftByIndex(i) <= width + 20) {
+            while (toLeftByIndex(i) <= width + 25) {
                 if (isRemove) {
                     if (times[i]) {
                         destroy(i);
@@ -262,7 +258,7 @@ export function toTimes(
         const start = startIndex - delta;
         if (
             hasValue(start) &&
-            toLeftByIndex(start) > -20
+            toLeftByIndex(start) > -25
         ) {
             const time = times[endIndex];
             times[endIndex] = undefined;
@@ -280,7 +276,7 @@ export function toTimes(
         const end = endIndex + delta;
         if (
             hasValue(end) &&
-            toLeftByIndex(end) < width + 20
+            toLeftByIndex(end) < width + 25
         ) {
             const time = times[startIndex];
             times[startIndex] = undefined;
@@ -318,7 +314,7 @@ export function toTimes(
             deltaIndex++;
             delta = Math.pow(2, deltaIndex);
         }
-
+        startIndex--;
         endIndex = startIndex;
         while (
             hasValue(endIndex + delta) &&
