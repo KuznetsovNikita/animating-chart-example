@@ -166,7 +166,7 @@ export function toTimes(
             let i = endIndex;
             let isRemove = false;
             let newStart = 0;
-            while (toLeftByIndex(i) >= 0) {
+            while (toLeftByIndex(i) >= -20) {
 
                 if (isRemove) {
                     if (times[i]) {
@@ -236,7 +236,7 @@ export function toTimes(
             let i = startIndex;
             let isRemove = false;
             let newEnd = 0;
-            while (toLeftByIndex(i) <= width) {
+            while (toLeftByIndex(i) <= width + 20) {
                 if (isRemove) {
                     if (times[i]) {
                         destroy(i);
