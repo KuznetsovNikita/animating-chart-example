@@ -3,7 +3,7 @@ import { ChangeKind, DataService } from '../data/service';
 import { Line } from './line';
 import { Polyline } from './polyline';
 import { PopUp } from './pop-up';
-import { Times } from './times';
+import { Times, toTimes } from './times';
 
 export default class Chart {
 
@@ -42,7 +42,7 @@ export default class Chart {
         svg.setAttribute('width', width.toString());
         svg.setAttribute('height', (height + 20).toString());
 
-        this.times = new Times(this.gDates, this.settings);
+        this.times = toTimes(this.gDates, this.settings);
 
         this.currentMax = this.settings.toMaxVisibleValue(indexRange);
 

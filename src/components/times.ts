@@ -1,139 +1,137 @@
 import { ChangeKind, DataService } from "src/data/service";
 import { Time, toTime } from "./time";
 
+export interface Times {
+    redrawTimes: (kind: ChangeKind) => void;
+}
+export function toTimes(
+    gDates: SVGGElement,
+    settings: DataService,
+): Times {
+    const minSpace = 80;
+    let startIndex: number;
+    let endIndex: number;
+    let delta = 0;
 
-export class Times {
-    minSpace = 80;
+    let dy: number;
 
-    startIndex: number;
-    endIndex: number;
-    delta = 0;
+    const { viewport: { height, width }, jsonData: { columns } } = settings;
+    gDates.setAttribute('transform', `translate(0,${height})`);
 
-    times: Time[];
+    const times: Time[] = new Array(columns[0].length);
 
-    dy: number;
+    drawTimes();
 
-    constructor(
-        private gDates: SVGGElement,
-        private settings: DataService,
-    ) {
-        const { viewport: { height }, jsonData: { columns } } = this.settings;
-        this.gDates.setAttribute('transform', `translate(0,${height})`);
-
-        this.times = new Array(columns[0].length);
-
-        this.drawTimes();
+    function hasValue(index: number) {
+        return settings.jsonData.columns[0][index] != undefined;
     }
 
-    redrawTimes(kind: ChangeKind) {
+    function toValue(index: number) {
+        return settings.jsonData.columns[0][index] as number;
+    }
+
+    function toLeftByIndex(index: number) {
+        return toLeftByValue(toValue(index));
+    }
+
+    function toLeftByValue(value: number) {
+        return (value - settings.timeRange.start) * dy;
+    }
+
+    function destroy(index: number) {
+        times[index].destroy();
+        times[index] = undefined;
+    }
+
+    function drawTime(index: number) {
+        times[index] = toTime(
+            gDates,
+            toValue(index),
+            toLeftByIndex(index),
+        );
+    }
+
+    function redrawTimes(kind: ChangeKind) {
         switch (kind) {
-            case 'left': return this.moveOnScale(() => {
-                this.maybeLeftScaleIn();
-                this.maybeLeftScaleOut();
+            case 'left': return moveOnScale(() => {
+                maybeLeftScaleIn();
+                maybeLeftScaleOut();
             });
-            case 'right': return this.moveOnScale(() => {
-                this.maybeRightScaleIn();
-                this.maybeRightScaleOut();
+            case 'right': return moveOnScale(() => {
+                maybeRightScaleIn();
+                maybeRightScaleOut();
             });
-            case 'move': return this.move()
+            case 'move': return move()
             default: return;
         }
     }
 
-    moveOnScale(scale: () => void) {
+    function moveOnScale(scale: () => void) {
         const {
-            viewport: { width },
             timeRange: { start, end }
-        } = this.settings;
+        } = settings;
 
-        this.dy = width / (end - start);
+        dy = width / (end - start);
 
         scale();
-        this.maybeAddOrRemoveItem();
+        maybeAddOrRemoveItem();
 
-        for (let i = this.startIndex; i <= this.endIndex; i += this.delta) {
-            this.times[i].setLeft(this.toLeftByIndex(i));
+        for (let i = startIndex; i <= endIndex; i += delta) {
+            times[i].setLeft(toLeftByIndex(i));
         }
     }
 
-    hasValue = (index: number) =>
-        this.settings.jsonData.columns[0][index] != undefined;
-
-    toValue = (index: number) =>
-        this.settings.jsonData.columns[0][index] as number;
-
-    toLeftByIndex = (index: number) =>
-        this.toLeftByValue(this.toValue(index));
-
-    toLeftByValue = (value: number) =>
-        (value - this.settings.timeRange.start) * this.dy;
-
-    destroy = (index: number) => {
-        this.times[index].destroy();
-        this.times[index] = undefined;
-    }
-
-    drawTime = (index: number) => {
-        this.times[index] = toTime(
-            this.gDates,
-            this.toValue(index),
-            this.toLeftByIndex(index),
-        );
-    }
-
-
-    maybeAddOrRemoveItem() {
-        const { viewport: { width } } = this.settings;
-
-        const start = this.startIndex - this.delta;
+    function maybeAddOrRemoveItem() {
+        const start = startIndex - delta;
         if (
-            this.hasValue(start) &&
-            this.toLeftByIndex(start) > 0
+            hasValue(start) &&
+            toLeftByIndex(start) > 0
         ) {
-            this.drawTime(start);
-            this.startIndex = start;
+            drawTime(start);
+            startIndex = start;
             return;
         }
 
-        const leftStart = this.toLeftByIndex(this.startIndex);
+        const leftStart = toLeftByIndex(startIndex);
         if (leftStart < 0) {
-            this.destroy(this.startIndex);
-            this.startIndex = this.startIndex + this.delta;
+            destroy(startIndex);
+            startIndex = startIndex + delta;
             return;
         }
 
-        const end = this.endIndex + this.delta;
+        const end = endIndex + delta;
         if (
-            this.hasValue(end) &&
-            this.toLeftByIndex(end) < width
+            hasValue(end) &&
+            toLeftByIndex(end) < width
         ) {
-            this.drawTime(end);
-            this.endIndex = end;
+            drawTime(end);
+            endIndex = end;
             return;
         }
 
-        const leftEnd = this.toLeftByIndex(this.endIndex);
+        const leftEnd = toLeftByIndex(endIndex);
         if (leftEnd > width) {
-            this.destroy(this.endIndex);
-            this.endIndex = this.endIndex - this.delta;
+            destroy(endIndex);
+            endIndex = endIndex - delta;
             return;
         }
     }
 
-    maybeLeftScaleIn() {
-        const delta = Math.max(1, this.delta / 2);
-        let index = this.endIndex - delta;
+    function maybeLeftScaleIn() {
+        if (delta === 1) return;
+        const newDelta = delta / 2;
+        let index = endIndex - newDelta;
         if (
-            this.hasValue(index) &&
-            (this.toValue(this.endIndex) - this.toValue(index)) * this.dy > this.minSpace
+            hasValue(index) &&
+            (toValue(endIndex) - toValue(index)) * dy > minSpace
         ) {
             let newStart = 0;
-            while (index >= this.startIndex) {
-                const left = this.toLeftByIndex(index);
+            while (index >= startIndex) {
+                const left = toLeftByIndex(index);
 
-                if (this.times[index]) {
+                if (times[index]) {
                     if (left < 0) {
-                        this.destroy(index);
+                        destroy(index);
                     }
                     else {
                         newStart = index;
@@ -141,69 +139,68 @@ export class Times {
                 }
                 else {
                     if (left > 0) {
-                        this.drawTime(index);
+                        drawTime(index);
                         newStart = index;
                     }
                 }
 
-                index -= delta;
+                index -= newDelta;
             }
 
-            this.startIndex = newStart;
-            this.delta = delta;
+            startIndex = newStart;
+            delta = newDelta;
         }
     }
 
-    maybeLeftScaleOut() {
-
-        const delta = this.delta * 2;
-        const index = this.endIndex - this.delta;
+    function maybeLeftScaleOut() {
+        const newDelta = delta * 2;
+        const index = endIndex - delta;
         if (
-            this.hasValue(index) &&
-            (this.toValue(this.endIndex) - this.toValue(index)) * this.dy < this.minSpace
+            hasValue(index) &&
+            (toValue(endIndex) - toValue(index)) * dy < minSpace
         ) {
-            let i = this.endIndex;
+            let i = endIndex;
             let isRemove = false;
             let newStart = 0;
-            while (this.toLeftByIndex(i) >= 0) {
+            while (toLeftByIndex(i) >= 0) {
 
                 if (isRemove) {
-                    if (this.times[i]) {
-                        this.destroy(i);
+                    if (times[i]) {
+                        destroy(i);
                     }
                 }
                 else {
-                    if (!this.times[i]) {
-                        this.drawTime(i);
+                    if (!times[i]) {
+                        drawTime(i);
                     }
                     newStart = i;
                 }
 
                 isRemove = !isRemove;
-                i -= this.delta;
+                i -= delta;
             }
 
-            this.startIndex = newStart;
-            this.delta = delta;
+            startIndex = newStart;
+            delta = newDelta;
         }
     }
 
-    maybeRightScaleIn() {
-        const { viewport: { width } } = this.settings;
+    function maybeRightScaleIn() {
 
-        const delta = Math.max(1, this.delta / 2);
-        let index = this.startIndex + delta;
+        if (delta === 1) return;
+        const newDelta = delta / 2;
+        let index = startIndex + newDelta;
         if (
-            this.hasValue(index) &&
-            (this.toValue(index) - this.toValue(this.startIndex)) * this.dy > this.minSpace
+            hasValue(index) &&
+            (toValue(index) - toValue(startIndex)) * dy > minSpace
         ) {
             let newEnd = 0;
-            while (index <= this.endIndex) {
-                const left = this.toLeftByIndex(index);
+            while (index <= endIndex) {
+                const left = toLeftByIndex(index);
 
-                if (this.times[index]) {
+                if (times[index]) {
                     if (left > width) {
-                        this.destroy(index);
+                        destroy(index);
                     }
                     else {
                         newEnd = index;
@@ -211,124 +208,121 @@ export class Times {
                 }
                 else {
                     if (left < width) {
-                        this.drawTime(index);
+                        drawTime(index);
                         newEnd = index;
                     }
                 }
 
-                index += delta;
+                index += newDelta;
             }
 
-            this.endIndex = newEnd;
-            this.delta = delta;
+            endIndex = newEnd;
+            delta = newDelta;
         }
     }
 
-    maybeRightScaleOut() {
-        const { viewport: { width } } = this.settings;
-
-        const delta = this.delta * 2;
-        const index = this.startIndex + this.delta
+    function maybeRightScaleOut() {
+        const newDelta = delta * 2;
+        const index = startIndex + delta
         if (
-            this.hasValue(index) &&
-            (this.toValue(index) - this.toValue(this.startIndex)) * this.dy < this.minSpace
+            hasValue(index) &&
+            (toValue(index) - toValue(startIndex)) * dy < minSpace
         ) {
 
-            let i = this.startIndex;
+            let i = startIndex;
             let isRemove = false;
             let newEnd = 0;
-            while (this.toLeftByIndex(i) <= width) {
+            while (toLeftByIndex(i) <= width) {
                 if (isRemove) {
-                    if (this.times[i]) {
-                        this.destroy(i);
+                    if (times[i]) {
+                        destroy(i);
                     }
                 }
                 else {
-                    if (!this.times[i]) {
-                        this.drawTime(i);
+                    if (!times[i]) {
+                        drawTime(i);
                     }
                     newEnd = i;
                 }
 
                 isRemove = !isRemove;
-                i += this.delta;
+                i += delta;
             }
 
-            this.endIndex = newEnd;
-            this.delta = delta;
+            endIndex = newEnd;
+            delta = newDelta;
         }
     }
 
-    maybeMoveStart() {
-        const start = this.startIndex - this.delta;
+    function maybeMoveStart() {
+        const start = startIndex - delta;
         if (
-            this.hasValue(start) &&
-            this.toLeftByIndex(start) > 0
+            hasValue(start) &&
+            toLeftByIndex(start) > 0
         ) {
-            this.drawTime(start);
-            this.destroy(this.endIndex);
-            this.endIndex -= this.delta;
-            this.startIndex = start;
+            drawTime(start);
+            destroy(endIndex);
+            endIndex -= delta;
+            startIndex = start;
 
-            this.maybeMoveStart();
+            maybeMoveStart();
         }
     }
 
-    maybeMoveEnd() {
-        const { viewport: { width } } = this.settings;
-        const end = this.endIndex + this.delta;
+    function maybeMoveEnd() {
+        const end = endIndex + delta;
         if (
-            this.hasValue(end) &&
-            this.toLeftByIndex(end) < width
+            hasValue(end) &&
+            toLeftByIndex(end) < width
         ) {
-            this.drawTime(end);
-            this.destroy(this.startIndex);
-            this.startIndex += this.delta;
-            this.endIndex = end;
+            drawTime(end);
+            destroy(startIndex);
+            startIndex += delta;
+            endIndex = end;
 
-            this.maybeMoveEnd();
+            maybeMoveEnd();
         }
     }
 
-    move() {
-        this.maybeMoveStart();
-        this.maybeMoveEnd();
+    function move() {
+        maybeMoveStart();
+        maybeMoveEnd();
 
-        for (let i = this.startIndex; i <= this.endIndex; i += this.delta) {
-            this.times[i].setLeft(this.toLeftByIndex(i));
+        for (let i = startIndex; i <= endIndex; i += delta) {
+            times[i].setLeft(toLeftByIndex(i));
         }
     }
 
-    drawTimes() {
-        const {
-            viewport: { width },
-            indexRange, timeRange
-        } = this.settings;
-
-        this.dy = width / (timeRange.end - timeRange.start);
+    function drawTimes() {
+        const { indexRange, timeRange } = settings;
+        dy = width / (timeRange.end - timeRange.start);
 
         const firstSpace = 20;
-        this.startIndex = indexRange.start;
-        while (this.toLeftByIndex(this.startIndex) < firstSpace) {
-            this.startIndex++;
+        startIndex = indexRange.start;
+        while (toLeftByIndex(startIndex) < firstSpace) {
+            startIndex++;
         }
 
         let deltaIndex = -1;
-        while (this.toLeftByIndex(this.startIndex + this.delta) < this.minSpace + firstSpace) {
+        while (toLeftByIndex(startIndex + delta) < minSpace + firstSpace) {
             deltaIndex++;
-            this.delta = Math.pow(2, deltaIndex);
+            delta = Math.pow(2, deltaIndex);
         }
 
-        this.endIndex = this.startIndex;
+        endIndex = startIndex;
         while (
-            this.hasValue(this.endIndex + this.delta) &&
-            this.toLeftByIndex(this.endIndex) <= width
+            hasValue(endIndex + delta) &&
+            toLeftByIndex(endIndex) <= width
         ) {
-            this.endIndex += this.delta;
+            endIndex += delta;
         }
 
-        for (let i = this.startIndex; i <= this.endIndex; i += this.delta) {
-            this.drawTime(i);
+        for (let i = startIndex; i <= endIndex; i += delta) {
+            drawTime(i);
         }
+    }
+
+    return {
+        redrawTimes,
     }
 }
