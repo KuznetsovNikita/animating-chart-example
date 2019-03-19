@@ -1,135 +1,132 @@
 import { Column, Dict, TimeColumn } from 'src/data/models';
 import { DataService } from '../data/service';
 import { drawLens } from './lens';
-import { Polyline } from './polyline';
+import { Polyline, toPolyline } from './polyline';
 
 
-export class MiniMap {
-    constructor(
-        container: HTMLDivElement,
-        settings: DataService,
-        public element = document.createElement('div'),
-        public miniMap = new MiniMapSvg(element, settings)
-    ) {
-        container.appendChild(element);
-        element.id = 'mini-map';
+export function toMiniMap(
+    container: HTMLDivElement,
+    settings: DataService,
+) {
+    const element = document.createElement('div');
+    container.appendChild(element);
+    element.id = 'mini-map';
 
-        drawLens(element, settings);
-    }
+    toMiniMapSvg(element, settings);
+    drawLens(element, settings);
+
 }
 
+function toMiniMapSvg(
+    element: HTMLDivElement,
+    settings: DataService,
+) {
+    let currentMax: number;
+    let targetMax: number;
 
-class MiniMapSvg {
+    let deltaMax: number;
 
-    currentMax: number;
-    targetMax: number;
+    let lastUpdateCall: number;
 
-    deltaMax: number;
+    const polylines: Dict<Polyline> = {};
 
-    lastUpdateCall: number;
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 
-    polylines: Dict<Polyline> = {};
+    element.appendChild(svg);
 
-    constructor(
-        element: HTMLDivElement,
-        private settings: DataService,
-        private svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
-    ) {
-        element.appendChild(this.svg);
 
-        const { width, height } = this.settings.miniMap.viewport;
-        svg.setAttribute('width', width.toString());
-        svg.setAttribute('height', height.toString());
+    const {
+        jsonData: { columns, colors },
+        miniMap: { viewport, viewport: { width, height }, indexRange, timeRange },
+        visibility,
+    } = settings;
 
-        this.currentMax = this.settings.toMaxVisibleValue(
-            this.settings.miniMap.indexRange,
+    svg.setAttribute('width', width.toString());
+    svg.setAttribute('height', height.toString());
+
+    currentMax = settings.toMaxVisibleValue(
+        settings.miniMap.indexRange,
+    );
+
+    for (let i = 1; i < columns.length; i++) {
+        const key = columns[i][0];
+        drawPolyline(
+            key, currentMax, columns[i],
+            columns[0], colors[key],
         );
-
-        const { jsonData: { columns, colors } } = this.settings;
-        for (let i = 1; i < columns.length; i++) {
-            const key = columns[i][0];
-            this.drawPolyline(
-                key, this.currentMax, columns[i],
-                columns[0], colors[key],
-            );
-        }
-
-
-        settings.onVisibilityChange((key, value) => {
-            if (value) {
-                this.drawCharts(
-                    () => this.polylines[key].polyline.classList.remove('invisible'),
-                );
-            }
-            else {
-                this.polylines[key].polyline.classList.add('invisible')
-                this.drawCharts();
-            }
-        });
     }
 
-    drawCharts(callback?: () => void) {
 
-        if (this.lastUpdateCall) cancelAnimationFrame(this.lastUpdateCall);
+    settings.onVisibilityChange((key, value) => {
+        if (value) {
+            drawCharts(
+                () => polylines[key].polyline.classList.remove('invisible'),
+            );
+        }
+        else {
+            polylines[key].polyline.classList.add('invisible')
+            drawCharts();
+        }
+    });
 
-        const max = this.settings.toMaxVisibleValue(
-            this.settings.miniMap.indexRange,
+    settings.onDestroy(() => {
+        element.removeChild(svg);
+    });
+
+    function drawCharts(callback?: () => void) {
+
+        if (lastUpdateCall) cancelAnimationFrame(lastUpdateCall);
+
+        const max = settings.toMaxVisibleValue(
+            settings.miniMap.indexRange,
         );
 
         if (max === 0) return;
 
-        this.targetMax = max;
-        this.deltaMax = this.targetMax - this.currentMax;
+        targetMax = max;
+        deltaMax = targetMax - currentMax;
 
-        this.scale(callback);
+        scale(callback);
     }
 
-    scale(callback?: () => void) {
-        this.lastUpdateCall = requestAnimationFrame(() => {
+    function scale(callback?: () => void) {
+        lastUpdateCall = requestAnimationFrame(() => {
 
-            const {
-                jsonData: { columns },
-                miniMap: { viewport, indexRange, timeRange },
-                visibility,
-            } = this.settings;
             for (let i = 1; i < columns.length; i++) {
                 const key = columns[i][0];
                 if (visibility[key]) {
-                    this.polylines[key].setPoints(
-                        this.currentMax, columns[i], columns[0],
+                    polylines[key].setPoints(
+                        currentMax, columns[i], columns[0],
                         indexRange, timeRange, viewport,
                     );
                 }
             }
 
-            if (this.currentMax === this.targetMax) return callback && callback();
+            if (currentMax === targetMax) return callback && callback();
 
-            const absMax = Math.abs(this.deltaMax);
-            for (let i = 0; i < absMax * this.settings.animationSpeed; i++) {
-                this.currentMax += this.deltaMax / absMax;
-                if (this.currentMax === this.targetMax) {
+            const absMax = Math.abs(deltaMax);
+            for (let i = 0; i < absMax * settings.animationSpeed; i++) {
+                currentMax += deltaMax / absMax;
+                if (currentMax === targetMax) {
                     break;
                 }
             }
-            return this.scale(callback);
+            return scale(callback);
         });
     }
 
-
-    drawPolyline(
+    function drawPolyline(
         key: string, max: number, values: Column,
         times: TimeColumn, color: string,
     ) {
-        const { viewport, indexRange, timeRange } = this.settings.miniMap;
-        const poliline = new Polyline(color, 'mini-map-chart');
+        const poliline = toPolyline(color, 'mini-map-chart');
 
-        this.svg.appendChild(poliline.polyline);
+        svg.appendChild(poliline.polyline);
         poliline.setPoints(
             max, values, times,
             indexRange, timeRange, viewport,
         );
 
-        this.polylines[key] = poliline;
+        polylines[key] = poliline;
     }
 }
-

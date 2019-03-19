@@ -20,6 +20,10 @@ export function toTimes(
 
     const times: Time[] = new Array(columns[0].length);
 
+    settings.onDestroy(() => {
+        times.forEach(item => item && item.destroy());
+    });
+
     drawTimes();
 
     function hasValue(index: number) {

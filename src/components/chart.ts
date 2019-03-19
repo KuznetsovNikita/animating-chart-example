@@ -1,8 +1,8 @@
 import { Column, Dict, Range, TimeColumn, Viewport } from 'src/data/models';
 import { ChangeKind, DataService } from '../data/service';
-import { Line } from './line';
-import { Polyline } from './polyline';
-import { PopUp } from './pop-up';
+import { Line, toLine } from './line';
+import { Polyline, toPolyline } from './polyline';
+import { toPopUp } from './pop-up';
 import { Times, toTimes } from './times';
 
 export default class Chart {
@@ -20,7 +20,6 @@ export default class Chart {
     polylines: Dict<Polyline> = {};
 
     times: Times;
-    popUp: PopUp;
 
     constructor(
         element: HTMLDivElement,
@@ -46,7 +45,7 @@ export default class Chart {
 
         this.currentMax = this.settings.toMaxVisibleValue(indexRange);
 
-        new Line(this.gLines, 0, height, width, '');
+        toLine(this.gLines, 0, height, width, '');
         this.lines = this.drawLine(this.currentMax);
 
         for (let i = 1; i < columns.length; i++) {
@@ -58,7 +57,7 @@ export default class Chart {
             );
         }
 
-        this.popUp = new PopUp(this.svg, this.settings, () => this.currentMax);
+        toPopUp(this.svg, this.settings, () => this.currentMax);
 
         settings.onTimeRangeChange(kind => {
             this.drawCharts(kind);
@@ -121,7 +120,7 @@ export default class Chart {
         times: TimeColumn, color: string, indexRange: Range,
         timeRange: Range, viewport: Viewport,
     ) {
-        const poliline = new Polyline(color, 'main-chart');
+        const poliline = toPolyline(color, 'main-chart');
 
         this.svg.appendChild(poliline.polyline);
         poliline.setPoints(
@@ -142,7 +141,7 @@ export default class Chart {
         for (let label = dOneLine; label <= lastLine; label += dOneLine) {
             const x = height - label * dx;
 
-            lines.push(new Line(this.gLines, label, x, width, className));
+            lines.push(toLine(this.gLines, label, x, width, className));
         }
         return lines;
     }

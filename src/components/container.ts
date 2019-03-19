@@ -1,7 +1,7 @@
 import { DataService } from "src/data/service";
 import Chart from "./chart";
-import { Menu } from "./menu";
-import { MiniMap } from "./mini-map";
+import { toMenu } from "./menu";
+import { toMiniMap } from "./mini-map";
 
 export class Container {
     constructor(
@@ -9,11 +9,12 @@ export class Container {
         public container = document.createElement('div'),
         public header = new Header(container),
         public chart = new Chart(container, settings),
-        public miniMap = new MiniMap(container, settings),
-        public menu = new Menu(container, settings),
     ) {
         document.body.append(container);
         container.id = 'app';
+
+        toMiniMap(container, settings);
+        toMenu(container, settings);
     }
 }
 

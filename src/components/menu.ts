@@ -1,56 +1,60 @@
 import { DataService } from "src/data/service";
 
+export function toMenu(
+    container: HTMLDivElement,
+    settings: DataService,
+) {
+    const element = document.createElement('div');
 
-export class Menu {
-    button: ModeButton;
-    constructor(
-        container: HTMLDivElement,
-        settings: DataService,
-        public element = document.createElement('div')
-    ) {
-        container.appendChild(element);
-        element.id = 'menu';
+    container.appendChild(element);
+    element.id = 'menu';
 
-        for (let key in settings.visibility) {
-            element.appendChild(drawCheckbox(
-                key, settings.visibility[key],
-                settings.jsonData.colors[key],
-                settings.jsonData.names[key],
-                settings
-            ));
-        }
-
-        this.button = new ModeButton(element);
+    for (let key in settings.visibility) {
+        element.appendChild(drawCheckbox(
+            key, settings.visibility[key],
+            settings.jsonData.colors[key],
+            settings.jsonData.names[key],
+            settings
+        ));
     }
+
+    toModeButton(element, settings);
+
+    settings.onDestroy(() => {
+        container.removeChild(element);
+    });
 }
 
-class ModeButton {
+function toModeButton(
+    container: HTMLDivElement,
+    settings: DataService,
+) {
+    let isDay: boolean;
+    const button = document.createElement('div');
 
-    isDay: boolean;
+    container.appendChild(button);
+    button.classList.add('mode');
+    setDay();
 
-    constructor(
-        container: HTMLDivElement,
-        private button = document.createElement('div')
-    ) {
-        container.appendChild(this.button);
-        this.button.classList.add('mode');
-        this.setDay();
+    button.onclick = () => {
+        isDay ? setNight() : setDay();
+    };
 
-        this.button.onclick = () => {
-            this.isDay ? this.setNight() : this.setDay();
-        };
-    }
+    settings.onDestroy(() => {
+        button.onclick = null;
+        container.removeChild(button);
+    });
 
-    setDay() {
-        this.isDay = true;
+    function setDay() {
+        isDay = true;
         document.body.classList.remove('night');
-        this.button.innerHTML = "Switch to Night Mode";
+        button.innerHTML = "Switch to Night Mode";
     }
 
-    setNight() {
-        this.isDay = false;
+    function setNight() {
+        isDay = false;
         document.body.classList.add('night');
-        this.button.innerHTML = "Switch to Day Mode";
+        button.innerHTML = "Switch to Day Mode";
     }
 }
 
@@ -75,6 +79,10 @@ function drawCheckbox(
         if (item === key) {
             element.classList.toggle('as-check')
         };
+    });
+
+    settings.onDestroy(() => {
+        element.onclick = null;
     });
 
     return element;

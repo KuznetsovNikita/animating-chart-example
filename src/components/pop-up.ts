@@ -12,112 +12,121 @@ interface Elements {
     block: PopUpBlock;
 }
 
+export function toPopUp(
+    svg: SVGSVGElement,
+    setting: DataService,
+    toMax: () => number
+) {
+    let index: number | null = null;
+    let elements: Elements;
+    const { viewport: { width, height }, jsonData: { columns, colors } } = setting;
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    svg.appendChild(g);
+    g.classList.add('pop-up');
+    createPopUp();
 
-export class PopUp {
+    let lastUpdate: number;
+    const onDrawPopUp = (offsetX: number, offsetY: number) => {
+        if (lastUpdate != null) cancelAnimationFrame(lastUpdate);
+        lastUpdate = requestAnimationFrame(() => {
+            const {
+                indexRange: { start, end },
+            } = setting;
 
-    index: number | null = null;
-    elements: Elements;
+            const dx = width / (end - start);
 
-    constructor(
-        svg: SVGGElement,
-        private setting: DataService,
-        private toMax: () => number,
-        private g = document.createElementNS("http://www.w3.org/2000/svg", "g"),
-    ) {
-        svg.appendChild(this.g);
-        this.g.classList.add('pop-up');
-        this.createPopUp();
+            const newIndex = start + Math.round(offsetX / dx);
 
-        let lastUpdate: number;
-        const drawPopUp = (offsetX: number, offsetY: number) => {
-            if (lastUpdate != null) cancelAnimationFrame(lastUpdate);
-            lastUpdate = requestAnimationFrame(() => {
-                const {
-                    indexRange: { start, end },
-                    viewport: { width }
-                } = this.setting;
-
-                const dx = width / (end - start);
-
-                const index = start + Math.round(offsetX / dx);
-
-                if (index != this.index) {
-                    this.index = index;
-                    this.drawPopUp(index, offsetY);
-                }
-            });
-        }
-
-        const cleanUp = () => {
-            this.g.classList.add('invisible');
-        }
-
-        const touchEnd = () => {
-            svg.removeEventListener('touchmove', drawPopUpByTouch);
-            cleanUp();
-        }
-
-        svg.addEventListener('mousemove', event => drawPopUp(event.offsetX, event.offsetY));
-        svg.addEventListener('mouseleave', cleanUp);
-
-        const drawPopUpByTouch = (event: TouchEvent) => {
-            if (event.targetTouches.length == 1) {
-                event.preventDefault();
-                event.stopPropagation();
-                const { pageX, pageY } = event.targetTouches[0];
-                drawPopUp(pageX, pageY);
+            if (newIndex != index) {
+                index = newIndex;
+                drawPopUp(newIndex, offsetY);
             }
-        }
-
-        svg.addEventListener('touchstart', event => {
-            if (event.targetTouches.length == 1) {
-                event.preventDefault();
-                event.stopPropagation();
-                const { pageX, pageY } = event.targetTouches[0];
-                drawPopUp(pageX, pageY);
-
-                svg.addEventListener('touchmove', drawPopUpByTouch, { passive: false });
-            }
-        }, { passive: false });
-
-
-        svg.addEventListener('touchend', touchEnd);
-
-
-        this.setting.onVisibilityChange(key => {
-            this.elements.dots.forEach((dot, i) => {
-                if (this.setting.jsonData.columns[i + 1][0] == key) {
-                    dot.circle.classList.toggle('invisible');
-                    dot.innerCircle.classList.toggle('invisible');
-                }
-            })
         });
     }
 
-    createPopUp() {
-        const {
-            viewport: { height },
-            jsonData: { columns, colors }
-        } = this.setting;
+    function cleanUp() {
+        g.classList.add('invisible');
+    }
+
+    function touchEnd() {
+        svg.removeEventListener('touchmove', drawPopUpByTouch);
+        cleanUp();
+    }
+
+    function onMouseMove(event: MouseEvent) {
+        onDrawPopUp(event.offsetX, event.offsetY);
+    }
+
+    function drawPopUpByTouch(event: TouchEvent) {
+        if (event.targetTouches.length == 1) {
+            event.preventDefault();
+            event.stopPropagation();
+            const { pageX, pageY } = event.targetTouches[0];
+            onDrawPopUp(pageX, pageY);
+        }
+    }
+
+    function onTouchStart(event: TouchEvent) {
+        if (event.targetTouches.length == 1) {
+            event.preventDefault();
+            event.stopPropagation();
+            const { pageX, pageY } = event.targetTouches[0];
+            onDrawPopUp(pageX, pageY);
+
+            svg.addEventListener('touchmove', drawPopUpByTouch, { passive: false });
+        }
+    }
+
+    svg.addEventListener('mousemove', onMouseMove);
+    svg.addEventListener('mouseleave', cleanUp);
+
+    svg.addEventListener('touchstart', onTouchStart, { passive: false });
+    svg.addEventListener('touchend', touchEnd);
+
+    setting.onVisibilityChange(key => {
+        elements.dots.forEach((dot, i) => {
+            if (setting.jsonData.columns[i + 1][0] == key) {
+                dot.circle.classList.toggle('invisible');
+                dot.innerCircle.classList.toggle('invisible');
+            }
+        })
+    });
+
+    setting.onDestroy(() => {
+        svg.removeEventListener('mousemove', onMouseMove);
+        svg.removeEventListener('mouseleave', cleanUp);
+
+        svg.removeEventListener('touchstart', onTouchStart);
+        svg.removeEventListener('touchend', touchEnd);
+
+        g.removeChild(elements.line);
+        elements.dots.forEach(({ circle, innerCircle }) => {
+            g.removeChild(circle);
+            g.removeChild(innerCircle);
+        });
+        elements = null;
+    })
+
+    function createPopUp() {
         const [_, ...lines] = columns;
 
-        this.g.classList.add('invisible');
+        g.classList.add('invisible');
 
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
         line.classList.add('line');
         line.setAttribute('y1', '0');
         line.setAttribute('y2', height.toString());
 
-        this.g.appendChild(line);
+        g.appendChild(line);
 
         const dots = lines.map(item => {
             const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             const innerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            this.g.appendChild(circle);
+            g.appendChild(circle);
             circle.style.fill = colors[item[0]];
             circle.setAttribute("r", '5');
 
-            this.g.appendChild(innerCircle);
+            g.appendChild(innerCircle);
             innerCircle.classList.add('inner-circle');
             innerCircle.setAttribute("r", '3');
 
@@ -127,28 +136,17 @@ export class PopUp {
             }
         });
 
-        this.elements = {
+        elements = {
             line,
             dots,
-            block: toPopUpBlock(this.setting, this.g),
+            block: toPopUpBlock(setting, g),
         }
     }
 
-    destroy() {
-        this.g.removeChild(this.elements.line);
-        this.elements.dots.forEach(({ circle, innerCircle }) => {
-            this.g.removeChild(circle);
-            this.g.removeChild(innerCircle);
-        });
-        this.elements = null;
-    }
-
-    drawPopUp(index: number, offsetY: number) {
+    function drawPopUp(index: number, offsetY: number) {
         const {
             timeRange: { start, end },
-            viewport: { width, height },
-            jsonData: { columns }
-        } = this.setting;
+        } = setting;
 
         const [times, ...lines] = columns;
         const time = times[index] as number;
@@ -156,13 +154,12 @@ export class PopUp {
         const positionX = (time - start) * dx;
         const x = positionX.toString();
 
-        this.elements.line.setAttribute('x1', x);
-        this.elements.line.setAttribute('x2', x);
+        elements.line.setAttribute('x1', x);
+        elements.line.setAttribute('x2', x);
 
-        const max = this.toMax();
-        const dy = (height - 10) / max;
+        const dy = (height - 10) / toMax();
 
-        this.elements.dots.forEach((dot, i) => {
+        elements.dots.forEach((dot, i) => {
             const coordinates = lines[i][index] as number;
             const positionY = height - coordinates * dy;
             const y = positionY.toString();
@@ -174,7 +171,7 @@ export class PopUp {
             dot.innerCircle.setAttribute("cy", y);
         });
 
-        this.elements.block.setData(time, index, positionX, offsetY);
-        this.g.classList.remove('invisible');
+        elements.block.setData(time, index, positionX, offsetY);
+        g.classList.remove('invisible');
     }
 }
