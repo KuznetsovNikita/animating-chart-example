@@ -47,6 +47,30 @@ svg text, svg tspan {
     }
 }
 
+.pop-up {
+    &.invisible {
+        visibility: hidden;
+    }
+
+    .line, .rect, .shadow {
+        fill: white;
+        stroke: #f2f4f5;
+    }
+
+    .date {
+        fill: black;
+    }
+    .inner-circle {
+        fill: white;
+    }
+
+    text {
+        font: 400 14px sans-serif;
+    }
+    .value {
+        font: 600 15px sans-serif;
+    }
+}
 
 .night {
     .line line {
@@ -55,4 +79,19 @@ svg text, svg tspan {
     svg text, svg tspan {
         fill: #485e6f;
     }
+
+    .pop-up {
+        .line, .rect, .shadow {
+            fill: #222f3f;
+            stroke: #2b3f51;
+        }
+        .date {
+            fill: white;
+        }
+        .inner-circle {
+            fill: #222f3f;
+        }
+    }
+
 }
+

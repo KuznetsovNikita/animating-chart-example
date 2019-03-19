@@ -2,6 +2,7 @@ import { Column, Dict, Range, TimeColumn, Viewport } from 'src/data/models';
 import { ChangeKind, DataService } from '../data/service';
 import { Line } from './line';
 import { Polyline } from './polyline';
+import { PopUp } from './pop-up';
 import { Times } from './times';
 
 export default class Chart {
@@ -19,6 +20,8 @@ export default class Chart {
     polylines: Dict<Polyline> = {};
 
     times: Times;
+    popUp: PopUp;
+
     constructor(
         element: HTMLDivElement,
         private settings: DataService,
@@ -54,6 +57,8 @@ export default class Chart {
                 indexRange, timeRange, viewport,
             );
         }
+
+        this.popUp = new PopUp(this.svg, this.settings, () => this.currentMax);
 
         settings.onTimeRangeChange(kind => {
             this.drawCharts(kind);
