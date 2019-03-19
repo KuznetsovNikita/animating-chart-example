@@ -262,11 +262,14 @@ export function toTimes(
         const start = startIndex - delta;
         if (
             hasValue(start) &&
-            toLeftByIndex(start) > 0
+            toLeftByIndex(start) > -20
         ) {
-            drawTime(start);
-            destroy(endIndex);
+            const time = times[endIndex];
+            times[endIndex] = undefined;
             endIndex -= delta;
+
+            time.update(toValue(start), toLeftByIndex(start));
+            times[start] = time;
             startIndex = start;
 
             maybeMoveStart();
@@ -277,11 +280,14 @@ export function toTimes(
         const end = endIndex + delta;
         if (
             hasValue(end) &&
-            toLeftByIndex(end) < width
+            toLeftByIndex(end) < width + 20
         ) {
-            drawTime(end);
-            destroy(startIndex);
+            const time = times[startIndex];
+            times[startIndex] = undefined;
             startIndex += delta;
+
+            time.update(toValue(end), toLeftByIndex(end));
+            times[end] = time;
             endIndex = end;
 
             maybeMoveEnd();
