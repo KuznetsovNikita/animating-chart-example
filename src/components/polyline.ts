@@ -1,4 +1,5 @@
-import { Column, Range, TimeColumn, Viewport } from "src/data/models";
+import { nsu } from "../data/const";
+import { Column, Range, TimeColumn, Viewport } from "../data/models";
 
 export interface Polyline {
     polyline: SVGPolylineElement,
@@ -11,7 +12,7 @@ export function toPolyline(
     color: string,
     className: string,
 ) {
-    const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+    const polyline = document.createElementNS(nsu, "polyline");
     polyline.classList.add('polyline');
     polyline.classList.add(className);
     polyline.style.stroke = color;

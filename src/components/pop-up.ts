@@ -1,4 +1,5 @@
-import { DataService } from "src/data/service";
+import { nsu } from "../data/const";
+import { DataService } from "../data/service";
 import { PopUpBlock, toPopUpBlock } from "./pop-up-block";
 
 interface Dot {
@@ -20,7 +21,7 @@ export function toPopUp(
     let index: number | null = null;
     let elements: Elements;
     const { viewport: { width, height }, jsonData: { columns, colors } } = setting;
-    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const g = document.createElementNS(nsu, "g");
     svg.appendChild(g);
     g.classList.add('pop-up');
     createPopUp();
@@ -112,7 +113,7 @@ export function toPopUp(
 
         g.classList.add('invisible');
 
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        const line = document.createElementNS(nsu, "line");
         line.classList.add('line');
         line.setAttribute('y1', '0');
         line.setAttribute('y2', height.toString());
@@ -120,8 +121,8 @@ export function toPopUp(
         g.appendChild(line);
 
         const dots = lines.map(item => {
-            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            const innerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            const circle = document.createElementNS(nsu, "circle");
+            const innerCircle = document.createElementNS(nsu, "circle");
             g.appendChild(circle);
             circle.style.fill = colors[item[0]];
             circle.setAttribute("r", '5');

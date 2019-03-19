@@ -1,3 +1,5 @@
+import { nsu } from '../data/const';
+
 export interface Line {
     g: SVGGElement;
     value: number;
@@ -12,14 +14,14 @@ export function toLine(
     width: number,
     className: string,
 ) {
-    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const g = document.createElementNS(nsu, "g");
 
     g.classList.add('line');
     className && g.classList.add(className);
     setHeight(height);
 
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    const line = document.createElementNS(nsu, "line");
+    const text = document.createElementNS(nsu, "text");
 
     line.setAttribute('x1', '5');
     line.setAttribute('x2', (width - 5).toString());

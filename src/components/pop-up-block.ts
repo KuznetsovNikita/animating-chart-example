@@ -1,4 +1,4 @@
-import { days, month } from "../data/const";
+import { days, month, nsu } from "../data/const";
 import { DataService } from "../data/service";
 
 interface Value {
@@ -16,10 +16,10 @@ export function toPopUpBlock(
     setting: DataService,
     g: SVGGElement
 ): PopUpBlock {
-    const panel = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    const shadow = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    const date = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    const panel = document.createElementNS(nsu, "g");
+    const rect = document.createElementNS(nsu, "rect");
+    const shadow = document.createElementNS(nsu, "rect");
+    const date = document.createElementNS(nsu, "text");
 
     const {
         jsonData: { columns, colors, names },
@@ -58,12 +58,12 @@ export function toPopUpBlock(
 
     const values = lines.map((item, index) => {
 
-        const block = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        const block = document.createElementNS(nsu, "g");
         panel.appendChild(block);
         blockPosition(block, index);
 
-        const value = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        const name = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        const value = document.createElementNS(nsu, "text");
+        const name = document.createElementNS(nsu, "text");
         block.appendChild(value);
         block.appendChild(name);
 

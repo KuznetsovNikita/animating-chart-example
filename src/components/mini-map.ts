@@ -1,8 +1,8 @@
 import { Column, Dict, TimeColumn } from 'src/data/models';
+import { nsu } from '../data/const';
 import { DataService } from '../data/service';
 import { drawLens } from './lens';
 import { Polyline, toPolyline } from './polyline';
-
 
 export function toMiniMap(
     container: HTMLDivElement,
@@ -30,7 +30,7 @@ function toMiniMapSvg(
 
     const polylines: Dict<Polyline> = {};
 
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const svg = document.createElementNS(nsu, "svg");
 
     element.appendChild(svg);
 

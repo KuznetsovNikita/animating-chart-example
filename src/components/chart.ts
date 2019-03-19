@@ -1,4 +1,5 @@
 import { Column, Dict, Range, TimeColumn, Viewport } from 'src/data/models';
+import { nsu } from '../data/const';
 import { ChangeKind, DataService } from '../data/service';
 import { Line, toLine } from './line';
 import { Polyline, toPolyline } from './polyline';
@@ -22,9 +23,9 @@ export function toChart(
     let linesStock: Line[] = [];
     const polylines: Dict<Polyline> = {};
 
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    const gLines = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    const gDates = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const svg = document.createElementNS(nsu, "svg");
+    const gLines = document.createElementNS(nsu, "g");
+    const gDates = document.createElementNS(nsu, "g");
 
     element.appendChild(svg);
     svg.appendChild(gLines);

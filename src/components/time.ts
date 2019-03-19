@@ -1,4 +1,4 @@
-import { month } from "../data/const";
+import { month, nsu } from "../data/const";
 
 export interface Time {
     value: number;
@@ -11,8 +11,8 @@ export function toTime(
     value: number,
     left: number
 ): Time {
-    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+    const text = document.createElementNS(nsu, "text");
+    const tspan = document.createElementNS(nsu, "tspan");
 
     text.classList.add('time');
     text.appendChild(tspan);
