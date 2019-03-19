@@ -107,6 +107,11 @@ export class DataService {
         this.visibilityWatchers.push(act);
     }
 
+    private destroyWatchers: (() => void)[] = [];
+    onDestroy(act: () => void) {
+        this.destroyWatchers.push(act);
+    }
+
     toMaxVisibleValue(indexRange: Range) {
         let max = 0;
         const { start, end } = indexRange;

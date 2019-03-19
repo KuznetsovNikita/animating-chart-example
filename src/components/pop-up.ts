@@ -1,5 +1,5 @@
 import { DataService } from "src/data/service";
-import { PopUpBlock } from "./pop-up-block";
+import { PopUpBlock, toPopUpBlock } from "./pop-up-block";
 
 interface Dot {
     innerCircle: SVGCircleElement;
@@ -130,7 +130,7 @@ export class PopUp {
         this.elements = {
             line,
             dots,
-            block: new PopUpBlock(this.setting, this.g),
+            block: toPopUpBlock(this.setting, this.g),
         }
     }
 

@@ -1,5 +1,5 @@
 import { ChangeKind, DataService } from "src/data/service";
-import { Time } from "./time";
+import { Time, toTime } from "./time";
 
 
 export class Times {
@@ -74,7 +74,7 @@ export class Times {
     }
 
     drawTime = (index: number) => {
-        this.times[index] = new Time(
+        this.times[index] = toTime(
             this.gDates,
             this.toValue(index),
             this.toLeftByIndex(index),
