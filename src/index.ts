@@ -1,11 +1,8 @@
 import { Container } from './components/container';
-import * as chart_data from './data/chart_data.json';
 import { DataService, JsonData } from './data/service';
 import './style/index.css';
 
 function init() {
-    const jsonData = (chart_data as any as JsonData[])[0];
-
     const w = window,
         d = document,
         e = d.documentElement,
@@ -13,9 +10,18 @@ function init() {
         x = w.innerWidth || e.clientWidth || g.clientWidth;
     const width = Math.min(x, 500);
 
-    const settings = new DataService(width, jsonData);
+    const rawFile = new XMLHttpRequest();
+    rawFile.overrideMimeType("application/json");
+    rawFile.open("GET", './chart_data.json', true);
+    rawFile.onreadystatechange = function () {
+        if (rawFile.readyState === 4 && rawFile.status == 200) {
+            const jsonData: JsonData = JSON.parse(rawFile.responseText)[0];
+            const settings = new DataService(width, jsonData);
+            new Container(settings);
 
-    new Container(settings);
+        }
+    }
+    rawFile.send(null);
 }
 
 window.onload = init;
