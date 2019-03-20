@@ -109,7 +109,7 @@ export function toTimes(
             hasValue(start) &&
             toLeftByIndex(start) > -viewportSpace
         ) {
-            drawTime(start, false);
+            drawTime(start, true);
             startIndex = start;
         }
 
@@ -124,7 +124,7 @@ export function toTimes(
             hasValue(end) &&
             toLeftByIndex(end) < width + viewportSpace
         ) {
-            drawTime(end, false);
+            drawTime(end, true);
             endIndex = end;
         }
 
