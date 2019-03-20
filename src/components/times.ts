@@ -10,7 +10,7 @@ export function toTimes(
 ): Times {
     const viewportSpace = 50;
     const minSpace = 80;
-    const firstSpace = 15;
+    const firstSpace = 20;
 
     let startIndex: number;
     let endIndex: number;
