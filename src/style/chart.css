@@ -18,7 +18,7 @@ svg .transparent {
 
 .time  {
     opacity: 1;
-    transition: opacity .2s ease;
+    transition: opacity .1s ease;
 }
 .polyline, .line {
     opacity: 1;
@@ -78,6 +78,4 @@ svg .transparent {
             fill: #222f3f;
         }
     }
-
 }
-
