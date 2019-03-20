@@ -151,7 +151,7 @@ export function toChart(
                     linesStock = linesStock
                         .filter(item => item !== line);
                     line.destroy();
-                }, 400);
+                }, 300);
             })
 
             const newLines = drawLine(targetMax, 'transparent');
