@@ -1,6 +1,7 @@
 import { month, nsu } from "../data/const";
 
 export interface Time {
+    g: SVGGElement,
     value: number;
     update: (value: number, left: number) => void;
     setLeft: (left: number) => void;
@@ -10,20 +11,25 @@ export interface Time {
 export function toTime(
     svg: SVGGElement,
     value: number,
-    left: number
+    left: number,
+    className?: string,
 ): Time {
+    const g = document.createElementNS(nsu, "g");
     const text = document.createElementNS(nsu, "text");
     const tspan = document.createElementNS(nsu, "tspan");
 
-    text.classList.add('time');
-    text.appendChild(tspan);
+    g.classList.add('time');
+    className && g.classList.add(className);
 
+    text.appendChild(tspan);
+    g.appendChild(text);
 
     update(value, left);
     tspan.setAttribute('y', '18');
     tspan.setAttribute('text-anchor', 'middle');
 
-    svg.appendChild(text);
+
+    svg.appendChild(g);
 
     function update(value: number, left: number) {
         setValue(value);
@@ -39,10 +45,11 @@ export function toTime(
     }
 
     function destroy() {
-        svg.removeChild(text);
+        svg.removeChild(g);
     }
 
     return {
+        g,
         value,
         update,
         setLeft,

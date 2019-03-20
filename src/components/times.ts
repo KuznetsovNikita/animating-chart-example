@@ -8,7 +8,10 @@ export function toTimes(
     gDates: SVGGElement,
     settings: DataService,
 ): Times {
+    const viewportSpace = 50;
     const minSpace = 80;
+    const firstSpace = 20;
+
     let startIndex: number;
     let endIndex: number;
     let delta = 0;
@@ -19,6 +22,7 @@ export function toTimes(
     gDates.setAttribute('transform', `translate(0,${height})`);
 
     const times: Time[] = new Array(columns[0].length);
+    let timesStock: Time[] = [];
 
     settings.onDestroy(() => {
         times.forEach(item => item && item.destroy());
@@ -43,16 +47,31 @@ export function toTimes(
     }
 
     function destroy(index: number) {
-        times[index].destroy();
+        const time = times[index]
         times[index] = undefined;
+        time.g.classList.add('transparent');
+        timesStock.push(time);
+        setTimeout(() => {
+            timesStock = timesStock
+                .filter(item => item != time);
+            time.destroy();
+        }, 300);
     }
 
-    function drawTime(index: number) {
-        times[index] = toTime(
+    function drawTime(index: number, isTransparent: boolean) {
+        const time = toTime(
             gDates,
             toValue(index),
             toLeftByIndex(index),
+            isTransparent ? 'transparent' : '',
         );
+        times[index] = time;
+        if (isTransparent) {
+            requestAnimationFrame(() => {
+                time.g.classList.remove('transparent');
+            });
+        }
+
     }
 
     function redrawTimes(kind: ChangeKind) {
@@ -71,11 +90,9 @@ export function toTimes(
     }
 
     function moveOnScale(scale: () => void) {
-        const {
-            timeRange: { start, end }
-        } = settings;
+        const { timeRange } = settings;
 
-        dy = width / (end - start);
+        dy = width / (timeRange.end - timeRange.start);
 
         scale();
         maybeAddOrRemoveItem();
@@ -83,20 +100,21 @@ export function toTimes(
         for (let i = startIndex; i <= endIndex; i += delta) {
             times[i].setLeft(toLeftByIndex(i));
         }
+        timesStock.forEach(time => time.setLeft(toLeftByValue(time.value)))
     }
 
     function maybeAddOrRemoveItem() {
         const start = startIndex - delta;
         if (
             hasValue(start) &&
-            toLeftByIndex(start) > -25
+            toLeftByIndex(start) > -viewportSpace
         ) {
-            drawTime(start);
+            drawTime(start, false);
             startIndex = start;
         }
 
         const leftStart = toLeftByIndex(startIndex);
-        if (leftStart < -25) {
+        if (leftStart < -viewportSpace) {
             destroy(startIndex);
             startIndex = startIndex + delta;
         }
@@ -104,14 +122,14 @@ export function toTimes(
         const end = endIndex + delta;
         if (
             hasValue(end) &&
-            toLeftByIndex(end) < width + 25
+            toLeftByIndex(end) < width + viewportSpace
         ) {
-            drawTime(end);
+            drawTime(end, false);
             endIndex = end;
         }
 
         const leftEnd = toLeftByIndex(endIndex);
-        if (leftEnd > width + 25) {
+        if (leftEnd > width + viewportSpace) {
             destroy(endIndex);
             endIndex = endIndex - delta;
         }
@@ -139,7 +157,7 @@ export function toTimes(
                 }
                 else {
                     if (left > 0) {
-                        drawTime(index);
+                        drawTime(index, true);
                         newStart = index;
                     }
                 }
@@ -162,7 +180,7 @@ export function toTimes(
             let i = endIndex;
             let isRemove = false;
             let newStart = 0;
-            while (toLeftByIndex(i) >= -25) {
+            while (toLeftByIndex(i) >= -viewportSpace) {
 
                 if (isRemove) {
                     if (times[i]) {
@@ -171,7 +189,7 @@ export function toTimes(
                 }
                 else {
                     if (!times[i]) {
-                        drawTime(i);
+                        drawTime(i, true);
                     }
                     newStart = i;
                 }
@@ -208,7 +226,7 @@ export function toTimes(
                 }
                 else {
                     if (left < width) {
-                        drawTime(index);
+                        drawTime(index, true);
                         newEnd = index;
                     }
                 }
@@ -232,7 +250,7 @@ export function toTimes(
             let i = startIndex;
             let isRemove = false;
             let newEnd = 0;
-            while (toLeftByIndex(i) <= width + 25) {
+            while (toLeftByIndex(i) <= width + viewportSpace) {
                 if (isRemove) {
                     if (times[i]) {
                         destroy(i);
@@ -240,7 +258,7 @@ export function toTimes(
                 }
                 else {
                     if (!times[i]) {
-                        drawTime(i);
+                        drawTime(i, true);
                     }
                     newEnd = i;
                 }
@@ -258,7 +276,7 @@ export function toTimes(
         const start = startIndex - delta;
         if (
             hasValue(start) &&
-            toLeftByIndex(start) > -25
+            toLeftByIndex(start) > -viewportSpace
         ) {
             const time = times[endIndex];
             times[endIndex] = undefined;
@@ -276,7 +294,7 @@ export function toTimes(
         const end = endIndex + delta;
         if (
             hasValue(end) &&
-            toLeftByIndex(end) < width + 25
+            toLeftByIndex(end) < width + viewportSpace
         ) {
             const time = times[startIndex];
             times[startIndex] = undefined;
@@ -303,7 +321,7 @@ export function toTimes(
         const { indexRange, timeRange } = settings;
         dy = width / (timeRange.end - timeRange.start);
 
-        const firstSpace = 20;
+
         startIndex = indexRange.start;
         while (toLeftByIndex(startIndex) < firstSpace) {
             startIndex++;
@@ -324,7 +342,7 @@ export function toTimes(
         }
 
         for (let i = startIndex; i <= endIndex; i += delta) {
-            drawTime(i);
+            drawTime(i, false);
         }
     }
 

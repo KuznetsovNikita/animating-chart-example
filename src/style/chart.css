@@ -19,6 +19,13 @@ svg text, svg tspan {
 }
 
 .time {
+    opacity: 1;
+    transition: opacity .2s ease;
+
+    &.transparent {
+        opacity: 0;
+    }
+
     &.invisible {
         visibility: hidden;
     }
