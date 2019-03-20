@@ -119,9 +119,11 @@ export function toPopUpBlock(
 
         values.forEach((item, i) => {
             let value = lines[i][index].toString();
-            item.value.innerHTML = value.length > 4
-                ? value.substr(0, value.length - 3) + 'k'
-                : value;
+            item.value.innerHTML = value.length > 6
+                ? value.substr(0, value.length - 6) + '.' + value.substr(value.length - 6, 1) + 'M'
+                : value.length > 4
+                    ? value.substr(0, value.length - 3) + 'K'
+                    : value;
         });
 
         const y = offsetY > height / 2 ? 20 : height - 20 - panelHeight;

@@ -15,7 +15,13 @@ function init() {
     rawFile.open("GET", './chart_data.json', true);
     rawFile.onreadystatechange = function () {
         if (rawFile.readyState === 4 && rawFile.status == 200) {
-            const jsonData: JsonData = JSON.parse(rawFile.responseText)[0];
+            const href = window.location.href;
+            const last = href[href.length - 1];
+            const index = last === '1' ? 1
+                : last === '2' ? 2
+                    : last === '3' ? 3
+                        : last === '4' ? 4 : 0;
+            const jsonData: JsonData = JSON.parse(rawFile.responseText)[index];
             const settings = new DataService(width, jsonData);
 
             drawContainer(settings);
