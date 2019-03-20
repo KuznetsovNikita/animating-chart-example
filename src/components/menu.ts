@@ -69,11 +69,21 @@ function drawCheckbox(
     const element = document.createElement('div');
     element.classList.add('checkbox');
     if (value) element.classList.add('as-check');
-    element.appendChild(drawIcon(color));
-    element.innerHTML += name;
 
+    element.innerHTML += name;
+    requestAnimationFrame(() => {
+        element.appendChild(drawIcon(color, element.clientWidth));
+    });
+
+    let lastUpdate: number;
     element.onclick = () => {
         settings.toggleVisibility(key);
+
+        element.classList.add('as-click');
+        if (lastUpdate) clearTimeout(lastUpdate);
+        lastUpdate = setTimeout(() => {
+            element.classList.remove('as-click');
+        }, 300);
     };
 
     settings.onVisibilityChange(item => {
@@ -89,28 +99,33 @@ function drawCheckbox(
     return element;
 }
 
-function drawIcon(color: string) {
+function drawIcon(color: string, width: number) {
     const svg = document.createElementNS(nsu, "svg");
-    svg.setAttribute("height", "30");
-    svg.setAttribute("width", "30");
+
+    const shadow = document.createElementNS(nsu, "circle");
+    shadow.classList.add('shadow');
+    shadow.setAttribute("cx", '22');
+    shadow.setAttribute("cy", '21');
+    shadow.setAttribute("r", width.toString());
+    svg.appendChild(shadow);
 
     const circle = document.createElementNS(nsu, "circle");
     svg.appendChild(circle);
     circle.style.fill = color;
-    circle.setAttribute("cx", '15');
-    circle.setAttribute("cy", '15');
+    circle.setAttribute("cx", '22');
+    circle.setAttribute("cy", '21');
     circle.setAttribute("r", '13');
 
     const polyline = document.createElementNS(nsu, "polyline");
     svg.appendChild(polyline);
     polyline.classList.add('check-mark');
-    polyline.setAttribute("points", '9,15.5 13,19.5 20,11.5');
+    polyline.setAttribute("points", '16,21.5 20,25.5 27,17.5');
 
     const cover = document.createElementNS(nsu, "circle");
     svg.appendChild(cover);
     cover.classList.add('cover');
-    cover.setAttribute("cx", '15');
-    cover.setAttribute("cy", '15');
+    cover.setAttribute("cx", '22');
+    cover.setAttribute("cy", '21');
     cover.setAttribute("r", '12');
 
     return svg;
