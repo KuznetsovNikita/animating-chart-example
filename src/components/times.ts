@@ -10,7 +10,7 @@ export function toTimes(
 ): Times {
     const viewportSpace = 50;
     const minSpace = 80;
-    const firstSpace = 20;
+    const firstSpace = 15;
 
     let startIndex: number;
     let endIndex: number;
@@ -49,7 +49,7 @@ export function toTimes(
     function destroy(index: number) {
         const time = times[index]
         times[index] = undefined;
-        time.g.classList.add('transparent');
+        time.text.classList.add('transparent');
         timesStock.push(time);
         setTimeout(() => {
             timesStock = timesStock
@@ -68,7 +68,7 @@ export function toTimes(
         times[index] = time;
         if (isTransparent) {
             requestAnimationFrame(() => {
-                time.g.classList.remove('transparent');
+                time.text.classList.remove('transparent');
             });
         }
 
@@ -332,7 +332,7 @@ export function toTimes(
             deltaIndex++;
             delta = Math.pow(2, deltaIndex);
         }
-        startIndex--;
+        startIndex -= delta;
         endIndex = startIndex;
         while (
             hasValue(endIndex + delta) &&
