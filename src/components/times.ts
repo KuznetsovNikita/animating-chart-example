@@ -8,7 +8,7 @@ export function toTimes(
     gDates: SVGGElement,
     settings: DataService,
 ): Times {
-    const viewportSpace = 50;
+    const viewportSpace = 80;
     const minSpace = 80;
     const firstSpace = 20;
 

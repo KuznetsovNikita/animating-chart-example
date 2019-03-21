@@ -26,6 +26,13 @@ export function toPopUp(
     g.classList.add('pop-up');
     createPopUp();
 
+    const hover = document.createElementNS(nsu, "rect");
+    hover.classList.add('hover');
+    hover.setAttribute('width', svg.width.baseVal.value.toString());
+    hover.setAttribute('height', svg.height.baseVal.value.toString());
+    svg.appendChild(hover);
+
+
     let lastUpdate: number;
     const onDrawPopUp = (offsetX: number, offsetY: number) => {
         if (lastUpdate != null) cancelAnimationFrame(lastUpdate);
@@ -50,7 +57,7 @@ export function toPopUp(
     }
 
     function touchEnd() {
-        svg.removeEventListener('touchmove', onTouchMove);
+        hover.removeEventListener('touchmove', onTouchMove);
         cleanUp();
     }
 
@@ -77,15 +84,15 @@ export function toPopUp(
     function onTouchStart(event: TouchEvent) {
         if (event.targetTouches.length == 1) {
             drawPopUpByTouch(event);
-            svg.addEventListener('touchmove', onTouchMove, { passive: false });
+            hover.addEventListener('touchmove', onTouchMove, { passive: false });
         }
     }
 
-    svg.addEventListener('mousemove', onMouseMove);
-    svg.addEventListener('mouseleave', cleanUp);
+    hover.addEventListener('mousemove', onMouseMove);
+    hover.addEventListener('mouseout', cleanUp);
 
-    svg.addEventListener('touchstart', onTouchStart, { passive: false });
-    svg.addEventListener('touchend', touchEnd);
+    hover.addEventListener('touchstart', onTouchStart, { passive: false });
+    hover.addEventListener('touchend', touchEnd);
 
     setting.onVisibilityChange(key => {
         elements.dots.forEach((dot, i) => {
@@ -97,11 +104,11 @@ export function toPopUp(
     });
 
     setting.onDestroy(() => {
-        svg.removeEventListener('mousemove', onMouseMove);
-        svg.removeEventListener('mouseleave', cleanUp);
+        hover.removeEventListener('mousemove', onMouseMove);
+        hover.removeEventListener('mouseout', cleanUp);
 
-        svg.removeEventListener('touchstart', onTouchStart);
-        svg.removeEventListener('touchend', touchEnd);
+        hover.removeEventListener('touchstart', onTouchStart);
+        hover.removeEventListener('touchend', touchEnd);
 
         g.removeChild(elements.line);
         elements.dots.forEach(({ circle, innerCircle }) => {

@@ -60,6 +60,9 @@ svg .transparent {
         font: 600 15px sans-serif;
     }
 }
+.hover {
+    fill: transparent;
+}
 
 .night {
     .line line {
