@@ -56,7 +56,7 @@ export function toChart(
         );
     }
 
-    toPopUp(svg, settings, () => currentMax);
+    toPopUp(element, svg, settings, () => currentMax);
 
     settings.onTimeRangeChange(kind => {
         drawCharts(kind);

@@ -14,6 +14,7 @@ interface Elements {
 }
 
 export function toPopUp(
+    parent: HTMLDivElement,
     svg: SVGSVGElement,
     setting: DataService,
     toMax: () => number
@@ -56,13 +57,20 @@ export function toPopUp(
         g.classList.add('invisible');
     }
 
+
+    function onMouseMove(event: MouseEvent) {
+        if (event.target === hover) {
+            onDrawPopUp(event.offsetX, event.offsetY);
+        }
+        else {
+            cleanUp();
+        }
+
+    }
+
     function touchEnd() {
         hover.removeEventListener('touchmove', onTouchMove);
         cleanUp();
-    }
-
-    function onMouseMove(event: MouseEvent) {
-        onDrawPopUp(event.offsetX, event.offsetY);
     }
 
     function drawPopUpByTouch(event: TouchEvent) {
@@ -88,7 +96,7 @@ export function toPopUp(
         }
     }
 
-    hover.addEventListener('mousemove', onMouseMove);
+    parent.addEventListener('mousemove', onMouseMove);
     hover.addEventListener('mouseout', cleanUp);
 
     hover.addEventListener('touchstart', onTouchStart, { passive: false });
@@ -104,7 +112,7 @@ export function toPopUp(
     });
 
     setting.onDestroy(() => {
-        hover.removeEventListener('mousemove', onMouseMove);
+        parent.removeEventListener('mousemove', onMouseMove);
         hover.removeEventListener('mouseout', cleanUp);
 
         hover.removeEventListener('touchstart', onTouchStart);
