@@ -129,7 +129,16 @@ export function toChart(
     function drawLine(max: number, className: string = ''): Line[] {
         const dx = (height - 5) / max;
 
-        const lastLine = Math.floor((max - 25 / dx) / 10) * 10;
+        let lastLine: number;
+        if (max > 50) {
+            lastLine = Math.floor((max - 20 / dx) / 10) * 10;
+        }
+        else {
+            lastLine = max - max % 5
+            if (lastLine * dx > height - 10) {
+                lastLine -= 5;
+            }
+        }
         const dOneLine = lastLine / settings.lines;
 
         const lines = [];
@@ -151,7 +160,7 @@ export function toChart(
                     linesStock = linesStock
                         .filter(item => item !== line);
                     line.destroy();
-                }, 300);
+                }, 400);
             })
 
             const newLines = drawLine(targetMax, 'transparent');

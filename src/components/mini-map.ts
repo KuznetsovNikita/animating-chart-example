@@ -10,7 +10,7 @@ export function toMiniMap(
 ) {
     const element = document.createElement('div');
     container.appendChild(element);
-    element.id = 'mini-map';
+    element.classList.add('mini-map');
 
     toMiniMapSvg(element, settings);
     drawLens(element, settings);

@@ -18,11 +18,11 @@ svg .transparent {
 
 .time  {
     opacity: 1;
-    transition: opacity .1s ease;
+    transition: opacity .2s ease;
 }
 .polyline, .line {
     opacity: 1;
-    transition: opacity .3s ease;
+    transition: opacity .4s ease;
 }
 
 .main-chart {
@@ -38,11 +38,14 @@ svg .transparent {
 
 .pop-up {
     
-    .line, .rect, .shadow {
+    .line, .rect {
         fill: white;
         stroke: #f2f4f5;
     }
-
+    .shadow {
+        fill: rgba(0, 0, 0, 0.1);
+        stroke: rgba(0, 0, 0, 0.05);
+    }
     .date {
         fill: black;
     }
@@ -67,8 +70,8 @@ svg .transparent {
     }
 
     .pop-up {
-        .line, .rect, .shadow {
-            fill: #222f3f;
+        .line, .rect {
+            fill: #213242;
             stroke: #2b3f51;
         }
         .date {

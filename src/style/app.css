@@ -4,12 +4,14 @@ html {
     height:100%;
     max-width: 100% !important;
     overflow-x: hidden !important;
+    margin: 0;
 } 
 body {
     width: 100%;
     min-height:100%;
     max-width: 100% !important;
     overflow-x: hidden !important;
+    margin: 0;
 }
 
 #app {
@@ -22,6 +24,9 @@ body {
     position: relative;
 }
 
+.chart {
+    margin-bottom: 50px;
+}
 
 #header {
     padding: 0 5px;
@@ -32,22 +37,7 @@ body {
     }
 }
 
-.night {
-    background-color: #222f3f;
-
-    h1 {
-        color: #fafafa;
-    }
-
-    #mini-map .cover {
-        background-color: rgba(19, 26, 31, 0.5);
-    }
-    .lens {
-        border-color: rgba(103, 118, 128, 0.5);
-    }
-}
-
-#mini-map {
+.mini-map {
     margin: 20px 5px 0;
     position: relative;
     height: 48px;
@@ -81,7 +71,7 @@ body {
 }
 
 
-#menu {
+.menu {
     padding: 0 5px;
     margin-top: 20px;
 }
@@ -95,4 +85,19 @@ body {
     position: absolute;
     bottom: 0;
     width: 100%;
+}
+
+.night {
+    background-color: #222f3f;
+
+    h1 {
+        color: #fafafa;
+    }
+
+    .mini-map .cover {
+        background-color: rgba(19, 26, 31, 0.5);
+    }
+    .lens {
+        border-color: rgba(103, 118, 128, 0.5);
+    }
 }

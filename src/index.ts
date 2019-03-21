@@ -15,16 +15,10 @@ function init() {
     rawFile.open("GET", './chart_data.json', true);
     rawFile.onreadystatechange = function () {
         if (rawFile.readyState === 4 && rawFile.status == 200) {
-            const href = window.location.href;
-            const last = href[href.length - 1];
-            const index = last === '1' ? 1
-                : last === '2' ? 2
-                    : last === '3' ? 3
-                        : last === '4' ? 4 : 0;
-            const jsonData: JsonData = JSON.parse(rawFile.responseText)[index];
-            const settings = new DataService(width, jsonData);
+            const jsonData: JsonData[] = JSON.parse(rawFile.responseText);
+            const settings = jsonData.map(item => new DataService(width, item));
 
-            drawContainer(settings);
+            drawContainer(settings, width);
         }
     }
     rawFile.send(null);

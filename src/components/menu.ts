@@ -8,7 +8,7 @@ export function toMenu(
     const element = document.createElement('div');
 
     container.appendChild(element);
-    element.id = 'menu';
+    element.classList.add('menu');
 
     for (let key in settings.visibility) {
         element.appendChild(drawCheckbox(
@@ -19,44 +19,9 @@ export function toMenu(
         ));
     }
 
-    toModeButton(element, settings);
-
     settings.onDestroy(() => {
         container.removeChild(element);
     });
-}
-
-function toModeButton(
-    container: HTMLDivElement,
-    settings: DataService,
-) {
-    let isDay: boolean;
-    const button = document.createElement('div');
-
-    container.appendChild(button);
-    button.classList.add('mode');
-    setDay();
-
-    button.onclick = () => {
-        isDay ? setNight() : setDay();
-    };
-
-    settings.onDestroy(() => {
-        button.onclick = null;
-        container.removeChild(button);
-    });
-
-    function setDay() {
-        isDay = true;
-        document.body.classList.remove('night');
-        button.innerHTML = "Switch to Night Mode";
-    }
-
-    function setNight() {
-        isDay = false;
-        document.body.classList.add('night');
-        button.innerHTML = "Switch to Day Mode";
-    }
 }
 
 function drawCheckbox(

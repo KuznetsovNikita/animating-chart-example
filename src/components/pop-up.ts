@@ -50,7 +50,7 @@ export function toPopUp(
     }
 
     function touchEnd() {
-        svg.removeEventListener('touchmove', drawPopUpByTouch);
+        svg.removeEventListener('touchmove', onTouchMove);
         cleanUp();
     }
 
@@ -59,22 +59,25 @@ export function toPopUp(
     }
 
     function drawPopUpByTouch(event: TouchEvent) {
+        event.preventDefault();
+        event.stopPropagation();
+        const { clientX, clientY, target } = event.targetTouches[0];
+        var rect = (target as SVGSVGElement).getBoundingClientRect();
+        var x = clientX - rect.left;
+        var y = clientY - rect.top;
+        onDrawPopUp(x, y);
+    }
+
+    function onTouchMove(event: TouchEvent) {
         if (event.targetTouches.length == 1) {
-            event.preventDefault();
-            event.stopPropagation();
-            const { pageX, pageY } = event.targetTouches[0];
-            onDrawPopUp(pageX, pageY);
+            drawPopUpByTouch(event);
         }
     }
 
     function onTouchStart(event: TouchEvent) {
         if (event.targetTouches.length == 1) {
-            event.preventDefault();
-            event.stopPropagation();
-            const { pageX, pageY } = event.targetTouches[0];
-            onDrawPopUp(pageX, pageY);
-
-            svg.addEventListener('touchmove', drawPopUpByTouch, { passive: false });
+            drawPopUpByTouch(event);
+            svg.addEventListener('touchmove', onTouchMove, { passive: false });
         }
     }
 
