@@ -20,6 +20,7 @@ export class DataService {
     public animationSpeed = 0.15; // % per frame
 
     public lines = 5;
+    public min: number;
 
     public timeRange: Range;
     public indexRange: Range;
@@ -60,7 +61,7 @@ export class DataService {
             this.visibility[key] = true;
         }
 
-
+        this.min = this.toMinValue();
     }
 
     private timeChangeWatchers: ((kind: ChangeKind, timeRange: Range) => void)[] = [];
@@ -124,6 +125,20 @@ export class DataService {
             }
         }
         return max;
+    }
+
+    toMinValue() {
+        const { jsonData: { columns } } = this;
+        let min = columns[1][1] as number;
+        for (let i = 1; i < columns.length; i++) {
+            for (let j = 1; j < columns[0].length; j++) {
+                min = Math.min(min, columns[i][j] as number);
+            }
+        }
+        if (min > 1000) {
+            return min - min % 100;
+        }
+        return 0;
     }
 }
 

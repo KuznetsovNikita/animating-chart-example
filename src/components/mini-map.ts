@@ -38,7 +38,7 @@ function toMiniMapSvg(
     const {
         jsonData: { columns, colors },
         miniMap: { viewport, viewport: { width, height }, indexRange, timeRange },
-        visibility,
+        visibility, min,
     } = settings;
 
     svg.setAttribute('width', width.toString());
@@ -96,7 +96,7 @@ function toMiniMapSvg(
                 const key = columns[i][0];
                 if (visibility[key]) {
                     polylines[key].setPoints(
-                        currentMax, columns[i], columns[0],
+                        min, currentMax, columns[i], columns[0],
                         indexRange, timeRange, viewport,
                     );
                 }
@@ -123,7 +123,7 @@ function toMiniMapSvg(
 
         svg.appendChild(poliline.polyline);
         poliline.setPoints(
-            max, values, times,
+            min, max, values, times,
             indexRange, timeRange, viewport,
         );
 

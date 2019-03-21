@@ -176,10 +176,10 @@ export function toPopUp(
         elements.line.setAttribute('x1', x);
         elements.line.setAttribute('x2', x);
 
-        const dy = (height - 10) / toMax();
+        const dy = (height - 10) / (toMax() - setting.min);
 
         elements.dots.forEach((dot, i) => {
-            const coordinates = lines[i][index] as number;
+            const coordinates = lines[i][index] as number - setting.min;
             const positionY = height - coordinates * dy;
             const y = positionY.toString();
 

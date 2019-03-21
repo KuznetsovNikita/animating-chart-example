@@ -34,7 +34,8 @@ export function toChart(
     const {
         jsonData: { columns, colors },
         viewport: { width, height },
-        indexRange, timeRange, viewport
+        indexRange, timeRange, viewport,
+        min,
     } = settings;
 
     svg.setAttribute('width', width.toString());
@@ -44,7 +45,7 @@ export function toChart(
 
     currentMax = settings.toMaxVisibleValue(indexRange);
 
-    toLine(gLines, 0, height, width, '');
+    toLine(gLines, settings.min, height, width, '');
     lines = drawLine(currentMax);
 
     for (let i = 1; i < columns.length; i++) {
@@ -94,7 +95,7 @@ export function toChart(
             } = settings;
             for (let i = 1; i < columns.length; i++) {
                 polylines[columns[i][0]].setPoints(
-                    currentMax, columns[i], columns[0],
+                    min, currentMax, columns[i], columns[0],
                     indexRange, timeRange, viewport,
                 );
             }
@@ -120,14 +121,14 @@ export function toChart(
 
         svg.appendChild(poliline.polyline);
         poliline.setPoints(
-            max, values, times, indexRange, timeRange, viewport,
+            min, max, values, times, indexRange, timeRange, viewport,
         );
 
         polylines[key] = poliline;
     }
 
     function drawLine(max: number, className: string = ''): Line[] {
-        const dx = (height - 5) / max;
+        const dx = (height - 5) / (max - min);
 
         let lastLine: number;
         if (max > 50) {
@@ -139,11 +140,11 @@ export function toChart(
                 lastLine -= 5;
             }
         }
-        const dOneLine = lastLine / settings.lines;
+        const dOneLine = (lastLine - min) / settings.lines;
 
         const lines = [];
-        for (let label = dOneLine; label <= lastLine; label += dOneLine) {
-            const x = height - label * dx;
+        for (let label = min + dOneLine; label <= lastLine; label += dOneLine) {
+            const x = height - (label - min) * dx;
 
             lines.push(toLine(gLines, label, x, width, className));
         }
@@ -173,9 +174,9 @@ export function toChart(
     }
 
     function scaleLines() {
-        const dx = (height - 10) / currentMax;
+        const dx = (height - 10) / (currentMax - min);
 
-        lines.forEach(line => line.setHeight(height - dx * line.value));
-        linesStock.forEach(line => line.setHeight(height - dx * line.value));
+        lines.forEach(line => line.setHeight(height - dx * (line.value - min)));
+        linesStock.forEach(line => line.setHeight(height - dx * (line.value - min)));
     }
 }
