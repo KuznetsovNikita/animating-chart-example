@@ -58,16 +58,6 @@ export function toPopUp(
     }
 
 
-    function onMouseMove(event: MouseEvent) {
-        if (event.target === hover) {
-            onDrawPopUp(event.offsetX, event.offsetY);
-        }
-        else {
-            cleanUp();
-        }
-
-    }
-
     function touchEnd() {
         hover.removeEventListener('touchmove', onTouchMove);
         cleanUp();
@@ -96,8 +86,26 @@ export function toPopUp(
         }
     }
 
-    parent.addEventListener('mousemove', onMouseMove);
-    hover.addEventListener('mouseout', cleanUp);
+    function onMouseMove(event: MouseEvent) {
+        if (event.target === hover) {
+            onDrawPopUp(event.offsetX, event.offsetY);
+        }
+        else {
+            onMouseOut();
+        }
+    }
+
+    function onMouseOver() {
+        parent.addEventListener('mousemove', onMouseMove);
+    }
+
+    function onMouseOut() {
+        parent.removeEventListener('mousemove', onMouseMove);
+        cleanUp();
+    }
+
+    hover.addEventListener('mouseover', onMouseOver);
+    hover.addEventListener('mouseout', onMouseOut);
 
     hover.addEventListener('touchstart', onTouchStart, { passive: false });
     hover.addEventListener('touchend', touchEnd);
@@ -112,19 +120,14 @@ export function toPopUp(
     });
 
     setting.onDestroy(() => {
+        hover.removeEventListener('mouseover', onMouseOver);
+        hover.removeEventListener('mouseout', onMouseOut);
+
         parent.removeEventListener('mousemove', onMouseMove);
-        hover.removeEventListener('mouseout', cleanUp);
 
         hover.removeEventListener('touchstart', onTouchStart);
         hover.removeEventListener('touchend', touchEnd);
-
-        g.removeChild(elements.line);
-        elements.dots.forEach(({ circle, innerCircle }) => {
-            g.removeChild(circle);
-            g.removeChild(innerCircle);
-        });
-        elements = null;
-    })
+    });
 
     function createPopUp() {
         const [_, ...lines] = columns;

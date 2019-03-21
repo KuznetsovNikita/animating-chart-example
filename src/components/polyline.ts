@@ -16,6 +16,7 @@ export function toPolyline(
     polyline.classList.add('polyline');
     polyline.classList.add(className);
     polyline.style.stroke = color;
+    polyline.setAttribute('stroke-linejoin', "round");
 
     function setPoints(
         min: number, max: number, values: Column, times: TimeColumn,
