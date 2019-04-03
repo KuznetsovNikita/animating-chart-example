@@ -1,5 +1,5 @@
-import { ChangeKind, DataService } from "src/data/service";
-import { Time, toTime } from "./time";
+import { ChangeKind, DataService } from 'src/data/service';
+import { Time, toTime } from './time';
 
 export interface Times {
     redrawTimes: (kind: ChangeKind) => void;
@@ -31,7 +31,7 @@ export function toTimes(
     drawTimes();
 
     function hasValue(index: number) {
-        return settings.jsonData.columns[0][index] != undefined;
+        return settings.jsonData.columns[0][index] !== undefined;
     }
 
     function toValue(index: number) {
@@ -47,13 +47,13 @@ export function toTimes(
     }
 
     function destroy(index: number) {
-        const time = times[index]
+        const time = times[index];
         times[index] = undefined;
         time.text.classList.add('transparent');
         timesStock.push(time);
         setTimeout(() => {
             timesStock = timesStock
-                .filter(item => item != time);
+                .filter(item => item !== time);
             time.destroy();
         }, 300);
     }
@@ -84,7 +84,7 @@ export function toTimes(
                 maybeRightScaleIn();
                 maybeRightScaleOut();
             });
-            case 'move': return move()
+            case 'move': return move();
             default: return;
         }
     }
@@ -100,7 +100,7 @@ export function toTimes(
         for (let i = startIndex; i <= endIndex; i += delta) {
             times[i].setLeft(toLeftByIndex(i));
         }
-        timesStock.forEach(time => time.setLeft(toLeftByValue(time.value)))
+        timesStock.forEach(time => time.setLeft(toLeftByValue(time.value)));
     }
 
     function maybeAddOrRemoveItem() {
@@ -241,7 +241,7 @@ export function toTimes(
 
     function maybeRightScaleOut() {
         const newDelta = delta * 2;
-        const index = startIndex + delta
+        const index = startIndex + delta;
         if (
             hasValue(index) &&
             (toValue(index) - toValue(startIndex)) * dy < minSpace
@@ -348,5 +348,5 @@ export function toTimes(
 
     return {
         redrawTimes,
-    }
+    };
 }

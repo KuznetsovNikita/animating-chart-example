@@ -1,8 +1,8 @@
-import { nsu } from "../data/const";
-import { Column, Range, TimeColumn, Viewport } from "../data/models";
+import { nsu } from '../data/const';
+import { Column, Range, TimeColumn, Viewport } from '../data/models';
 
 export interface Polyline {
-    polyline: SVGPolylineElement,
+    polyline: SVGPolylineElement;
     setPoints: (
         min: number, max: number, values: Column, times: TimeColumn,
         indexRange: Range, timeRange: Range, viewport: Viewport,
@@ -12,11 +12,11 @@ export function toPolyline(
     color: string,
     className: string,
 ) {
-    const polyline = document.createElementNS(nsu, "polyline");
+    const polyline = document.createElementNS(nsu, 'polyline');
     polyline.classList.add('polyline');
     polyline.classList.add(className);
     polyline.style.stroke = color;
-    polyline.setAttribute('stroke-linejoin', "round");
+    polyline.setAttribute('stroke-linejoin', 'round');
 
     function setPoints(
         min: number, max: number, values: Column, times: TimeColumn,
@@ -30,14 +30,14 @@ export function toPolyline(
 
         let points = '';
         for (let i = indexRange.start; i <= indexRange.end; i++) {
-            if (i != 0) points += ' ';
+            if (i !== 0) points += ' ';
             points += `${((times[i] as number) - start) * dy},${height - (values[i] as number - min) * dx}`;
         }
-        polyline.setAttribute("points", points);
+        polyline.setAttribute('points', points);
     }
 
     return {
         polyline,
         setPoints,
-    }
+    };
 }

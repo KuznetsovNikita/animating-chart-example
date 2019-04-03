@@ -1,7 +1,7 @@
 import { month, nsu } from "../data/const";
 
 export interface Time {
-    text: SVGTextElement,
+    text: SVGTextElement;
     value: number;
     update: (value: number, left: number) => void;
     setLeft: (left: number) => void;

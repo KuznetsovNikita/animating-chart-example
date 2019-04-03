@@ -30,7 +30,7 @@ function toMiniMapSvg(
 
     const polylines: Dict<Polyline> = {};
 
-    const svg = document.createElementNS(nsu, "svg");
+    const svg = document.createElementNS(nsu, 'svg');
 
     element.appendChild(svg);
 
@@ -64,7 +64,7 @@ function toMiniMapSvg(
             );
         }
         else {
-            polylines[key].polyline.classList.add('invisible')
+            polylines[key].polyline.classList.add('invisible');
             drawCharts();
         }
     });

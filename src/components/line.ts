@@ -14,14 +14,14 @@ export function toLine(
     width: number,
     className: string,
 ) {
-    const g = document.createElementNS(nsu, "g");
+    const g = document.createElementNS(nsu, 'g');
 
     g.classList.add('line');
     className && g.classList.add(className);
     setHeight(height);
 
-    const line = document.createElementNS(nsu, "line");
-    const text = document.createElementNS(nsu, "text");
+    const line = document.createElementNS(nsu, 'line');
+    const text = document.createElementNS(nsu, 'text');
 
     line.setAttribute('x1', '5');
     line.setAttribute('x2', (width - 5).toString());
@@ -51,5 +51,5 @@ export function toLine(
         value,
         setHeight,
         destroy,
-    }
+    };
 }

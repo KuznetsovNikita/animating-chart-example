@@ -1,6 +1,6 @@
-import { nsu } from "../data/const";
-import { DataService } from "../data/service";
-import { PopUpBlock, toPopUpBlock } from "./pop-up-block";
+import { nsu } from '../data/const';
+import { DataService } from '../data/service';
+import { PopUpBlock, toPopUpBlock } from './pop-up-block';
 
 interface Dot {
     innerCircle: SVGCircleElement;
@@ -17,17 +17,17 @@ export function toPopUp(
     parent: HTMLDivElement,
     svg: SVGSVGElement,
     setting: DataService,
-    toMax: () => number
+    toMax: () => number,
 ) {
     let index: number | null = null;
     let elements: Elements;
     const { viewport: { width, height }, jsonData: { columns, colors } } = setting;
-    const g = document.createElementNS(nsu, "g");
+    const g = document.createElementNS(nsu, 'g');
     svg.appendChild(g);
     g.classList.add('pop-up');
     createPopUp();
 
-    const hover = document.createElementNS(nsu, "rect");
+    const hover = document.createElementNS(nsu, 'rect');
     hover.classList.add('hover');
     hover.setAttribute('width', svg.width.baseVal.value.toString());
     hover.setAttribute('height', svg.height.baseVal.value.toString());
@@ -46,12 +46,12 @@ export function toPopUp(
 
             const newIndex = start + Math.round(offsetX / dx);
 
-            if (newIndex != index) {
+            if (newIndex !== index) {
                 index = newIndex;
                 drawPopUp(newIndex, offsetY);
             }
         });
-    }
+    };
 
     function cleanUp() {
         g.classList.add('invisible');
@@ -74,13 +74,13 @@ export function toPopUp(
     }
 
     function onTouchMove(event: TouchEvent) {
-        if (event.targetTouches.length == 1) {
+        if (event.targetTouches.length === 1) {
             drawPopUpByTouch(event);
         }
     }
 
     function onTouchStart(event: TouchEvent) {
-        if (event.targetTouches.length == 1) {
+        if (event.targetTouches.length === 1) {
             drawPopUpByTouch(event);
             hover.addEventListener('touchmove', onTouchMove, { passive: false });
         }
@@ -112,11 +112,11 @@ export function toPopUp(
 
     setting.onVisibilityChange(key => {
         elements.dots.forEach((dot, i) => {
-            if (setting.jsonData.columns[i + 1][0] == key) {
+            if (setting.jsonData.columns[i + 1][0] === key) {
                 dot.circle.classList.toggle('invisible');
                 dot.innerCircle.classList.toggle('invisible');
             }
-        })
+        });
     });
 
     setting.onDestroy(() => {
@@ -134,7 +134,7 @@ export function toPopUp(
 
         g.classList.add('invisible');
 
-        const line = document.createElementNS(nsu, "line");
+        const line = document.createElementNS(nsu, 'line');
         line.classList.add('line');
         line.setAttribute('y1', '0');
         line.setAttribute('y2', height.toString());
@@ -142,27 +142,27 @@ export function toPopUp(
         g.appendChild(line);
 
         const dots = lines.map(item => {
-            const circle = document.createElementNS(nsu, "circle");
-            const innerCircle = document.createElementNS(nsu, "circle");
+            const circle = document.createElementNS(nsu, 'circle');
+            const innerCircle = document.createElementNS(nsu, 'circle');
             g.appendChild(circle);
             circle.style.fill = colors[item[0]];
-            circle.setAttribute("r", '5');
+            circle.setAttribute('r', '5');
 
             g.appendChild(innerCircle);
             innerCircle.classList.add('inner-circle');
-            innerCircle.setAttribute("r", '3');
+            innerCircle.setAttribute('r', '3');
 
             return {
                 circle,
                 innerCircle,
-            }
+            };
         });
 
         elements = {
             line,
             dots,
             block: toPopUpBlock(setting, g),
-        }
+        };
     }
 
     function drawPopUp(index: number, offsetY: number) {
@@ -186,11 +186,11 @@ export function toPopUp(
             const positionY = height - coordinates * dy;
             const y = positionY.toString();
 
-            dot.circle.setAttribute("cx", x);
-            dot.circle.setAttribute("cy", y);
+            dot.circle.setAttribute('cx', x);
+            dot.circle.setAttribute('cy', y);
 
-            dot.innerCircle.setAttribute("cx", x);
-            dot.innerCircle.setAttribute("cy", y);
+            dot.innerCircle.setAttribute('cx', x);
+            dot.innerCircle.setAttribute('cy', y);
         });
 
         elements.block.setData(time, index, positionX, offsetY);

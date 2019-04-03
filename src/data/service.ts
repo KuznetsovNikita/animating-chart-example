@@ -1,4 +1,4 @@
-import { Column, Dict, Range, TimeColumn, Viewport } from "./models";
+import { Column, Dict, Range, TimeColumn, Viewport } from './models';
 
 export interface JsonData {
     columns: [TimeColumn, ...Array<Column>];
@@ -53,9 +53,9 @@ export class DataService {
             indexRange: { start: 1, end: time.length - 1 },
             timeRange: {
                 start: time[1],
-                end: time[time.length - 1] as number
-            }
-        }
+                end: time[time.length - 1] as number,
+            },
+        };
 
         for (let key in jsonData.names) {
             this.visibility[key] = true;
@@ -74,7 +74,7 @@ export class DataService {
         this.timeRange = timeRange;
         this.indexRange = this.toIndexRange(timeRange);
 
-        this.timeChangeWatchers.forEach(act => act(kind, timeRange))
+        this.timeChangeWatchers.forEach(act => act(kind, timeRange));
     }
 
     toIndexRange(timeRange: Range): Range {
@@ -101,7 +101,7 @@ export class DataService {
     private visibilityWatchers: ((key: string, value: boolean) => void)[] = [];
     toggleVisibility(key: string) {
         this.visibility[key] = !this.visibility[key];
-        this.visibilityWatchers.forEach(act => act(key, this.visibility[key]))
+        this.visibilityWatchers.forEach(act => act(key, this.visibility[key]));
     }
 
     onVisibilityChange(act: (key: string, value: boolean) => void) {

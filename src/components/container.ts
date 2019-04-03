@@ -1,7 +1,7 @@
-import { DataService } from "src/data/service";
-import { toChart } from "./chart";
-import { toMenu } from "./menu";
-import { toMiniMap } from "./mini-map";
+import { DataService } from 'src/data/service';
+import { toChart } from './chart';
+import { toMenu } from './menu';
+import { toMiniMap } from './mini-map';
 
 export function drawContainer(
     settings: DataService[],
@@ -55,12 +55,12 @@ function toModeButton(
     function setDay() {
         isDay = true;
         document.body.classList.remove('night');
-        button.innerHTML = "Switch to Night Mode";
+        button.innerHTML = 'Switch to Night Mode';
     }
 
     function setNight() {
         isDay = false;
         document.body.classList.add('night');
-        button.innerHTML = "Switch to Day Mode";
+        button.innerHTML = 'Switch to Day Mode';
     }
 }

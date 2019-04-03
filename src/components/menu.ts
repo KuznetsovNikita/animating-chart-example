@@ -1,4 +1,4 @@
-import { DataService } from "src/data/service";
+import { DataService } from 'src/data/service';
 import { nsu } from '../data/const';
 
 export function toMenu(
@@ -15,7 +15,7 @@ export function toMenu(
             key, settings.visibility[key],
             settings.jsonData.colors[key],
             settings.jsonData.names[key],
-            settings
+            settings,
         ));
     }
 
@@ -53,8 +53,8 @@ function drawCheckbox(
 
     settings.onVisibilityChange(item => {
         if (item === key) {
-            element.classList.toggle('as-check')
-        };
+            element.classList.toggle('as-check');
+        }
     });
 
     settings.onDestroy(() => {
@@ -65,33 +65,33 @@ function drawCheckbox(
 }
 
 function drawIcon(color: string, width: number) {
-    const svg = document.createElementNS(nsu, "svg");
+    const svg = document.createElementNS(nsu, 'svg');
 
-    const shadow = document.createElementNS(nsu, "circle");
+    const shadow = document.createElementNS(nsu, 'circle');
     shadow.classList.add('shadow');
-    shadow.setAttribute("cx", '22');
-    shadow.setAttribute("cy", '21');
-    shadow.setAttribute("r", width.toString());
+    shadow.setAttribute('cx', '22');
+    shadow.setAttribute('cy', '21');
+    shadow.setAttribute('r', width.toString());
     svg.appendChild(shadow);
 
-    const circle = document.createElementNS(nsu, "circle");
+    const circle = document.createElementNS(nsu, 'circle');
     svg.appendChild(circle);
     circle.style.fill = color;
-    circle.setAttribute("cx", '22');
-    circle.setAttribute("cy", '21');
-    circle.setAttribute("r", '13');
+    circle.setAttribute('cx', '22');
+    circle.setAttribute('cy', '21');
+    circle.setAttribute('r', '13');
 
-    const polyline = document.createElementNS(nsu, "polyline");
+    const polyline = document.createElementNS(nsu, 'polyline');
     svg.appendChild(polyline);
     polyline.classList.add('check-mark');
-    polyline.setAttribute("points", '16,21.5 20,25.5 27,17.5');
+    polyline.setAttribute('points', '16,21.5 20,25.5 27,17.5');
 
-    const cover = document.createElementNS(nsu, "circle");
+    const cover = document.createElementNS(nsu, 'circle');
     svg.appendChild(cover);
     cover.classList.add('cover');
-    cover.setAttribute("cx", '22');
-    cover.setAttribute("cy", '21');
-    cover.setAttribute("r", '12');
+    cover.setAttribute('cx', '22');
+    cover.setAttribute('cy', '21');
+    cover.setAttribute('r', '12');
 
     return svg;
 }

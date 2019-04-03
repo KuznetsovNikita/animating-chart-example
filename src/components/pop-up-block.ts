@@ -1,5 +1,5 @@
-import { days, month, nsu } from "../data/const";
-import { DataService } from "../data/service";
+import { days, month, nsu } from '../data/const';
+import { DataService } from '../data/service';
 
 interface Value {
     block: SVGGElement;
@@ -14,12 +14,12 @@ export interface PopUpBlock {
 
 export function toPopUpBlock(
     setting: DataService,
-    g: SVGGElement
+    g: SVGGElement,
 ): PopUpBlock {
-    const panel = document.createElementNS(nsu, "g");
-    const rect = document.createElementNS(nsu, "rect");
-    const shadow = document.createElementNS(nsu, "rect");
-    const date = document.createElementNS(nsu, "text");
+    const panel = document.createElementNS(nsu, 'g');
+    const rect = document.createElementNS(nsu, 'rect');
+    const shadow = document.createElementNS(nsu, 'rect');
+    const date = document.createElementNS(nsu, 'text');
 
     const {
         jsonData: { columns, colors, names },
@@ -58,12 +58,12 @@ export function toPopUpBlock(
 
     const values = lines.map((item, index) => {
 
-        const block = document.createElementNS(nsu, "g");
+        const block = document.createElementNS(nsu, 'g');
         panel.appendChild(block);
         blockPosition(block, index);
 
-        const value = document.createElementNS(nsu, "text");
-        const name = document.createElementNS(nsu, "text");
+        const value = document.createElementNS(nsu, 'text');
+        const name = document.createElementNS(nsu, 'text');
         block.appendChild(value);
         block.appendChild(name);
 
@@ -83,7 +83,7 @@ export function toPopUpBlock(
             value,
             name,
             key: item[0],
-        }
+        };
     });
 
     setting.onVisibilityChange(key => {
@@ -133,5 +133,5 @@ export function toPopUpBlock(
 
     return {
         setData,
-    }
+    };
 }

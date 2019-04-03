@@ -23,9 +23,9 @@ export function toChart(
     let linesStock: Line[] = [];
     const polylines: Dict<Polyline> = {};
 
-    const svg = document.createElementNS(nsu, "svg");
-    const gLines = document.createElementNS(nsu, "g");
-    const gDates = document.createElementNS(nsu, "g");
+    const svg = document.createElementNS(nsu, 'svg');
+    const gLines = document.createElementNS(nsu, 'g');
+    const gDates = document.createElementNS(nsu, 'g');
 
     element.appendChild(svg);
     svg.appendChild(gLines);
@@ -63,7 +63,7 @@ export function toChart(
         drawCharts(kind);
     });
 
-    settings.onVisibilityChange((key) => {
+    settings.onVisibilityChange(key => {
         polylines[key].polyline.classList.toggle('transparent');
         drawCharts('visible');
     });
@@ -127,7 +127,7 @@ export function toChart(
         polylines[key] = poliline;
     }
 
-    function drawLine(max: number, className: string = ''): Line[] {
+    function drawLine(max: number, className = ''): Line[] {
         const dx = (height - 5) / (max - min);
 
         let lastLine: number;
@@ -135,7 +135,7 @@ export function toChart(
             lastLine = Math.floor((max - 20 / dx) / 10) * 10;
         }
         else {
-            lastLine = max - max % 5
+            lastLine = max - max % 5;
             if (lastLine * dx > height - 10) {
                 lastLine -= 5;
             }
@@ -152,7 +152,7 @@ export function toChart(
     }
 
     function redrawLines(deltaMax: number) {
-        if (deltaMax != 0) {
+        if (deltaMax !== 0) {
 
             lines.forEach(line => {
                 line.g.classList.add('transparent');
@@ -162,7 +162,7 @@ export function toChart(
                         .filter(item => item !== line);
                     line.destroy();
                 }, 400);
-            })
+            });
 
             const newLines = drawLine(targetMax, 'transparent');
             lines = newLines;

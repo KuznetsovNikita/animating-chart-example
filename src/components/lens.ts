@@ -1,5 +1,5 @@
-import { Range } from "src/data/models";
-import { DataService } from "src/data/service";
+import { Range } from 'src/data/models';
+import { DataService } from 'src/data/service';
 
 export function drawLens(
     element: HTMLDivElement,
@@ -30,7 +30,7 @@ export function drawLens(
     const {
         miniMap: {
             viewport: { width },
-            timeRange: { start, end }
+            timeRange: { start, end },
         },
         timeRange,
     } = settings;
@@ -45,7 +45,7 @@ export function drawLens(
 
         coverLeft.style.width = left + 'px';
         coverRight.style.left = left + width + 'px';
-    }
+    };
     // set initial style
     setStyle(timeRange);
 
@@ -69,7 +69,7 @@ export function drawLens(
                     break;
                 }
                 case right: {
-                    const newWidth = Math.min(width - startLeft, Math.max(20, startWidth + clientX - startX))
+                    const newWidth = Math.min(width - startLeft, Math.max(20, startWidth + clientX - startX));
                     if (newWidth === startWidth) return;
 
                     settings.setTimeRange('right', {
@@ -93,7 +93,7 @@ export function drawLens(
 
         let lastUpdateCall: number;
         function onMove(clientX: number) {
-            if (lastUpdateCall) cancelAnimationFrame(lastUpdateCall)
+            if (lastUpdateCall) cancelAnimationFrame(lastUpdateCall);
             lastUpdateCall = requestAnimationFrame(() => moveAt(clientX));
         }
 
@@ -103,7 +103,7 @@ export function drawLens(
             onMove(event.clientX);
         }
         function onTouchMove(event: TouchEvent) {
-            if (event.targetTouches.length == 1) {
+            if (event.targetTouches.length === 1) {
                 event.stopPropagation();
                 event.preventDefault();
                 onMove(event.targetTouches[0].clientX);
@@ -111,34 +111,34 @@ export function drawLens(
         }
 
         document.addEventListener(
-            "mousemove", onMouseMove
+            'mousemove', onMouseMove,
         );
         document.addEventListener(
-            "touchmove", onTouchMove,
-            { passive: false }
+            'touchmove', onTouchMove,
+            { passive: false },
         );
 
         function onEnd() {
-            document.removeEventListener("mousemove", onMouseMove);
-            document.removeEventListener("touchmove", onTouchMove);
-            lens.removeEventListener("mouseup", onEnd);
-            element.addEventListener("mouseleave", onEnd);
-            lens.removeEventListener("touchend", onEnd);
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('touchmove', onTouchMove);
+            lens.removeEventListener('mouseup', onEnd);
+            element.addEventListener('mouseleave', onEnd);
+            lens.removeEventListener('touchend', onEnd);
         }
 
-        lens.addEventListener("mouseup", onEnd);
-        element.addEventListener("mouseleave", onEnd);
-        lens.addEventListener("touchend", onEnd);
+        lens.addEventListener('mouseup', onEnd);
+        element.addEventListener('mouseleave', onEnd);
+        lens.addEventListener('touchend', onEnd);
     }
 
-    lens.addEventListener("mousedown", event => {
+    lens.addEventListener('mousedown', event => {
         event.stopPropagation();
         event.preventDefault();
         onMousedown(event.target, event.clientX);
     });
 
-    lens.addEventListener("touchstart", event => {
-        if (event.targetTouches.length == 1) {
+    lens.addEventListener('touchstart', event => {
+        if (event.targetTouches.length === 1) {
             event.stopPropagation();
             event.preventDefault();
             onMousedown(event.targetTouches[0].target, event.targetTouches[0].clientX);
