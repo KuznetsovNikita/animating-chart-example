@@ -14,7 +14,7 @@ function init() {
     rawFile.overrideMimeType('application/json');
     rawFile.open('GET', './chart_data.json', true);
     rawFile.onreadystatechange = function () {
-        if (rawFile.readyState === 4 && rawFile.status == 200) {
+        if (rawFile.readyState === 4 && rawFile.status === 200) {
             const jsonData: JsonData[] = JSON.parse(rawFile.responseText);
             const settings = jsonData.map(item => new DataService(width, item));
 
