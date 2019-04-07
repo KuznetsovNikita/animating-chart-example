@@ -15,3 +15,32 @@ export type TimeColumn = ['x', ...Array<number>];
 export interface Dict<T> {
     [key: string]: T;
 }
+
+export interface Adapter {
+    use: (
+        index: number, indexRange: Range, timeRange: Range,
+        vp: Viewport, min: number, max: number,
+        use: (topX: number, topY: number, botX: number, botY: number) => void
+    ) => void;
+    toMax: (visibility: Dict<boolean>, indexRange: Range) => number[];
+}
+
+export interface Polyline {
+    drw: (
+        adapter: Adapter,
+        context: CanvasRenderingContext2D,
+        index: number,
+        min: number, max: number, values: Column, times: TimeColumn,
+        indexRange: Range, timeRange: Range, viewport: Viewport,
+
+    ) => void;
+    set: (value: boolean) => void;
+    sc: (
+        adapter: Adapter,
+        context: CanvasRenderingContext2D,
+        index: number,
+        min: number, max: number, values: Column,
+        times: TimeColumn, indexRange: Range,
+        timeRange: Range, viewport: Viewport,
+    ) => void;
+}

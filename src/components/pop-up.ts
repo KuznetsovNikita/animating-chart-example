@@ -17,7 +17,7 @@ export function toPopUp(
     parent: HTMLDivElement,
     context: CanvasRenderingContext2D,
     setting: DataService,
-    toMax: () => number,
+    toMax: (index: number) => number,
 ) {
     let index: number | null = null;
     let elements: Elements;
@@ -156,9 +156,8 @@ export function toPopUp(
 
         elements.line.style.transform = `translate(${x}px, 0)`;
 
-        const dy = (height - 10) / (toMax() - setting.min);
-
         elements.dots.forEach((dot, i) => {
+            const dy = height / (toMax(i + 1) - setting.min);
             const coordinates = lines[i][index] as number - setting.min;
             const positionY = height - coordinates * dy;
             const y = positionY.toString();

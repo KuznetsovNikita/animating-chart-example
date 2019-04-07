@@ -4,23 +4,25 @@ export function toMenu(
     container: HTMLDivElement,
     settings: DataService,
 ) {
-    const element = document.createElement('div');
+    if (settings.jsonData.columns.length > 2) {
+        const element = document.createElement('div');
 
-    container.appendChild(element);
-    element.classList.add('menu');
+        container.appendChild(element);
+        element.classList.add('menu');
 
-    for (let key in settings.visibility) {
-        element.appendChild(drawCheckbox(
-            key, settings.visibility[key],
-            settings.jsonData.colors[key],
-            settings.jsonData.names[key],
-            settings,
-        ));
+        for (let key in settings.visibility) {
+            element.appendChild(drawCheckbox(
+                key, settings.visibility[key],
+                settings.jsonData.colors[key],
+                settings.jsonData.names[key],
+                settings,
+            ));
+        }
+
+        settings.onDestroy(() => {
+            container.removeChild(element);
+        });
     }
-
-    settings.onDestroy(() => {
-        container.removeChild(element);
-    });
 }
 
 function drawCheckbox(

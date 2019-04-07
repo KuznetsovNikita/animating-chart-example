@@ -28,3 +28,10 @@ export function toDiv(parent: HTMLElement, className?: string): HTMLDivElement {
     parent.appendChild(div);
     return div;
 }
+
+export function map2<A>(arr1: A[], arr2: A[], map: (a: A, b: A) => A): A[] {
+    return arr1.reduce((result, item, index) => {
+        result.push(map(item, arr2[index]));
+        return result;
+    }, []);
+}

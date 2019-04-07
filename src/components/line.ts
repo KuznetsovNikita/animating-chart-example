@@ -8,9 +8,12 @@ export interface Line {
 
 export function ln(
     vl: number,
+    value2: number | null,
     height: number,
     width: number,
     opacity: number,
+    color1: string | null,
+    color2: string | null,
 ): Line {
     let action: 'none' | 'in' | 'out' = opacity === 0 ? 'in' : 'none';
 
@@ -18,17 +21,29 @@ export function ln(
         action = 'out';
     }
 
-    function drw(context: CanvasRenderingContext2D) {
+    function draw(context: CanvasRenderingContext2D, h: number) {
         context.globalAlpha = opacity;
-        context.fillText(vl.toString(), 0, height - 5);
+        context.textAlign = 'left';
+        if (color1) context.fillStyle = color1;
+        context.fillText(vl.toString(), 0, h - 5);
+
+        if (value2 !== null) {
+            context.fillStyle = color2;
+            context.textAlign = 'right';
+            context.fillText(value2.toString(), width, h - 5);
+        }
 
         context.beginPath();
-        context.lineTo(0, height);
-        context.lineTo(width, height);
+        context.lineTo(0, h);
+        context.lineTo(width, h);
         context.stroke();
     }
 
-    function up(context: CanvasRenderingContext2D, newHeight: number): number {
+    function drw(context: CanvasRenderingContext2D) {
+        draw(context, height);
+    }
+
+    function up(context: CanvasRenderingContext2D, h: number): number {
         if (action === 'in') {
             opacity = Math.min(1, opacity + 0.1);
             if (opacity === 1) action = 'none';
@@ -40,13 +55,7 @@ export function ln(
         }
 
         if (opacity !== 0) {
-            context.globalAlpha = opacity;
-            context.fillText(vl.toString(), 0, newHeight - 5);
-
-            context.beginPath();
-            context.lineTo(0, newHeight);
-            context.lineTo(width, newHeight);
-            context.stroke();
+            draw(context, h);
         }
 
         return opacity;

@@ -1,13 +1,12 @@
 import { Adapter, Column, Polyline, Range, TimeColumn, Viewport } from '../data/models';
 
 
-export function pl(
+export function plg(
     color: string,
-    lineWidth: number,
 ): Polyline {
     const devicePixelRatio = window.devicePixelRatio;
     let action: 'none' | 'in' | 'out' = 'none';
-    let opacity = 1;
+    let scale = 1;
 
     function set(value: boolean) {
         action = value ? 'in' : 'out';
@@ -22,16 +21,16 @@ export function pl(
         timeRange: Range, viewport: Viewport,
     ) {
         if (action === 'in') {
-            opacity = Math.min(1, opacity + 0.1);
-            if (opacity === 1) action = 'none';
+            scale = Math.min(1, scale + 0.1);
+            if (scale === 1) action = 'none';
         }
 
         if (action === 'out') {
-            opacity = Math.max(0, opacity - 0.1);
-            if (opacity === 0) action = 'none';
+            scale = Math.max(0, scale - 0.1);
+            if (scale === 0) action = 'none';
         }
 
-        if (opacity !== 0) {
+        if (scale !== 0) {
             drw(
                 adapter, context, index, min, max, values, times, indexRange, timeRange, viewport,
             );
@@ -45,24 +44,40 @@ export function pl(
         min: number, max: number, values: Column, times: TimeColumn,
         indexRange: Range, timeRange: Range, viewport: Viewport,
     ) {
-        context.lineWidth = lineWidth * devicePixelRatio;
-        context.globalAlpha = opacity;
-        context.strokeStyle = color;
+        context.fillStyle = color;
 
+        adapter.use(
+            index, indexRange, timeRange, viewport, min, max,
+            (x, y, bx, by) => {
+                context.beginPath();
+                context.moveTo(bx, by);
+                context.lineTo(bx, y);
+                context.lineTo(x, y);
+                context.lineTo(x, by);
+                context.closePath();
+                context.fill();
+            },
+        )
         const { start, end } = timeRange;
         const { height, width } = viewport;
 
-        const dx = height / (max - min);
-        const dy = width / (end - start);
+        const dy = height / (max - min);
+        const dx = width / (end - start);
 
-        context.beginPath();
+        let oldX = 0;
         for (let i = indexRange.start; i <= indexRange.end; i++) {
-            context.lineTo(
-                ((times[i] as number) - start) * dy * devicePixelRatio,
-                (height - (values[i] as number - min) * dx) * devicePixelRatio,
-            );
+            const x = ((times[i] as number) - start) * dx * devicePixelRatio * scale;
+            const y = (height - (values[i] as number - min) * dy) * devicePixelRatio;
+            context.beginPath();
+            context.moveTo(oldX, height * devicePixelRatio);
+            context.lineTo(oldX, y);
+            context.lineTo(x, y);
+            context.lineTo(x, height * devicePixelRatio);
+            context.closePath();
+            context.fill();
+
+            oldX = x;
         }
-        context.stroke();
     }
 
     return {

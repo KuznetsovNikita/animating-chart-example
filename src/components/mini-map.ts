@@ -1,8 +1,7 @@
-import { Column, Dict, TimeColumn } from 'src/data/models';
-import { drawConvas } from '../data/const';
+import { drawConvas, map2 } from '../data/const';
+import { Column, Dict, Polyline, TimeColumn } from '../data/models';
 import { DataService } from '../data/service';
 import { drawLens } from './lens';
-import { pl, Polyline } from './polyline';
 
 export function toMiniMap(
     container: HTMLDivElement,
@@ -21,10 +20,10 @@ function toMiniMapSvg(
     element: HTMLDivElement,
     settings: DataService,
 ) {
-    let currentMax: number;
-    let targetMax: number;
+    let currentMax: number[];
+    let targetMax: number[];
 
-    let deltaMax: number;
+    let deltaMax: number[];
 
     let lastUpdateCall: number;
 
@@ -40,10 +39,14 @@ function toMiniMapSvg(
 
     currentMax = settings.toMaxVisibleValue(indexRange);
 
+    function toCurrentMax(index: number) {
+        return currentMax.length > 1 ? currentMax[index - 1] : currentMax[0];
+    }
+
     for (let i = 1; i < columns.length; i++) {
         const key = columns[i][0];
         drawPolyline(
-            key, currentMax, columns[i],
+            i, key, toCurrentMax(i), columns[i],
             columns[0], colors[key],
         );
     }
@@ -55,13 +58,15 @@ function toMiniMapSvg(
     });
 
     function drawCharts() {
-
-        if (lastUpdateCall) cancelAnimationFrame(lastUpdateCall);
-
-        const max = settings.toMaxVisibleValue(indexRange);
-
-        targetMax = max;
-        deltaMax = (targetMax - currentMax) / 10;
+        if (lastUpdateCall) {
+            cancelAnimationFrame(lastUpdateCall);
+            currentMax = currentMax.map(max => Math.floor(max / 10) * 10); // round current max, if animation wasn't finished
+        }
+        targetMax = settings.toMaxVisibleValue(indexRange);
+        deltaMax = map2(
+            targetMax, currentMax,
+            (t, c) => Math.round((t - c) / 10),
+        );
 
         scale(0);
     }
@@ -72,22 +77,27 @@ function toMiniMapSvg(
 
             for (let i = 1; i < columns.length; i++) {
                 polylines[columns[i][0]].sc(
-                    context, min, currentMax, columns[i], columns[0],
+                    settings.adapter, context, i, min, toCurrentMax(i), columns[i], columns[0],
                     indexRange, timeRange, viewport,
                 );
             }
 
             if (index === 10) return;
-            currentMax += deltaMax;
+            currentMax = map2(
+                currentMax, deltaMax,
+                (c, d) => c + d,
+            );
+
             return scale(index + 1);
         });
     }
 
     function drawPolyline(
+        index: number,
         key: string, max: number, values: Column,
         times: TimeColumn, color: string,
     ) {
-        polylines[key] = pl(color, 1);
-        polylines[key].drw(context, min, max, values, times, indexRange, timeRange, viewport);
+        polylines[key] = settings.cr(color, 1);
+        polylines[key].drw(settings.adapter, context, index, min, max, values, times, indexRange, timeRange, viewport);
     }
 }

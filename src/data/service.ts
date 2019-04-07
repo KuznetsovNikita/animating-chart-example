@@ -1,8 +1,15 @@
-import { Column, Dict, Range, TimeColumn, Viewport } from './models';
+import { plg } from '../components/poligon';
+import { pl } from '../components/polyline';
+import { Adapter, Column, Dict, Polyline, Range, TimeColumn, Viewport } from './models';
+
+// interface Types {
+//     x: string[];
+//     [key: string]: 'line' | 'percent';
+// }
 
 export interface JsonData {
     columns: [TimeColumn, ...Array<Column>];
-    types: Dict<string>;
+    types: any;
     names: Dict<string>;
     colors: Dict<string>;
 }
@@ -15,6 +22,137 @@ interface MiniMap {
 
 export type ChangeKind = 'left' | 'right' | 'move' | 'visible';
 
+function dataAdapter(
+    kind: 'point' | 'double' | 'summ' | 'percent',
+    jsonData: JsonData,
+): Adapter {
+    const devicePixelRatio = window.devicePixelRatio;
+    const times = jsonData.columns[0];
+
+    function points(
+        index: number, indexRange: Range, timeRange: Range,
+        vp: Viewport, min: number, max: number,
+
+        use: (topX: number, topY: number, botX: number, botY: number) => void
+    ) {
+        const dy = vp.height / (max - min);
+        const dx = vp.width / (timeRange.end - timeRange.start);
+        for (let i = indexRange.start; i <= indexRange.end; i++) {
+            const x = ((times[i] as number) - timeRange.start) * dx * devicePixelRatio;
+            const y = (vp.height - (jsonData.columns[index][i] as number - min) * dy) * devicePixelRatio;
+            use(x, y, 0, 0);
+        }
+    }
+
+    function pointsMax(visibility: Dict<boolean>, indexRange: Range) {
+        let max = 10;
+        for (let i = 1; i < jsonData.columns.length; i++) {
+            if (visibility[jsonData.columns[i][0]]) {
+                for (let j = indexRange.start; j <= indexRange.end; j++) {
+                    max = Math.max(max, jsonData.columns[i][j] as number);
+                }
+            }
+        }
+        return [Math.ceil(max / 10) * 10];
+    }
+
+    function doubleMax(visibility: Dict<boolean>, indexRange: Range) {
+        return jsonData.types['x'].map((_key, i) => {
+            let max = 10;
+            if (visibility[jsonData.columns[i + 1][0]]) {
+                for (let j = indexRange.start; j <= indexRange.end; j++) {
+                    max = Math.max(max, jsonData.columns[i + 1][j] as number);
+                }
+            }
+            return Math.ceil(max / 10) * 10;
+        });
+    }
+
+    function summ(
+        index: number, indexRange: Range, timeRange: Range,
+        vp: Viewport, min: number, max: number,
+
+        use: (topX: number, topY: number, botX: number, botY: number) => void
+    ) {
+        const dy = vp.height / (max - min);
+        const dx = vp.width / (timeRange.end - timeRange.start);
+        let botX = 0
+        for (let i = indexRange.start; i <= indexRange.end; i++) {
+            const x = ((times[i] as number) - timeRange.start) * dx * devicePixelRatio;
+
+            let botY = 0;
+            for (let j = 1; j < index; j++) {
+                botY += (jsonData.columns[j][i] as number - min) * dy;
+            }
+
+            const y = botY + (jsonData.columns[index][i] as number - min) * dy;
+            use(x, (vp.height - y) * devicePixelRatio, botX, (vp.height - botY) * devicePixelRatio);
+            botX = x;
+        }
+    }
+
+    function summMax(visibility: Dict<boolean>, indexRange: Range) {
+        let max = 10;
+        for (let j = indexRange.start; j <= indexRange.end; j++) {
+            let summ = 0;
+            for (let i = 1; i < jsonData.columns.length; i++) {
+                if (visibility[jsonData.columns[i][0]]) {
+                    summ += jsonData.columns[i][j] as number;
+                }
+            }
+            max = Math.max(max, summ);
+        }
+        return [Math.ceil(max / 10) * 10];
+    }
+
+    function percent(
+        index: number, indexRange: Range, timeRange: Range,
+        vp: Viewport, min: number, max: number,
+
+        use: (topX: number, topY: number, botX: number, botY: number) => void
+    ) {
+
+        const dy = vp.height / (max - min);
+        const dx = vp.width / (timeRange.end - timeRange.start);
+        for (let i = indexRange.start; i <= indexRange.end; i++) {
+            const x = ((times[i] as number) - timeRange.start) * dx * devicePixelRatio;
+
+            let botY = 0;
+            for (let j = 1; j < index; j++) {
+                botY += (jsonData.columns[j][i] as number - min) * dy;
+            }
+
+            let totalY = 0;
+            for (let j = 1; j < jsonData.columns.length; j++) {
+                totalY += (jsonData.columns[j][i] as number - min) * dy;
+            }
+
+            const y = botY + (jsonData.columns[index][i] as number - min) * dy;
+
+            use(x, (vp.height - totalY / y) * devicePixelRatio, 0, (vp.height - totalY / botY) * devicePixelRatio);
+        }
+
+    }
+    switch (kind) {
+        case 'point': return {
+            use: points,
+            toMax: pointsMax,
+        };
+        case 'double': return {
+            use: points,
+            toMax: doubleMax,
+        }
+        case 'summ': return {
+            use: summ,
+            toMax: summMax,
+        }
+        case 'percent': return {
+            use: percent,
+            toMax: () => [100],
+        }
+    }
+}
+
 export class DataService {
     public lines = 5;
     public min: number;
@@ -26,6 +164,10 @@ export class DataService {
     public visibility: Dict<boolean> = {};
 
     public isMove = false;
+
+    public zIndex: string;
+    public cr: (color: string, lineWidth: number) => Polyline;
+    public adapter: Adapter;
 
     constructor(
         width: number,
@@ -61,6 +203,29 @@ export class DataService {
         }
 
         this.min = this.toMinValue();
+
+        const type = jsonData.types[jsonData.columns[1][0]];
+
+        if (jsonData.types['x'].length > 1) {
+            this.zIndex = '-1';
+            this.cr = pl;
+            this.adapter = dataAdapter('double', jsonData);
+        }
+        else if (type === 'line') {
+            this.zIndex = '-1';
+            this.cr = pl;
+            this.adapter = dataAdapter('point', jsonData);
+        }
+        else if (type === 'bar') {
+            this.zIndex = '1';
+            this.cr = plg;
+            this.adapter = dataAdapter('summ', jsonData);
+        }
+        else {
+            this.zIndex = '1';
+            this.cr = plg;
+            this.adapter = dataAdapter('percent', jsonData);
+        }
     }
 
     private timeChangeWatchers: ((kind: ChangeKind, timeRange: Range) => void)[] = [];
@@ -112,31 +277,21 @@ export class DataService {
         this.destroyWatchers.push(act);
     }
 
-    toMaxVisibleValue(indexRange: Range) {
-        let max = 10;
-        const { start, end } = indexRange;
-        const { jsonData: { columns }, visibility } = this;
-        for (let i = 1; i < columns.length; i++) {
-            if (visibility[columns[i][0]]) {
-                for (let j = start; j <= end; j++) {
-                    max = Math.max(max, columns[i][j] as number);
-                }
-            }
-        }
-        return Math.ceil(max / 10) * 10;
+    toMaxVisibleValue(indexRange: Range): number[] {
+        return this.adapter.toMax(this.visibility, indexRange);
     }
 
     toMinValue() {
-        const { jsonData: { columns } } = this;
-        let min = columns[1][1] as number;
-        for (let i = 1; i < columns.length; i++) {
-            for (let j = 1; j < columns[0].length; j++) {
-                min = Math.min(min, columns[i][j] as number);
-            }
-        }
-        if (min > 1000) {
-            return min - min % 100;
-        }
+        // const { jsonData: { columns } } = this;
+        // let min = columns[1][1] as number;
+        // for (let i = 1; i < columns.length; i++) {
+        //     for (let j = 1; j < columns[0].length; j++) {
+        //         min = Math.min(min, columns[i][j] as number);
+        //     }
+        // }
+        // if (min > 1000) {
+        //     return min - min % 100;
+        // }
         return 0;
     }
 }
