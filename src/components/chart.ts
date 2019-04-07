@@ -1,7 +1,9 @@
 import { Column, Dict, Range, TimeColumn, Viewport } from 'src/data/models';
+import { drawConvas } from '../data/const';
 import { ChangeKind, DataService } from '../data/service';
 import { Line } from './line';
 import { pl, Polyline } from './polyline';
+import { toTimes } from './times';
 
 
 export function toChart(
@@ -20,9 +22,6 @@ export function toChart(
     let linesStock: Line[] = [];
     const polylines: Dict<Polyline> = {};
 
-    const canvas = document.createElement('canvas');
-
-    element.appendChild(canvas);
 
     const {
         jsonData: { columns, colors },
@@ -31,12 +30,16 @@ export function toChart(
         min,
     } = settings;
 
-    canvas.setAttribute('width', width.toString());
-    canvas.setAttribute('height', (height + 20).toString());
-
+    const padding = 20;
+    const devicePixelRatio = window.devicePixelRatio;
+    const canvas = drawConvas(element, width, height + padding);
     const context = canvas.getContext('2d');
 
-    //const times = toTimes(gDates, settings);
+    context.textAlign = "center";
+    context.lineJoin = 'bevel';
+    context.lineCap = 'butt';
+
+    const times = toTimes(context, settings);
 
     currentMax = settings.toMaxVisibleValue(indexRange);
 
@@ -66,7 +69,7 @@ export function toChart(
     function drawCharts(kind: ChangeKind) {
         if (lastUpdateChart) cancelAnimationFrame(lastUpdateChart);
 
-        //   times.redrawTimes(kind);
+        times.rdt(kind);
 
         const max = settings.toMaxVisibleValue(
             settings.indexRange,
@@ -81,7 +84,7 @@ export function toChart(
 
     function scale(index: number) {
         lastUpdateChart = requestAnimationFrame(() => {
-            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.clearRect(0, 0, canvas.width, canvas.height - 20 * devicePixelRatio);
 
             //  scaleLines();
             const {

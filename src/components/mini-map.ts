@@ -1,4 +1,5 @@
 import { Column, Dict, TimeColumn } from 'src/data/models';
+import { drawConvas } from '../data/const';
 import { DataService } from '../data/service';
 import { drawLens } from './lens';
 import { pl, Polyline } from './polyline';
@@ -29,17 +30,13 @@ function toMiniMapSvg(
 
     const polylines: Dict<Polyline> = {};
 
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-
     const {
         jsonData: { columns, colors },
         miniMap: { viewport, indexRange, timeRange }, min,
     } = settings;
 
-    canvas.setAttribute('width', viewport.width.toString());
-    canvas.setAttribute('height', viewport.height.toString());
-    element.appendChild(canvas);
+    const canvas = drawConvas(element, viewport.width, viewport.height);
+    const context = canvas.getContext('2d');
 
     currentMax = settings.toMaxVisibleValue(indexRange);
 

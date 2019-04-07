@@ -1,15 +1,20 @@
 import { ChangeKind, DataService } from 'src/data/service';
-import { Time, toTime } from './time';
+import { month } from '../data/const';
 
 export interface Times {
-    redrawTimes: (kind: ChangeKind) => void;
+    rdt: (kind: ChangeKind) => void;
 }
+
 export function toTimes(
-    gDates: SVGGElement,
+    context: CanvasRenderingContext2D,
     settings: DataService,
 ): Times {
-    const viewportSpace = 80;
-    const minSpace = 80;
+    const devicePixelRatio = window.devicePixelRatio;
+    context.font = (10 * devicePixelRatio) + 'px Arial';
+    context.fillStyle = "#96a2aa";
+
+    const viewportSpace = 30;
+    const minSpace = 70;
     const firstSpace = 20;
 
     let startIndex: number;
@@ -19,13 +24,6 @@ export function toTimes(
     let dy: number;
 
     const { viewport: { height, width }, jsonData: { columns } } = settings;
-    gDates.setAttribute('transform', `translate(0,${height})`);
-
-    const times: Time[] = new Array(columns[0].length);
-
-    settings.onDestroy(() => {
-        times.forEach(item => item && item.destroy());
-    });
 
     drawTimes();
 
@@ -45,19 +43,24 @@ export function toTimes(
         return (value - settings.timeRange.start) * dy;
     }
 
-    function destroy(index: number) {
-        times[index] = undefined;
-    }
-
     function drawTime(index: number) {
-        times[index] = toTime(
-            gDates,
-            toValue(index),
-            toLeftByIndex(index),
+        const date = new Date(toValue(index));
+        context.fillText(
+            `${date.getDate()} ${month[date.getMonth()]}`,
+            toLeftByIndex(index) * devicePixelRatio,
+            (height + 15) * devicePixelRatio,
         );
     }
 
-    function redrawTimes(kind: ChangeKind) {
+    function redraw() {
+        context.clearRect(0, height * devicePixelRatio, width * devicePixelRatio, 20 * devicePixelRatio);
+        for (let i = startIndex; i <= endIndex; i += delta) {
+            drawTime(i);
+        }
+    }
+
+    function rdt(kind: ChangeKind) {
+
         switch (kind) {
             case 'left': return moveOnScale(() => {
                 maybeLeftScaleIn();
@@ -79,40 +82,28 @@ export function toTimes(
 
         scale();
         maybeAddOrRemoveItem();
-
-        for (let i = startIndex; i <= endIndex; i += delta) {
-            times[i].setLeft(toLeftByIndex(i));
-        }
+        redraw();
     }
 
     function maybeAddOrRemoveItem() {
         const start = startIndex - delta;
-        if (
-            hasValue(start) &&
-            toLeftByIndex(start) > -viewportSpace
-        ) {
-            drawTime(start);
+        if (hasValue(start) && toLeftByIndex(start) > -viewportSpace) {
             startIndex = start;
         }
 
         const leftStart = toLeftByIndex(startIndex);
         if (leftStart < -viewportSpace) {
-            destroy(startIndex);
             startIndex = startIndex + delta;
         }
 
         const end = endIndex + delta;
-        if (
-            hasValue(end) &&
-            toLeftByIndex(end) < width + viewportSpace
+        if (hasValue(end) && toLeftByIndex(end) < width + viewportSpace
         ) {
-            drawTime(end);
             endIndex = end;
         }
 
         const leftEnd = toLeftByIndex(endIndex);
         if (leftEnd > width + viewportSpace) {
-            destroy(endIndex);
             endIndex = endIndex - delta;
         }
     }
@@ -125,26 +116,9 @@ export function toTimes(
             hasValue(index) &&
             (toValue(endIndex) - toValue(index)) * dy > minSpace
         ) {
-            let newStart = 0;
-            while (index >= startIndex) {
-                const left = toLeftByIndex(index);
-
-                if (times[index]) {
-                    if (left < 0) {
-                        destroy(index);
-                    }
-                    else {
-                        newStart = index;
-                    }
-                }
-                else {
-                    if (left > 0) {
-                        drawTime(index);
-                        newStart = index;
-                    }
-                }
-
-                index -= newDelta;
+            let newStart = index;
+            while (toLeftByIndex(newStart) >= -viewportSpace) {
+                newStart -= newDelta;
             }
 
             startIndex = newStart;
@@ -159,25 +133,10 @@ export function toTimes(
             hasValue(index) &&
             (toValue(endIndex) - toValue(index)) * dy < minSpace
         ) {
-            let i = endIndex;
-            let isRemove = false;
-            let newStart = 0;
-            while (toLeftByIndex(i) >= -viewportSpace) {
 
-                if (isRemove) {
-                    if (times[i]) {
-                        destroy(i);
-                    }
-                }
-                else {
-                    if (!times[i]) {
-                        drawTime(i);
-                    }
-                    newStart = i;
-                }
-
-                isRemove = !isRemove;
-                i -= delta;
+            let newStart = endIndex;
+            while (toLeftByIndex(newStart) >= -viewportSpace) {
+                newStart -= delta;
             }
 
             startIndex = newStart;
@@ -194,26 +153,9 @@ export function toTimes(
             hasValue(index) &&
             (toValue(index) - toValue(startIndex)) * dy > minSpace
         ) {
-            let newEnd = 0;
-            while (index <= endIndex) {
-                const left = toLeftByIndex(index);
-
-                if (times[index]) {
-                    if (left > width) {
-                        destroy(index);
-                    }
-                    else {
-                        newEnd = index;
-                    }
-                }
-                else {
-                    if (left < width) {
-                        drawTime(index);
-                        newEnd = index;
-                    }
-                }
-
-                index += newDelta;
+            let newEnd = index;
+            while (toLeftByIndex(newEnd) <= width + viewportSpace) {
+                newEnd += newDelta;
             }
 
             endIndex = newEnd;
@@ -228,25 +170,9 @@ export function toTimes(
             hasValue(index) &&
             (toValue(index) - toValue(startIndex)) * dy < minSpace
         ) {
-
-            let i = startIndex;
-            let isRemove = false;
-            let newEnd = 0;
-            while (toLeftByIndex(i) <= width + viewportSpace) {
-                if (isRemove) {
-                    if (times[i]) {
-                        destroy(i);
-                    }
-                }
-                else {
-                    if (!times[i]) {
-                        drawTime(i);
-                    }
-                    newEnd = i;
-                }
-
-                isRemove = !isRemove;
-                i += delta;
+            let newEnd = startIndex;
+            while (toLeftByIndex(newEnd) <= width + viewportSpace) {
+                newEnd += newDelta;
             }
 
             endIndex = newEnd;
@@ -260,12 +186,7 @@ export function toTimes(
             hasValue(start) &&
             toLeftByIndex(start) > -viewportSpace
         ) {
-            const time = times[endIndex];
-            times[endIndex] = undefined;
             endIndex -= delta;
-
-            time.update(toValue(start), toLeftByIndex(start));
-            times[start] = time;
             startIndex = start;
 
             maybeMoveStart();
@@ -278,12 +199,7 @@ export function toTimes(
             hasValue(end) &&
             toLeftByIndex(end) < width + viewportSpace
         ) {
-            const time = times[startIndex];
-            times[startIndex] = undefined;
             startIndex += delta;
-
-            time.update(toValue(end), toLeftByIndex(end));
-            times[end] = time;
             endIndex = end;
 
             maybeMoveEnd();
@@ -293,16 +209,12 @@ export function toTimes(
     function move() {
         maybeMoveStart();
         maybeMoveEnd();
-
-        for (let i = startIndex; i <= endIndex; i += delta) {
-            times[i].setLeft(toLeftByIndex(i));
-        }
+        redraw();
     }
 
     function drawTimes() {
         const { indexRange, timeRange } = settings;
         dy = width / (timeRange.end - timeRange.start);
-
 
         startIndex = indexRange.start;
         while (toLeftByIndex(startIndex) < firstSpace) {
@@ -322,13 +234,10 @@ export function toTimes(
         ) {
             endIndex += delta;
         }
-
-        for (let i = startIndex; i <= endIndex; i += delta) {
-            drawTime(i);
-        }
+        redraw();
     }
 
     return {
-        redrawTimes,
+        rdt,
     };
 }

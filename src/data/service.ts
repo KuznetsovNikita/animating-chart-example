@@ -39,7 +39,7 @@ export class DataService {
 
         this.viewport = {
             width,
-            height: Math.round(width * 0.7),
+            height: Math.round(width * 0.6),
         };
 
         this.miniMap = {
