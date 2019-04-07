@@ -58,21 +58,23 @@ export function toTimes(
             drawTime(i);
         }
     }
-
+    let lastUpdate = null;
     function rdt(kind: ChangeKind) {
-
-        switch (kind) {
-            case 'left': return moveOnScale(() => {
-                maybeLeftScaleIn();
-                maybeLeftScaleOut();
-            });
-            case 'right': return moveOnScale(() => {
-                maybeRightScaleIn();
-                maybeRightScaleOut();
-            });
-            case 'move': return move();
-            default: return;
-        }
+        if (lastUpdate !== null) cancelAnimationFrame(lastUpdate);
+        lastUpdate = requestAnimationFrame(() => {
+            switch (kind) {
+                case 'left': return moveOnScale(() => {
+                    maybeLeftScaleIn();
+                    maybeLeftScaleOut();
+                });
+                case 'right': return moveOnScale(() => {
+                    maybeRightScaleIn();
+                    maybeRightScaleOut();
+                });
+                case 'move': return move();
+                default: return;
+            }
+        });
     }
 
     function moveOnScale(scale: () => void) {

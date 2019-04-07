@@ -1,55 +1,61 @@
-import { nsu } from '../data/const';
 
 export interface Line {
-    g: SVGGElement;
-    value: number;
-    setHeight: (height: number) => void;
-    destroy: () => void;
+    drw: (context: CanvasRenderingContext2D) => void;
+    hd: () => void;
+    up: (context: CanvasRenderingContext2D, height: number) => number;
+    vl: number;
 }
 
-export function toLine(
-    svg: SVGGElement,
-    value: number,
+export function ln(
+    vl: number,
     height: number,
     width: number,
-    className: string,
-) {
-    const g = document.createElementNS(nsu, 'g');
+    opacity: number,
+): Line {
+    let action: 'none' | 'in' | 'out' = opacity === 0 ? 'in' : 'none';
 
-    g.classList.add('line');
-    className && g.classList.add(className);
-    setHeight(height);
-
-    const line = document.createElementNS(nsu, 'line');
-    const text = document.createElementNS(nsu, 'text');
-
-    line.setAttribute('x1', '5');
-    line.setAttribute('x2', (width - 5).toString());
-    line.setAttribute('y1', '-1');
-    line.setAttribute('y2', '-1');
-
-    text.setAttribute('x', '5');
-    text.setAttribute('y', '-10');
-    text.textContent = value.toString();
-
-    g.appendChild(line);
-    g.appendChild(text);
-
-    svg.appendChild(g);
-
-    function setHeight(height: number) {
-        g.setAttribute('transform', `translate(0,${height})`);
+    function hd() {
+        action = 'out';
     }
 
-    function destroy() {
-        svg.removeChild(g);
-        svg = null;
+    function drw(context: CanvasRenderingContext2D) {
+        context.globalAlpha = opacity;
+        context.fillText(vl.toString(), 0, height - 5);
+
+        context.beginPath();
+        context.lineTo(0, height);
+        context.lineTo(width, height);
+        context.stroke();
+    }
+
+    function up(context: CanvasRenderingContext2D, newHeight: number): number {
+        if (action === 'in') {
+            opacity = Math.min(1, opacity + 0.1);
+            if (opacity === 1) action = 'none';
+        }
+
+        if (action === 'out') {
+            opacity = Math.max(0, opacity - 0.1);
+            if (opacity === 0) action = 'none';
+        }
+
+        if (opacity !== 0) {
+            context.globalAlpha = opacity;
+            context.fillText(vl.toString(), 0, newHeight - 5);
+
+            context.beginPath();
+            context.lineTo(0, newHeight);
+            context.lineTo(width, newHeight);
+            context.stroke();
+        }
+
+        return opacity;
     }
 
     return {
-        g,
-        value,
-        setHeight,
-        destroy,
+        drw,
+        hd,
+        up,
+        vl,
     };
 }

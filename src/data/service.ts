@@ -25,6 +25,8 @@ export class DataService {
     public miniMap: MiniMap;
     public visibility: Dict<boolean> = {};
 
+    public isMove = false;
+
     constructor(
         width: number,
         public jsonData: JsonData,

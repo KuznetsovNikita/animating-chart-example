@@ -53,6 +53,7 @@ export function drawLens(
     settings.onTimeRangeChange((_, range) => setStyle(range));
 
     function onMousedown(target: EventTarget, startX: number) {
+        settings.isMove = true;
         const startWidth = (settings.timeRange.end - settings.timeRange.start) * dX;
         const startLeft = (settings.timeRange.start - start) * dX;
 
@@ -119,6 +120,7 @@ export function drawLens(
         );
 
         function onEnd() {
+            settings.isMove = false;
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('touchmove', onTouchMove);
             lens.removeEventListener('mouseup', onEnd);

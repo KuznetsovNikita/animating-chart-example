@@ -1,5 +1,4 @@
 import { DataService } from 'src/data/service';
-import { nsu } from '../data/const';
 
 export function toMenu(
     container: HTMLDivElement,
@@ -65,33 +64,8 @@ function drawCheckbox(
 }
 
 function drawIcon(color: string, width: number) {
-    const svg = document.createElementNS(nsu, 'svg');
-
-    const shadow = document.createElementNS(nsu, 'circle');
-    shadow.classList.add('shadow');
-    shadow.setAttribute('cx', '22');
-    shadow.setAttribute('cy', '21');
-    shadow.setAttribute('r', width.toString());
-    svg.appendChild(shadow);
-
-    const circle = document.createElementNS(nsu, 'circle');
-    svg.appendChild(circle);
-    circle.style.fill = color;
-    circle.setAttribute('cx', '22');
-    circle.setAttribute('cy', '21');
-    circle.setAttribute('r', '13');
-
-    const polyline = document.createElementNS(nsu, 'polyline');
-    svg.appendChild(polyline);
-    polyline.classList.add('check-mark');
-    polyline.setAttribute('points', '16,21.5 20,25.5 27,17.5');
-
-    const cover = document.createElementNS(nsu, 'circle');
-    svg.appendChild(cover);
-    cover.classList.add('cover');
-    cover.setAttribute('cx', '22');
-    cover.setAttribute('cy', '21');
-    cover.setAttribute('r', '12');
-
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.innerHTML += `<circle class="shadow" cx="22" cy="21" r="${width}"></circle><circle cx="22" cy="21" r="13" style="fill: ${color};"></circle>`;
+    svg.innerHTML += '<polyline class="check-mark" points="16,21.5 20,25.5 27,17.5"></polyline><circle class="cover" cx="22" cy="21" r="12"></circle>';
     return svg;
 }

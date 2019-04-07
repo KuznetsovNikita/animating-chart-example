@@ -24,10 +24,6 @@ body {
     position: relative;
 }
 
-.chart {
-    margin-bottom: 50px;
-}
-
 #header {
     padding: 0 5px;
     h1 {

@@ -1,76 +1,84 @@
 
-svg .invisible {
-    visibility: hidden;
+.chart {
+    margin-bottom: 50px;
+    position: relative;
 }
 
-.line line {
-    stroke: #f2f4f5;
+.lines {
+    position: absolute;
+    top: 0;
+    left: 5px;
 }
 
-svg text, svg tspan {
-    font: 300 12px sans-serif;
-    fill: #a6b1b8;
+.hover {
+    position: absolute;
+    top: 0;
+    left: 0;;
 }
 
-svg .transparent {
-    opacity: 0;
-}
-
-.time  {
-    opacity: 1;
-    transition: opacity .2s ease;
-}
-.polyline, .line {
-    opacity: 1;
-    transition: opacity .4s ease;
-}
-
-.main-chart {
-    stroke-width: 3;
-    stroke-linecap: round;
-    fill: none;
-}
-
-.mini-map-chart {
-    stroke-width: 1;
-    fill: none;
+.invisible {
+    display: none;
 }
 
 .pop-up {
-    
-    .line, .rect {
-        fill: white;
-        stroke: #f2f4f5;
-    }
-    .shadow {
-        fill: rgba(0, 0, 0, 0.1);
-        stroke: rgba(0, 0, 0, 0.05);
-    }
-    .date {
-        fill: black;
-    }
-    .inner-circle {
-        fill: white;
+
+    .line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1px;
+        height: 100%;
+        background-color: #f2f4f5;
+        opacity: .9;
     }
 
-    text {
-        font: 400 14px sans-serif;
+    .dot {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 6px;
+        height: 6px;
+        border-radius: 6px;
+        border-width: 2px;
+        border-style: solid;
+        margin: -4px;
+        background-color: white;
     }
+
+    .panel {
+        position: relative;
+        position: absolute;
+        top: 0;
+        left: 0;
+        border: 1px solid #f2f4f5;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: white;
+        width: 140px;
+        box-sizing: border-box;
+    }
+
     .value {
+        float: right;
         font: 600 15px sans-serif;
     }
-}
-.hover {
-    fill: transparent;
+    .block {
+        float: left;
+        width: 100%;
+    }
+    .name {
+        font: 400 14px sans-serif;
+        float: left;
+    }
+
+    .date {
+        font: 600 14px sans-serif;
+        float: left;
+    }
+    
 }
 
 .night {
-    .line line {
-        stroke: #2b3f51;
-    }
-    svg text, svg tspan {
-        fill: #485e6f;
-    }
 
     .pop-up {
         .line, .rect {

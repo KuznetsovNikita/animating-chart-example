@@ -1,46 +1,42 @@
-import { nsu } from '../data/const';
+import { toDiv } from '../data/const';
 import { DataService } from '../data/service';
 import { PopUpBlock, toPopUpBlock } from './pop-up-block';
 
-interface Dot {
-    innerCircle: SVGCircleElement;
-    circle: SVGCircleElement;
-}
+// interface Dot {
+//     innerCircle: SVGCircleElement;
+//     circle: SVGCircleElement;
+// }
 
 interface Elements {
-    line: SVGLineElement;
-    dots: Dot[];
+    line: HTMLDivElement;
+    dots: HTMLDivElement[];
     block: PopUpBlock;
 }
 
 export function toPopUp(
     parent: HTMLDivElement,
-    svg: SVGSVGElement,
+    context: CanvasRenderingContext2D,
     setting: DataService,
     toMax: () => number,
 ) {
     let index: number | null = null;
     let elements: Elements;
     const { viewport: { width, height }, jsonData: { columns, colors } } = setting;
-    const g = document.createElementNS(nsu, 'g');
-    svg.appendChild(g);
-    g.classList.add('pop-up');
+
+    const element = toDiv(parent, 'hover');
+    element.style.height = height + 'px';
+    element.style.width = width + 'px';
+
+
+    const container = toDiv(element, 'pop-up');
+
     createPopUp();
-
-    const hover = document.createElementNS(nsu, 'rect');
-    hover.classList.add('hover');
-    hover.setAttribute('width', svg.width.baseVal.value.toString());
-    hover.setAttribute('height', svg.height.baseVal.value.toString());
-    svg.appendChild(hover);
-
 
     let lastUpdate: number;
     const onDrawPopUp = (offsetX: number, offsetY: number) => {
         if (lastUpdate != null) cancelAnimationFrame(lastUpdate);
         lastUpdate = requestAnimationFrame(() => {
-            const {
-                indexRange: { start, end },
-            } = setting;
+            const { indexRange: { start, end } } = setting;
 
             const dx = width / (end - start);
 
@@ -54,12 +50,12 @@ export function toPopUp(
     };
 
     function cleanUp() {
-        g.classList.add('invisible');
+        container.classList.add('invisible');
     }
 
 
     function touchEnd() {
-        hover.removeEventListener('touchmove', onTouchMove);
+        element.removeEventListener('touchmove', onTouchMove);
         cleanUp();
     }
 
@@ -82,90 +78,72 @@ export function toPopUp(
     function onTouchStart(event: TouchEvent) {
         if (event.targetTouches.length === 1) {
             drawPopUpByTouch(event);
-            hover.addEventListener('touchmove', onTouchMove, { passive: false });
+            element.addEventListener('touchmove', onTouchMove, { passive: false });
         }
     }
 
     function onMouseMove(event: MouseEvent) {
-        if (event.target === hover) {
-            onDrawPopUp(event.offsetX, event.offsetY);
+        if (!setting.isMove) {
+            const { clientX, clientY, currentTarget } = event;
+            var rect = (currentTarget as HTMLDivElement).getBoundingClientRect();
+            var x = clientX - rect.left;
+            var y = clientY - rect.top;
+            onDrawPopUp(x, y);
         }
         else {
-            onMouseOut();
+            cleanUp();
         }
     }
 
-    function onMouseOver() {
-        parent.addEventListener('mousemove', onMouseMove);
-    }
-
-    function onMouseOut() {
-        parent.removeEventListener('mousemove', onMouseMove);
+    function onMouseOut(_event: MouseEvent) {
         cleanUp();
     }
 
-    hover.addEventListener('mouseover', onMouseOver);
-    hover.addEventListener('mouseout', onMouseOut);
+    element.addEventListener('mousemove', onMouseMove);
+    element.addEventListener('mouseleave', onMouseOut);
 
-    hover.addEventListener('touchstart', onTouchStart, { passive: false });
-    hover.addEventListener('touchend', touchEnd);
+    element.addEventListener('touchstart', onTouchStart, { passive: false });
+    element.addEventListener('touchend', touchEnd);
 
     setting.onVisibilityChange(key => {
         elements.dots.forEach((dot, i) => {
             if (setting.jsonData.columns[i + 1][0] === key) {
-                dot.circle.classList.toggle('invisible');
-                dot.innerCircle.classList.toggle('invisible');
+                dot.classList.toggle('invisible');
             }
         });
     });
 
+    setting.onTimeRangeChange(() => cleanUp());
+
     setting.onDestroy(() => {
-        hover.removeEventListener('mouseover', onMouseOver);
-        hover.removeEventListener('mouseout', onMouseOut);
+        element.removeEventListener('mousemove', onMouseMove);
+        element.removeEventListener('mouseleave', onMouseOut);
 
-        parent.removeEventListener('mousemove', onMouseMove);
-
-        hover.removeEventListener('touchstart', onTouchStart);
-        hover.removeEventListener('touchend', touchEnd);
+        element.removeEventListener('touchstart', onTouchStart);
+        element.removeEventListener('touchend', touchEnd);
     });
 
     function createPopUp() {
         const [_, ...lines] = columns;
 
-        g.classList.add('invisible');
+        container.classList.add('invisible');
 
-        const line = document.createElementNS(nsu, 'line');
-        line.classList.add('line');
-        line.setAttribute('y1', '0');
-        line.setAttribute('y2', height.toString());
-
-        g.appendChild(line);
+        const line = toDiv(container, 'line');
 
         const dots = lines.map(item => {
-            const circle = document.createElementNS(nsu, 'circle');
-            const innerCircle = document.createElementNS(nsu, 'circle');
-            g.appendChild(circle);
-            circle.style.fill = colors[item[0]];
-            circle.setAttribute('r', '5');
-
-            g.appendChild(innerCircle);
-            innerCircle.classList.add('inner-circle');
-            innerCircle.setAttribute('r', '3');
-
-            return {
-                circle,
-                innerCircle,
-            };
+            const dot = toDiv(container, 'dot');
+            dot.style.borderColor = colors[item[0]];
+            return dot;
         });
 
         elements = {
             line,
             dots,
-            block: toPopUpBlock(setting, g),
+            block: toPopUpBlock(setting, container),
         };
     }
 
-    function drawPopUp(index: number, offsetY: number) {
+    function drawPopUp(index: number, _offsetY: number) {
         const {
             timeRange: { start, end },
         } = setting;
@@ -176,8 +154,7 @@ export function toPopUp(
         const positionX = (time - start) * dx;
         const x = positionX.toString();
 
-        elements.line.setAttribute('x1', x);
-        elements.line.setAttribute('x2', x);
+        elements.line.style.transform = `translate(${x}px, 0)`;
 
         const dy = (height - 10) / (toMax() - setting.min);
 
@@ -185,15 +162,10 @@ export function toPopUp(
             const coordinates = lines[i][index] as number - setting.min;
             const positionY = height - coordinates * dy;
             const y = positionY.toString();
-
-            dot.circle.setAttribute('cx', x);
-            dot.circle.setAttribute('cy', y);
-
-            dot.innerCircle.setAttribute('cx', x);
-            dot.innerCircle.setAttribute('cy', y);
+            dot.style.transform = `translate(${x}px, ${y}px)`;
         });
 
-        elements.block.setData(time, index, positionX, offsetY);
-        g.classList.remove('invisible');
+        elements.block.setData(time, index, positionX);
+        container.classList.remove('invisible');
     }
 }
