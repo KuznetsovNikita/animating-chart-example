@@ -16,9 +16,6 @@ interface MiniMap {
 export type ChangeKind = 'left' | 'right' | 'move' | 'visible';
 
 export class DataService {
-
-    public animationSpeed = 0.15; // % per frame
-
     public lines = 5;
     public min: number;
 
@@ -42,7 +39,7 @@ export class DataService {
 
         this.viewport = {
             width,
-            height: Math.round(width * 0.8),
+            height: Math.round(width * 0.7),
         };
 
         this.miniMap = {
@@ -114,7 +111,7 @@ export class DataService {
     }
 
     toMaxVisibleValue(indexRange: Range) {
-        let max = 0;
+        let max = 10;
         const { start, end } = indexRange;
         const { jsonData: { columns }, visibility } = this;
         for (let i = 1; i < columns.length; i++) {
@@ -124,7 +121,7 @@ export class DataService {
                 }
             }
         }
-        return max;
+        return Math.ceil(max / 10) * 10;
     }
 
     toMinValue() {

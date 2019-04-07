@@ -1,8 +1,7 @@
 import { Column, Dict, TimeColumn } from 'src/data/models';
-import { nsu } from '../data/const';
 import { DataService } from '../data/service';
 import { drawLens } from './lens';
-import { Polyline, toPolyline } from './polyline';
+import { pl, Polyline } from './polyline';
 
 export function toMiniMap(
     container: HTMLDivElement,
@@ -30,23 +29,19 @@ function toMiniMapSvg(
 
     const polylines: Dict<Polyline> = {};
 
-    const svg = document.createElementNS(nsu, 'svg');
-
-    element.appendChild(svg);
-
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
 
     const {
         jsonData: { columns, colors },
-        miniMap: { viewport, viewport: { width, height }, indexRange, timeRange },
-        visibility, min,
+        miniMap: { viewport, indexRange, timeRange }, min,
     } = settings;
 
-    svg.setAttribute('width', width.toString());
-    svg.setAttribute('height', height.toString());
+    canvas.setAttribute('width', viewport.width.toString());
+    canvas.setAttribute('height', viewport.height.toString());
+    element.appendChild(canvas);
 
-    currentMax = settings.toMaxVisibleValue(
-        settings.miniMap.indexRange,
-    );
+    currentMax = settings.toMaxVisibleValue(indexRange);
 
     for (let i = 1; i < columns.length; i++) {
         const key = columns[i][0];
@@ -58,60 +53,36 @@ function toMiniMapSvg(
 
 
     settings.onVisibilityChange((key, value) => {
-        if (value) {
-            drawCharts(
-                () => polylines[key].polyline.classList.remove('invisible'),
-            );
-        }
-        else {
-            polylines[key].polyline.classList.add('invisible');
-            drawCharts();
-        }
+        polylines[key].set(value);
+        drawCharts();
     });
 
-    settings.onDestroy(() => {
-        element.removeChild(svg);
-    });
-
-    function drawCharts(callback?: () => void) {
+    function drawCharts() {
 
         if (lastUpdateCall) cancelAnimationFrame(lastUpdateCall);
 
-        const max = settings.toMaxVisibleValue(
-            settings.miniMap.indexRange,
-        );
-
-        if (max === 0) return;
+        const max = settings.toMaxVisibleValue(indexRange);
 
         targetMax = max;
-        deltaMax = targetMax - currentMax;
+        deltaMax = (targetMax - currentMax) / 10;
 
-        scale(callback);
+        scale(0);
     }
 
-    function scale(callback?: () => void) {
+    function scale(index: number) {
         lastUpdateCall = requestAnimationFrame(() => {
+            context.clearRect(0, 0, canvas.width, canvas.height);
 
             for (let i = 1; i < columns.length; i++) {
-                const key = columns[i][0];
-                if (visibility[key]) {
-                    polylines[key].setPoints(
-                        min, currentMax, columns[i], columns[0],
-                        indexRange, timeRange, viewport,
-                    );
-                }
+                polylines[columns[i][0]].sc(
+                    context, min, currentMax, columns[i], columns[0],
+                    indexRange, timeRange, viewport,
+                );
             }
 
-            if (currentMax === targetMax) return callback && callback();
-
-            const absMax = Math.abs(deltaMax);
-            for (let i = 0; i < absMax * settings.animationSpeed; i++) {
-                currentMax += deltaMax / absMax;
-                if (currentMax === targetMax) {
-                    break;
-                }
-            }
-            return scale(callback);
+            if (index === 10) return;
+            currentMax += deltaMax;
+            return scale(index + 1);
         });
     }
 
@@ -119,14 +90,7 @@ function toMiniMapSvg(
         key: string, max: number, values: Column,
         times: TimeColumn, color: string,
     ) {
-        const poliline = toPolyline(color, 'mini-map-chart');
-
-        svg.appendChild(poliline.polyline);
-        poliline.setPoints(
-            min, max, values, times,
-            indexRange, timeRange, viewport,
-        );
-
-        polylines[key] = poliline;
+        polylines[key] = pl(color, 1);
+        polylines[key].drw(context, min, max, values, times, indexRange, timeRange, viewport);
     }
 }

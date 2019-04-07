@@ -122,12 +122,10 @@ export function drawLens(
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('touchmove', onTouchMove);
             lens.removeEventListener('mouseup', onEnd);
-            element.addEventListener('mouseleave', onEnd);
             lens.removeEventListener('touchend', onEnd);
         }
 
         lens.addEventListener('mouseup', onEnd);
-        element.addEventListener('mouseleave', onEnd);
         lens.addEventListener('touchend', onEnd);
     }
 
@@ -145,14 +143,5 @@ export function drawLens(
         }
     }, { passive: false });
 
-
-    // function disableEvent(e: Event) {
-    //     e.stopPropagation();
-    //     e.preventDefault();
-    // }
-    // coverLeft.addEventListener('touchmove', disableEvent, { passive: false });
-    // coverLeft.addEventListener('touchstart', disableEvent, { passive: false });
-    // coverRight.addEventListener('touchmove', disableEvent, { passive: false });
-    // coverRight.addEventListener('touchstart', disableEvent, { passive: false });
 }
 

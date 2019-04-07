@@ -1,43 +1,103 @@
-import { nsu } from '../data/const';
 import { Column, Range, TimeColumn, Viewport } from '../data/models';
 
 export interface Polyline {
-    polyline: SVGPolylineElement;
-    setPoints: (
+    drw: (
+        context: CanvasRenderingContext2D,
         min: number, max: number, values: Column, times: TimeColumn,
         indexRange: Range, timeRange: Range, viewport: Viewport,
     ) => void;
+    set: (value: boolean) => void;
+    sc: (
+        context: CanvasRenderingContext2D,
+        min: number, max: number, values: Column,
+        times: TimeColumn, indexRange: Range,
+        timeRange: Range, viewport: Viewport,
+    ) => void;
 }
-export function toPolyline(
-    color: string,
-    className: string,
-) {
-    const polyline = document.createElementNS(nsu, 'polyline');
-    polyline.classList.add('polyline');
-    polyline.classList.add(className);
-    polyline.style.stroke = color;
-    polyline.setAttribute('stroke-linejoin', 'round');
 
-    function setPoints(
+interface RGB {
+    r: number;
+    g: number;
+    b: number;
+}
+
+export function pl(
+    color: string,
+    lineWidth: number,
+) {
+
+    let action: 'none' | 'in' | 'out' = 'none';
+    let opacity = 1;
+    const rgb = hexToRgb(color);
+
+    function hexToRgb(hex: string): RGB {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        };
+    }
+
+    function set(value: boolean) {
+        action = value ? 'in' : 'out';
+    }
+
+    function sc(
+        context: CanvasRenderingContext2D,
+        min: number, max: number, values: Column,
+        times: TimeColumn, indexRange: Range,
+        timeRange: Range, viewport: Viewport,
+    ) {
+        if (action === 'in') {
+            opacity = Math.min(1, opacity + 0.1);
+            if (opacity === 1) action = 'none';
+        }
+
+        if (action === 'out') {
+            opacity = Math.max(0, opacity - 0.1);
+            if (opacity === 0) action = 'none';
+        }
+
+        if (opacity !== 0) {
+            drw(
+                context, min, max, values, times, indexRange, timeRange, viewport,
+            );
+        }
+    }
+
+    function drw(
+        context: CanvasRenderingContext2D,
         min: number, max: number, values: Column, times: TimeColumn,
         indexRange: Range, timeRange: Range, viewport: Viewport,
     ) {
+        context.lineWidth = lineWidth;
+        context.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${opacity})`;
+
         const { start, end } = timeRange;
         const { height, width } = viewport;
 
         const dx = (height - 10) / (max - min);
         const dy = width / (end - start);
 
-        let points = '';
+        let oldX = 0;
+        let oldY = 0;
+        context.beginPath();
         for (let i = indexRange.start; i <= indexRange.end; i++) {
-            if (i !== 0) points += ' ';
-            points += `${((times[i] as number) - start) * dy},${height - (values[i] as number - min) * dx}`;
+            const y = Math.round(((times[i] as number) - start) * dy);
+            const x = Math.round(height - (values[i] as number - min) * dx);
+            if (x > oldX + 1 || x < oldX - 1 || y > oldY + 1 || y < oldY - 1) {
+                context.lineTo(y, x);
+                oldX = x;
+                oldY = y;
+            }
         }
-        polyline.setAttribute('points', points);
+        context.stroke();
     }
 
     return {
-        polyline,
-        setPoints,
+        drw,
+        set,
+        sc,
     };
 }
