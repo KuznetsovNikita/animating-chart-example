@@ -12,13 +12,11 @@ export function toTime(
     svg: SVGGElement,
     value: number,
     left: number,
-    className?: string,
 ): Time {
     const text = document.createElementNS(nsu, "text");
     const tspan = document.createElementNS(nsu, "tspan");
 
     text.classList.add('time');
-    className && text.classList.add(className);
 
     text.appendChild(tspan);
 

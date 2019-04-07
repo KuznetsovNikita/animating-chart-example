@@ -22,7 +22,6 @@ export function toTimes(
     gDates.setAttribute('transform', `translate(0,${height})`);
 
     const times: Time[] = new Array(columns[0].length);
-    let timesStock: Time[] = [];
 
     settings.onDestroy(() => {
         times.forEach(item => item && item.destroy());
@@ -47,31 +46,15 @@ export function toTimes(
     }
 
     function destroy(index: number) {
-        const time = times[index];
         times[index] = undefined;
-        time.text.classList.add('transparent');
-        timesStock.push(time);
-        setTimeout(() => {
-            timesStock = timesStock
-                .filter(item => item !== time);
-            time.destroy();
-        }, 300);
     }
 
-    function drawTime(index: number, isTransparent: boolean) {
-        const time = toTime(
+    function drawTime(index: number) {
+        times[index] = toTime(
             gDates,
             toValue(index),
             toLeftByIndex(index),
-            isTransparent ? 'transparent' : '',
         );
-        times[index] = time;
-        if (isTransparent) {
-            requestAnimationFrame(() => {
-                time.text.classList.remove('transparent');
-            });
-        }
-
     }
 
     function redrawTimes(kind: ChangeKind) {
@@ -100,7 +83,6 @@ export function toTimes(
         for (let i = startIndex; i <= endIndex; i += delta) {
             times[i].setLeft(toLeftByIndex(i));
         }
-        timesStock.forEach(time => time.setLeft(toLeftByValue(time.value)));
     }
 
     function maybeAddOrRemoveItem() {
@@ -109,7 +91,7 @@ export function toTimes(
             hasValue(start) &&
             toLeftByIndex(start) > -viewportSpace
         ) {
-            drawTime(start, true);
+            drawTime(start);
             startIndex = start;
         }
 
@@ -124,7 +106,7 @@ export function toTimes(
             hasValue(end) &&
             toLeftByIndex(end) < width + viewportSpace
         ) {
-            drawTime(end, true);
+            drawTime(end);
             endIndex = end;
         }
 
@@ -157,7 +139,7 @@ export function toTimes(
                 }
                 else {
                     if (left > 0) {
-                        drawTime(index, true);
+                        drawTime(index);
                         newStart = index;
                     }
                 }
@@ -189,7 +171,7 @@ export function toTimes(
                 }
                 else {
                     if (!times[i]) {
-                        drawTime(i, true);
+                        drawTime(i);
                     }
                     newStart = i;
                 }
@@ -226,7 +208,7 @@ export function toTimes(
                 }
                 else {
                     if (left < width) {
-                        drawTime(index, true);
+                        drawTime(index);
                         newEnd = index;
                     }
                 }
@@ -258,7 +240,7 @@ export function toTimes(
                 }
                 else {
                     if (!times[i]) {
-                        drawTime(i, true);
+                        drawTime(i);
                     }
                     newEnd = i;
                 }
@@ -342,7 +324,7 @@ export function toTimes(
         }
 
         for (let i = startIndex; i <= endIndex; i += delta) {
-            drawTime(i, false);
+            drawTime(i);
         }
     }
 
