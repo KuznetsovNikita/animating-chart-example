@@ -23,6 +23,10 @@ export function toChart(
     let linesStock: Line[] = [];
     const polylines: Dict<Polyline> = {};
 
+    const canvas = document.createElement('canvas');
+
+    element.appendChild(canvas);
+
     const svg = document.createElementNS(nsu, 'svg');
     const gLines = document.createElementNS(nsu, 'g');
     const gDates = document.createElementNS(nsu, 'g');
@@ -37,6 +41,9 @@ export function toChart(
         indexRange, timeRange, viewport,
         min,
     } = settings;
+
+    canvas.setAttribute('width', width.toString());
+    canvas.setAttribute('height', (height + 20).toString());
 
     svg.setAttribute('width', width.toString());
     svg.setAttribute('height', (height + 20).toString());

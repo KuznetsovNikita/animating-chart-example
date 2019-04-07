@@ -4,7 +4,7 @@ import { toMenu } from './menu';
 import { toMiniMap } from './mini-map';
 
 export function drawContainer(
-    settings: DataService[],
+    charts: DataService[],
     width: number,
 ) {
     const container = document.createElement('div');
@@ -12,12 +12,12 @@ export function drawContainer(
     container.id = 'app';
     container.style.width = width + 'px';
 
-    const header = document.createElement('div');
-    container.appendChild(header);
-    header.id = 'header';
-    header.innerHTML = '<h1>Header</h1>';
+    charts.forEach((item, index) => {
+        const header = document.createElement('div');
+        container.appendChild(header);
+        header.id = 'header';
+        header.innerHTML = `<h1>Chart #${index}</h1>`;
 
-    settings.forEach(item => {
         const chart = document.createElement('div');
         chart.classList.add('chart');
         container.appendChild(chart);
@@ -26,7 +26,7 @@ export function drawContainer(
         toMenu(chart, item);
     });
 
-    toModeButton(container, settings[0]);
+    toModeButton(container, charts[0]);
 }
 
 

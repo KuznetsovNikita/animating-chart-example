@@ -3,12 +3,7 @@ import { DataService, JsonData } from './data/service';
 import './style/index.css';
 
 function init() {
-    const w = window,
-        d = document,
-        e = d.documentElement,
-        g = d.getElementsByTagName('body')[0],
-        x = w.innerWidth || e.clientWidth || g.clientWidth;
-    const width = Math.min(x, 500);
+    const width = Math.min(window.innerWidth, 500);
 
     const rawFile = new XMLHttpRequest();
     rawFile.overrideMimeType('application/json');
