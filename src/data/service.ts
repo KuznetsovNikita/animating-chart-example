@@ -9,9 +9,12 @@ import { Adapter, Column, Dict, Polyline, Range, TimeColumn, Viewport } from './
 
 export interface JsonData {
     columns: [TimeColumn, ...Array<Column>];
-    types: any;
+    types: Dict<string>;
     names: Dict<string>;
     colors: Dict<string>;
+    y_scaled?: boolean;
+    stacked?: boolean;
+    percentage?: boolean;
 }
 
 interface MiniMap {
@@ -23,7 +26,7 @@ interface MiniMap {
 export type ChangeKind = 'left' | 'right' | 'move' | 'visible';
 
 function dataAdapter(
-    kind: 'point' | 'double' | 'summ' | 'percent',
+    kind: 'point' | 'y_scaled' | 'stacked' | 'percentage',
     jsonData: JsonData,
 ): Adapter {
     const devicePixelRatio = window.devicePixelRatio;
@@ -37,10 +40,13 @@ function dataAdapter(
     ) {
         const dy = vp.height / (max - min);
         const dx = vp.width / (timeRange.end - timeRange.start);
+
+        let botX = 0
         for (let i = indexRange.start; i <= indexRange.end; i++) {
             const x = ((times[i] as number) - timeRange.start) * dx * devicePixelRatio;
             const y = (vp.height - (jsonData.columns[index][i] as number - min) * dy) * devicePixelRatio;
-            use(x, y, 0, 0);
+            use(x, y, botX, vp.height * devicePixelRatio);
+            botX = x;
         }
     }
 
@@ -57,15 +63,17 @@ function dataAdapter(
     }
 
     function doubleMax(visibility: Dict<boolean>, indexRange: Range) {
-        return jsonData.types['x'].map((_key, i) => {
+        const result: number[] = [];
+        for (let i = 1; i < jsonData.columns.length; i++) {
             let max = 10;
-            if (visibility[jsonData.columns[i + 1][0]]) {
+            if (visibility[jsonData.columns[i][0]]) {
                 for (let j = indexRange.start; j <= indexRange.end; j++) {
-                    max = Math.max(max, jsonData.columns[i + 1][j] as number);
+                    max = Math.max(max, jsonData.columns[i][j] as number);
                 }
             }
-            return Math.ceil(max / 10) * 10;
-        });
+            result.push(Math.ceil(max / 10) * 10);
+        }
+        return result;
     }
 
     function summ(
@@ -138,15 +146,15 @@ function dataAdapter(
             use: points,
             toMax: pointsMax,
         };
-        case 'double': return {
+        case 'y_scaled': return {
             use: points,
             toMax: doubleMax,
         }
-        case 'summ': return {
+        case 'stacked': return {
             use: summ,
             toMax: summMax,
         }
-        case 'percent': return {
+        case 'percentage': return {
             use: percent,
             toMax: () => [100],
         }
@@ -169,11 +177,22 @@ export class DataService {
     public cr: (color: string, lineWidth: number) => Polyline;
     public adapter: Adapter;
 
+    public jsonData: JsonData;
+
+    public asSoonAsReady: Promise<void>;
+
     constructor(
         width: number,
-        public jsonData: JsonData,
-
+        public url: string,
     ) {
+        this.asSoonAsReady = fetch(`./json/${url}/overview.json`)
+            .then(response => response.json())
+            .then(jsonData => this.setDate(width, jsonData))
+            .catch(alert);
+    }
+
+    private setDate(width, jsonData: JsonData) {
+        this.jsonData = jsonData;
         const time = jsonData.columns[0];
         this.timeRange = {
             start: time[Math.max(Math.round(time.length * 0.8), 1)] as number,
@@ -206,28 +225,31 @@ export class DataService {
 
         const type = jsonData.types[jsonData.columns[1][0]];
 
-        if (jsonData.types['x'].length > 1) {
+        if (jsonData.y_scaled) {
             this.zIndex = '-1';
             this.cr = pl;
-            this.adapter = dataAdapter('double', jsonData);
+            this.adapter = dataAdapter('y_scaled', jsonData);
         }
-        else if (type === 'line') {
+        else if (jsonData.percentage) {
+            this.zIndex = '1';
+            this.cr = plg;
+            this.adapter = dataAdapter('percentage', jsonData);
+        }
+        else if (jsonData.stacked) {
+            this.zIndex = '1';
+            this.cr = plg;
+            this.adapter = dataAdapter('stacked', jsonData);
+        }
+        else if (jsonData.types[jsonData.columns[1][0]] === 'bar') {
+            this.zIndex = '1';
+            this.cr = plg;
+            this.adapter = dataAdapter('point', jsonData);
+        } else {
             this.zIndex = '-1';
             this.cr = pl;
             this.adapter = dataAdapter('point', jsonData);
         }
-        else if (type === 'bar') {
-            this.zIndex = '1';
-            this.cr = plg;
-            this.adapter = dataAdapter('summ', jsonData);
-        }
-        else {
-            this.zIndex = '1';
-            this.cr = plg;
-            this.adapter = dataAdapter('percent', jsonData);
-        }
     }
-
     private timeChangeWatchers: ((kind: ChangeKind, timeRange: Range) => void)[] = [];
     onTimeRangeChange(act: (kind: ChangeKind, timeRange: Range) => void) {
         this.timeChangeWatchers.push(act);

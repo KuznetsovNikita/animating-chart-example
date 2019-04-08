@@ -11,7 +11,6 @@ export function toTimes(
 ): Times {
     const devicePixelRatio = window.devicePixelRatio;
     context.font = (10 * devicePixelRatio) + 'px Arial';
-    context.fillStyle = "#96a2aa";
 
     const viewportSpace = 30;
     const minSpace = 70;
@@ -54,6 +53,7 @@ export function toTimes(
 
     function redraw() {
         context.clearRect(0, height * devicePixelRatio, width * devicePixelRatio, 20 * devicePixelRatio);
+        context.fillStyle = "#96a2aa";
         for (let i = startIndex; i <= endIndex; i += delta) {
             drawTime(i);
         }

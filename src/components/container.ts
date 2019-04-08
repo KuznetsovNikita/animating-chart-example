@@ -12,11 +12,11 @@ export function drawContainer(
     container.id = 'app';
     container.style.width = width + 'px';
 
-    charts.forEach((item, index) => {
+    charts.forEach(item => item.asSoonAsReady.then(() => {
         const header = document.createElement('div');
         container.appendChild(header);
         header.id = 'header';
-        header.innerHTML = `<h1>Chart #${index}</h1>`;
+        header.innerHTML = `<h1>Chart #${item.url}</h1>`;
 
         const chart = document.createElement('div');
         chart.classList.add('chart');
@@ -24,7 +24,7 @@ export function drawContainer(
         toChart(chart, item);
         toMiniMap(chart, item);
         toMenu(chart, item);
-    });
+    }));
 
     toModeButton(container, charts[0]);
 }

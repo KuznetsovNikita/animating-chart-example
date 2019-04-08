@@ -28,7 +28,7 @@ module.exports = {
     },
     plugins: [
         new CopyPlugin([
-            { from: 'src/json', to: '' },
+            { from: 'src/json', to: 'json' },
         ]),
         new MiniCssExtractPlugin({
             filename: '[name].[hash].css'

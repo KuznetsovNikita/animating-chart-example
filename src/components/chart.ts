@@ -159,8 +159,8 @@ export function toChart(
             const lastLine2 = Math.floor(max2 / 10) * 10;
             dOneLine2 = (lastLine2 - min) / settings.lines;
             lebel2 = min;
-            color1 = colors[types['x'][0]];
-            color2 = colors[types['x'][1]];
+            color1 = colors[columns[1][0]];
+            color2 = colors[columns[2][0]];
         }
 
         for (let label = min; label <= lastLine1; label += dOneLine1) {
