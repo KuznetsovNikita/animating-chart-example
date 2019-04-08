@@ -22,7 +22,7 @@ export function toTimes(
 
     let dy: number;
 
-    const { viewport: { height, width }, jsonData: { columns } } = settings;
+    const { viewport: { height, width } } = settings;
 
     drawTimes();
 
@@ -53,7 +53,7 @@ export function toTimes(
 
     function redraw() {
         context.clearRect(0, height * devicePixelRatio, width * devicePixelRatio, 20 * devicePixelRatio);
-        context.fillStyle = "#96a2aa";
+        context.fillStyle = 'rgba(37, 37, 41, 0.5)';
         for (let i = startIndex; i <= endIndex; i += delta) {
             drawTime(i);
         }

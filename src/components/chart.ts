@@ -53,8 +53,8 @@ export function toChart(
     const lineCanvas = drawConvas(element, width - 10, height + 11, 'lines');
     const lineContext = lineCanvas.getContext('2d');
     lineContext.font = (10 * devicePixelRatio) + 'px Arial';
-    lineContext.fillStyle = "#96a2aa";
-    lineContext.strokeStyle = 'rgba(163, 173, 181, 0.3)';
+    lineContext.fillStyle = 'rgba(37, 37, 41, 0.5)';
+    lineContext.strokeStyle = 'rgba(24, 45, 59, 0.1)';
     lineContext.lineWidth = devicePixelRatio;
     lineCanvas.style.zIndex = settings.zIndex;
 

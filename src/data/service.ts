@@ -160,6 +160,14 @@ function dataAdapter(
         }
     }
 }
+const dayStyle = {
+    text: 'rgba(37, 37, 41, 0.5)',
+    line: 'rgba(24, 45, 59, 0.1)',
+}
+const nightStyle = {
+    text: 'rgba(37, 37, 41, 0.5)',
+    line: 'rgba(24, 45, 59, 0.1)',
+}
 
 export class DataService {
     public lines = 5;
@@ -179,7 +187,7 @@ export class DataService {
 
     public jsonData: JsonData;
 
-    public asSoonAsReady: Promise<void>;
+    public asSoonAsReady: Promise<this>;
 
     constructor(
         width: number,
@@ -188,10 +196,17 @@ export class DataService {
         this.asSoonAsReady = fetch(`./json/${url}/overview.json`)
             .then(response => response.json())
             .then(jsonData => this.setDate(width, jsonData))
-            .catch(alert);
+            .then(() => this);
+    }
+
+    public style: { text: string, line: string };
+    changeStyle(day: 'day' | 'night') {
+        this.style = day === 'day'
+            ? dayStyle : nightStyle;
     }
 
     private setDate(width, jsonData: JsonData) {
+        this.changeStyle('day');
         this.jsonData = jsonData;
         const time = jsonData.columns[0];
         this.timeRange = {

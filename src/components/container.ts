@@ -4,7 +4,7 @@ import { toMenu } from './menu';
 import { toMiniMap } from './mini-map';
 
 export function drawContainer(
-    charts: DataService[],
+    servicies: DataService[],
     width: number,
 ) {
     const container = document.createElement('div');
@@ -12,27 +12,31 @@ export function drawContainer(
     container.id = 'app';
     container.style.width = width + 'px';
 
-    charts.forEach(item => item.asSoonAsReady.then(() => {
-        const header = document.createElement('div');
-        container.appendChild(header);
-        header.id = 'header';
-        header.innerHTML = `<h1>Chart #${item.url}</h1>`;
+    Promise
+        .all(servicies.map(item => item.asSoonAsReady))
+        .then(charts => {
+            charts.forEach(item => {
+                const header = document.createElement('div');
+                container.appendChild(header);
+                header.id = 'header';
+                header.innerHTML = `<h1>Chart #${item.url}</h1>`;
 
-        const chart = document.createElement('div');
-        chart.classList.add('chart');
-        container.appendChild(chart);
-        toChart(chart, item);
-        toMiniMap(chart, item);
-        toMenu(chart, item);
-    }));
+                const chart = document.createElement('div');
+                chart.classList.add('chart');
+                container.appendChild(chart);
+                toChart(chart, item);
+                toMiniMap(chart, item);
+                toMenu(chart, item);
+            });
+        });
 
-    toModeButton(container, charts[0]);
+    toModeButton(container, servicies);
 }
 
 
 function toModeButton(
     container: HTMLDivElement,
-    settings: DataService,
+    settings: DataService[],
 ) {
     let isDay: boolean;
     let button = document.createElement('div');
@@ -45,7 +49,7 @@ function toModeButton(
         isDay ? setNight() : setDay();
     };
 
-    settings.onDestroy(() => {
+    settings[0].onDestroy(() => {
         button.onclick = null;
         container.removeChild(button);
         button = null;
@@ -56,11 +60,13 @@ function toModeButton(
         isDay = true;
         document.body.classList.remove('night');
         button.innerHTML = 'Switch to Night Mode';
+        settings.map(item => item.changeStyle('day'));
     }
 
     function setNight() {
         isDay = false;
         document.body.classList.add('night');
         button.innerHTML = 'Switch to Day Mode';
+        settings.map(item => item.changeStyle('night'));
     }
 }

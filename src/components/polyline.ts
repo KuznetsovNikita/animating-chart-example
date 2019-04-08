@@ -49,19 +49,11 @@ export function pl(
         context.globalAlpha = opacity;
         context.strokeStyle = color;
 
-        const { start, end } = timeRange;
-        const { height, width } = viewport;
-
-        const dx = height / (max - min);
-        const dy = width / (end - start);
-
         context.beginPath();
-        for (let i = indexRange.start; i <= indexRange.end; i++) {
-            context.lineTo(
-                ((times[i] as number) - start) * dy * devicePixelRatio,
-                (height - (values[i] as number - min) * dx) * devicePixelRatio,
-            );
-        }
+        adapter.use(
+            index, indexRange, timeRange, viewport, min, max,
+            (x, y) => context.lineTo(x, y),
+        );
         context.stroke();
     }
 
