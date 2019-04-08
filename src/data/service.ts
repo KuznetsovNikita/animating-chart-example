@@ -213,8 +213,8 @@ const dayStyle = {
     line: 'rgba(24, 45, 59, 0.1)',
 }
 const nightStyle = {
-    text: 'rgba(37, 37, 41, 0.5)',
-    line: 'rgba(24, 45, 59, 0.1)',
+    text: 'rgba(163, 177, 194, 0.6)',
+    line: 'rgba(255, 255, 255, 0.1)',
 }
 
 export class DataService {
@@ -229,6 +229,7 @@ export class DataService {
 
     public isMove = false;
     public isBars = false;
+    public isPercentage = false;
 
     public zIndex: string;
     public cr: (jsonData: JsonData, lineWidth: number) => ChartsItem;
@@ -248,10 +249,16 @@ export class DataService {
             .then(() => this);
     }
 
+    private styleWatchers: (() => void)[] = [];
     public style: { text: string, line: string };
     changeStyle(day: 'day' | 'night') {
         this.style = day === 'day'
             ? dayStyle : nightStyle;
+        this.styleWatchers.forEach(act => act());
+    }
+
+    onChangeStyle(act: () => void) {
+        this.styleWatchers.push(act);
     }
 
     private setDate(width, jsonData: JsonData) {
@@ -288,6 +295,7 @@ export class DataService {
         this.min = this.toMinValue();
 
         this.isBars = (jsonData.types[jsonData.columns[1][0]] === 'bar' || jsonData.stacked) && !jsonData.percentage;
+        this.isPercentage = jsonData.percentage;
 
         if (jsonData.y_scaled) {
             this.zIndex = '-1';

@@ -40,8 +40,16 @@ export function toChart(
     const lineCanvas = drawConvas(element, width - 10, height + 11, 'lines');
     const lineContext = lineCanvas.getContext('2d');
     lineContext.font = (10 * devicePixelRatio) + 'px Arial';
-    lineContext.fillStyle = 'rgba(37, 37, 41, 0.5)';
-    lineContext.strokeStyle = 'rgba(24, 45, 59, 0.1)';
+
+    lineContext.fillStyle = settings.style.text;
+    lineContext.strokeStyle = settings.style.line;
+
+    settings.onChangeStyle(() => {
+        lineContext.fillStyle = settings.style.text;
+        lineContext.strokeStyle = settings.style.line;
+        redrawLinesForse();
+    });
+
     lineContext.lineWidth = devicePixelRatio;
     lineCanvas.style.zIndex = settings.zIndex;
 
@@ -106,38 +114,35 @@ export function toChart(
     }
 
     function drawLine(max: number[], opacity: number): Line[] {
+
         const lines = [];
 
-        const [max1, max2] = max;
+        let items = max.map((maxValue, i) => {
+            const lastLine = Math.floor(maxValue / 10) * 10;
+            return {
+                dx: height / (maxValue - min),
+                lastLine,
+                dOneLine: (lastLine - min) / settings.lines,
+                color: colors[columns[i + 1][0]],
+                isShow: settings.visibility[columns[i + 1][0]],
+                label: min,
+            };
+        });
 
-        const dx1 = height / (max1 - min);
-        const lastLine1 = Math.floor(max1 / 10) * 10;
-        const dOneLine1 = (lastLine1 - min) / settings.lines;
-
-        let lebel2 = null;
-        let dOneLine2 = null;
-        let color1 = null;
-        let color2 = null;
-
-        if (max2 != null) {
-            const lastLine2 = Math.floor(max2 / 10) * 10;
-            dOneLine2 = (lastLine2 - min) / settings.lines;
-            lebel2 = min;
-            color1 = colors[columns[1][0]];
-            color2 = colors[columns[2][0]];
+        do {
+            const x = height + 10 - (items[0].label - min) * items[0].dx;
+            lines.push(ln(items, x * devicePixelRatio, (width - 10) * devicePixelRatio, opacity));
+            items = items.map(item => ({ ...item, label: item.label + item.dOneLine }));
         }
-
-        for (let label = min; label <= lastLine1; label += dOneLine1) {
-
-            const x = height + 10 - (label - min) * dx1;
-
-            lines.push(ln(label, lebel2, x * devicePixelRatio, (width - 10) * devicePixelRatio, opacity, color1, color2));
-            if (lebel2 != null) {
-                lebel2 += dOneLine2;
-            }
-        }
+        while (items[0].label <= items[0].lastLine);
 
         return lines;
+    }
+
+    function redrawLinesForse() {
+        lineContext.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
+        lines = drawLine(currentMax, 1);
+        lines.forEach(line => line.drw(lineContext));
     }
 
     function redrawLines(deltaMax: number[]) {
@@ -153,7 +158,6 @@ export function toChart(
         lines = drawLine(targetMax, 0);
 
         scaleLines(0);
-
     }
 
     function scaleLines(index: number) {
@@ -164,7 +168,7 @@ export function toChart(
             const dx1 = height / (currentMax[0] - min);
 
             function update(line: Line): boolean {
-                return line.up(lineContext, (height + 10 - (line.vl - min) * dx1) * devicePixelRatio) != 0;
+                return line.up(lineContext, (height + 10 - (line.vl[0].label - min) * dx1) * devicePixelRatio) != 0;
             }
 
             lines.forEach(update);

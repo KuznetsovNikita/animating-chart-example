@@ -24,6 +24,8 @@ export function toTimes(
 
     const { viewport: { height, width } } = settings;
 
+    settings.onChangeStyle(() => redraw());
+
     drawTimes();
 
     function hasValue(index: number) {
@@ -53,7 +55,7 @@ export function toTimes(
 
     function redraw() {
         context.clearRect(0, height * devicePixelRatio, width * devicePixelRatio, 20 * devicePixelRatio);
-        context.fillStyle = 'rgba(37, 37, 41, 0.5)';
+        context.fillStyle = settings.style.text;
         for (let i = startIndex; i <= endIndex; i += delta) {
             drawTime(i);
         }

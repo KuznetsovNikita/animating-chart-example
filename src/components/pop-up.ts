@@ -145,14 +145,14 @@ export function toPopUp(
 
         if (setting.isBars) {
             elements = {
-                line: [toDiv(container, 'line'), toDiv(container, 'line')],
+                line: [toDiv(container, 'shadow'), toDiv(container, 'shadow')],
                 dots: [],
                 block: toPopUpBlock(setting, container),
             };
         }
         else {
             const line = toDiv(container, 'line');
-            const dots = lines.map(item => {
+            const dots = setting.isPercentage ? [] : lines.map(item => {
                 const dot = toDiv(container, 'dot');
                 dot.style.borderColor = colors[item[0]];
                 return dot;

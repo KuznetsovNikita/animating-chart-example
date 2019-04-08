@@ -29,16 +29,52 @@ export function toPopUpBlock(
         return {
             block,
             value,
+            num: 0,
             name,
+            nameVal: names[item[0]],
             key: item[0],
+            isShow: true,
         };
     });
 
+    if (setting.isBars && values.length > 1) {
+        const block = toDiv(panel, 'block');
+        const name = toDiv(block, 'name');
+        const value = toDiv(block, 'value');
+        name.innerHTML = 'All';
+        values.push({
+            block,
+            value,
+            num: 0,
+            name,
+            nameVal: 'All',
+            key: 'all',
+            isShow: true,
+        });
+    }
+
     setting.onVisibilityChange(key => {
         values.forEach(item => {
-            if (item.key === key) item.block.classList.toggle('invisible');
+            if (item.key === key) {
+                item.isShow = !item.isShow;
+                item.block.classList.toggle('invisible');
+            }
         });
+
+        if (setting.isPercentage) {
+            updatePersent();
+        }
     });
+
+    function updatePersent() {
+        const total = values.filter(item => item.isShow)
+            .map(item => item.num).reduce((s, i) => s + i, 0);
+        values.forEach(item => {
+            if (item.isShow) {
+                item.name.innerHTML = `<b>${Math.round(item.num / total * 100)}%</b> ${item.nameVal}`;
+            }
+        });
+    }
 
     function setData(time: number, index: number, positionX: number) {
 
@@ -46,18 +82,46 @@ export function toPopUpBlock(
         date.innerHTML = `${days[d.getDay()]}, ${d.getDate()} ${month[d.getMonth()]}`;
 
         values.forEach((item, i) => {
-            let value = lines[i][index].toString();
-            item.value.innerHTML = value.length > 6
-                ? value.substr(0, value.length - 6) + '.' + value.substr(value.length - 6, 1) + 'M'
-                : value.length > 4
-                    ? value.substr(0, value.length - 3) + 'K'
-                    : value;
+            if (item.key !== 'all') {
+                item.num = lines[i][index] as number;
+                item.value.innerHTML = format(item.num);
+            }
         });
 
-        panel.style.transform = `translate(${positionX + (positionX > width / 2 ? -150 : 10)}px, 10px)`;
+        if (setting.isPercentage) {
+            updatePersent();
+        }
+
+        if (setting.isBars && values.length > 1) {
+            const item = values[values.length - 1];
+            const filtered = values.filter(item => item.key !== 'all' && item.isShow);
+            if (filtered.length > 1) {
+                item.isShow = true; 
+                item.num = filtered.map(item => item.num).reduce((s, i) => s + i, 0);
+                item.value.innerHTML = format(item.num);
+                item.block.classList.remove('invisible');
+            }
+            else {
+                item.isShow = false;
+                item.block.classList.add('invisible');
+            }
+        }
+        panel.style.transform = `translate(${positionX + (positionX > width / 2 ? -160 : 10)}px, 10px)`;
+    }
+
+    function format(value: number): string {
+        const str = value.toString();
+        return str.length > 6
+            ? str.substr(0, str.length - 6) + '.' + str.substr(str.length - 6, 1) + 'M'
+            : str.length > 4
+                ? str.substr(0, str.length - 3) + 'K'
+                : str;
     }
 
     return {
         setData,
     };
 }
+
+
+

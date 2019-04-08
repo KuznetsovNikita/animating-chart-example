@@ -91,9 +91,9 @@ body {
     }
 
     .mini-map .cover {
-        background-color: rgba(19, 26, 31, 0.5);
+        background-color: rgba(48, 66, 89, .6);;
     }
     .lens {
-        border-color: rgba(103, 118, 128, 0.5);
+        border-color: #56626D;
     }
 }

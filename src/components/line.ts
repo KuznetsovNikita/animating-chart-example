@@ -3,17 +3,22 @@ export interface Line {
     drw: (context: CanvasRenderingContext2D) => void;
     hd: () => void;
     up: (context: CanvasRenderingContext2D, height: number) => number;
-    vl: number;
+    vl: LineValue[];
+}
+export interface LineValue {
+    dx: number;
+    lastLine: number;
+    dOneLine: number;
+    color: string;
+    isShow: boolean;
+    label: number;
 }
 
 export function ln(
-    vl: number,
-    value2: number | null,
+    vl: LineValue[],
     height: number,
     width: number,
     opacity: number,
-    color1: string | null,
-    color2: string | null,
 ): Line {
     let action: 'none' | 'in' | 'out' = opacity === 0 ? 'in' : 'none';
 
@@ -22,15 +27,19 @@ export function ln(
     }
 
     function draw(context: CanvasRenderingContext2D, h: number) {
+        const [one, two] = vl;
         context.globalAlpha = opacity;
-        context.textAlign = 'left';
-        if (color1) context.fillStyle = color1;
-        context.fillText(vl.toString(), 0, h - 5);
 
-        if (value2 !== null) {
-            context.fillStyle = color2;
+        if (two != null) context.fillStyle = one.color;
+        if (one.isShow || two == null) {
+            context.textAlign = 'left';
+            context.fillText(one.label.toString(), 0, h - 5);
+        }
+
+        if (two != null && two.isShow) {
+            context.fillStyle = two.color;
             context.textAlign = 'right';
-            context.fillText(value2.toString(), width, h - 5);
+            context.fillText(two.label.toString(), width, h - 5);
         }
 
         context.beginPath();
