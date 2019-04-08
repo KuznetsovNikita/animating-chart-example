@@ -192,7 +192,7 @@ export function toChart(
 
             lines.forEach(update);
             linesStock = linesStock.filter(update);
-
+            if (index > 10) return;
             scaleLines(index + 1);
         });
     }
