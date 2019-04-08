@@ -19,7 +19,6 @@ export function toPopUp(
     setting: DataService,
     toMax: (index: number) => number,
 ) {
-    let index: number | null = null;
     let elements: Elements;
     const { viewport: { width, height }, jsonData: { columns, colors } } = setting;
 
@@ -32,19 +31,21 @@ export function toPopUp(
 
     createPopUp();
 
+    let oldTime: number | null = null;
     let lastUpdate: number;
     const onDrawPopUp = (offsetX: number, offsetY: number) => {
         if (lastUpdate != null) cancelAnimationFrame(lastUpdate);
         lastUpdate = requestAnimationFrame(() => {
-            const { indexRange: { start, end } } = setting;
+            const { timeRange: { start, end } } = setting;
 
             const dx = width / (end - start);
 
-            const newIndex = start + Math.round(offsetX / dx);
+            const time = new Date(start + Math.round(offsetX / dx))
+                .setUTCHours(0, 0, 0, 0);
 
-            if (newIndex !== index) {
-                index = newIndex;
-                drawPopUp(newIndex, offsetY);
+            if (time !== oldTime) {
+                oldTime = time;
+                drawPopUp(time, dx, offsetY);
             }
         });
     };
@@ -166,14 +167,14 @@ export function toPopUp(
         }
     }
 
-    function drawPopUp(index: number, _offsetY: number) {
-        const {
-            timeRange: { start, end },
-        } = setting;
+    function drawPopUp(time: number, dx: number, _offsetY: number) {
+        const { timeRange: { start, end } } = setting;
 
         const [times, ...lines] = columns;
-        const time = times[index] as number;
-        const dx = width / (end - start);
+        const index = times.findIndex(item => item === time);
+        if (index === -1) {
+            return cleanUp();
+        }
         const x = (time - start) * dx;
         if (!setting.isBars) {
             elements.line[0].style.transform = `translate(${x}px, 0)`;
@@ -197,8 +198,6 @@ export function toPopUp(
             elements.line[1].style.width = (end - next) * dx + 'px';
             elements.block.setData(time, index + 1, x);
         }
-
-
         container.classList.remove('invisible');
     }
 }

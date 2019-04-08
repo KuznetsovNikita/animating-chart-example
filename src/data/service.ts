@@ -86,7 +86,7 @@ function dataAdapter(
         for (let i = indexRange.start; i <= indexRange.end; i++) {
             const x = ((times[i] as number) - timeRange.start) * dx * devicePixelRatio;
             const y = (vp.height - (jsonData.columns[index][i] as number - min) * dy) * devicePixelRatio;
-            use(x, y, botX, vp.height * devicePixelRatio);
+            use(x, y, botX == 0 ? x : botX, vp.height * devicePixelRatio);
             botX = x;
         }
     }
@@ -137,7 +137,7 @@ function dataAdapter(
             }
 
             const y = botY + (jsonData.columns[index][i] as number - min) * dy * scales[index - 1];
-            use(x, (vp.height - y) * devicePixelRatio, botX, (vp.height - botY) * devicePixelRatio);
+            use(x, (vp.height - y) * devicePixelRatio, botX === 0 ? x : botX, (vp.height - botY) * devicePixelRatio);
             botX = x;
         }
     }
@@ -217,6 +217,8 @@ const nightStyle = {
     line: 'rgba(255, 255, 255, 0.1)',
 }
 
+const day = 1000 * 60 * 60 * 24;
+
 export class DataService {
     public lines = 5;
     public min: number;
@@ -283,8 +285,8 @@ export class DataService {
             },
             indexRange: { start: 1, end: time.length - 1 },
             timeRange: {
-                start: time[1],
-                end: time[time.length - 1] as number,
+                start: time[1] - day * 3,
+                end: time[time.length - 1] as number + day * 3,
             },
         };
 
