@@ -1,7 +1,7 @@
 import { ar } from '../components/area';
-import { plg } from '../components/poligon';
+import { plgs } from '../components/poligon';
 import { pl } from '../components/polyline';
-import { Adapter, ChartItem, Column, Dict, Range, TimeColumn, UseDataFunction, Viewport } from './models';
+import { Adapter, ChartItem, ChartsItem, Column, Dict, Range, TimeColumn, UseDataFunction, Viewport } from './models';
 
 export interface JsonData {
     columns: [TimeColumn, ...Array<Column>];
@@ -20,6 +20,51 @@ interface MiniMap {
 }
 
 export type ChangeKind = 'left' | 'right' | 'move' | 'visible';
+
+function tio(
+    jsonData: JsonData,
+    toItem: (color: string, lineWidth?: number) => ChartItem,
+    lineWidth?: number
+): ChartsItem {
+    const items: ChartItem[] = [];
+
+    for (let i = 1; i < jsonData.columns.length; i++) {
+        const key = jsonData.columns[i][0];
+        items.push(toItem(jsonData.colors[key], lineWidth));
+    }
+
+    function drw(
+        use: UseDataFunction, context: CanvasRenderingContext2D,
+        min: number, toMax: (index: number) => number, viewport: Viewport,
+    ) {
+        items.forEach((item, index) => {
+            item.drw(use, context, index + 1, min, toMax(index + 1), viewport);
+        });
+    }
+
+    function set(key: string, value: boolean) {
+        jsonData.columns.forEach((column, index) => {
+            if (column[0] === key) {
+                items[index].set(value);
+            }
+        });
+    }
+
+    function sc(
+        use: UseDataFunction, context: CanvasRenderingContext2D,
+        min: number, toMax: (index: number) => number, viewport: Viewport,
+    ) {
+        items.forEach((item, index) => {
+            item.sc(use, context, index + 1, min, toMax(index + 1), viewport);
+        });
+    }
+
+    return {
+        drw,
+        set,
+        sc,
+    };
+}
 
 function dataAdapter(
     kind: 'point' | 'y_scaled' | 'stacked' | 'percentage',
@@ -73,10 +118,11 @@ function dataAdapter(
     }
 
     function summ(
-        index: number, visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
+        index: number, _visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
         vp: Viewport, min: number, max: number,
 
         use: (topX: number, topY: number, botX: number, botY: number) => void,
+        scales?: number[],
     ) {
         const dy = vp.height / (max - min);
         const dx = vp.width / (timeRange.end - timeRange.start);
@@ -85,15 +131,12 @@ function dataAdapter(
 
             const x = ((times[i] as number) - timeRange.start) * dx * devicePixelRatio;
 
-
             let botY = 0;
             for (let j = 1; j < index; j++) {
-                if (visibility[jsonData.columns[j][0]]) {
-                    botY += (jsonData.columns[j][i] as number - min) * dy;
-                }
+                botY += (jsonData.columns[j][i] as number - min) * dy * scales[j - 1];
             }
 
-            const y = botY + (jsonData.columns[index][i] as number - min) * dy;
+            const y = botY + (jsonData.columns[index][i] as number - min) * dy * scales[index - 1];
             use(x, (vp.height - y) * devicePixelRatio, botX, (vp.height - botY) * devicePixelRatio);
             botX = x;
         }
@@ -187,7 +230,7 @@ export class DataService {
     public isMove = false;
 
     public zIndex: string;
-    public cr: (color: string, lineWidth: number) => ChartItem;
+    public cr: (jsonData: JsonData, lineWidth: number) => ChartsItem;
     public adapter: Adapter;
 
     public jsonData: JsonData;
@@ -245,26 +288,26 @@ export class DataService {
 
         if (jsonData.y_scaled) {
             this.zIndex = '-1';
-            this.cr = pl;
+            this.cr = (jsonData, lineWidth) => tio(jsonData, pl, lineWidth);
             this.adapter = dataAdapter('y_scaled', jsonData);
         }
         else if (jsonData.percentage) {
             this.zIndex = '1';
-            this.cr = ar;
+            this.cr = (jsonData, lineWidth) => tio(jsonData, ar, lineWidth);
             this.adapter = dataAdapter('percentage', jsonData);
         }
         else if (jsonData.stacked) {
             this.zIndex = '1';
-            this.cr = plg;
+            this.cr = plgs;
             this.adapter = dataAdapter('stacked', jsonData);
         }
         else if (jsonData.types[jsonData.columns[1][0]] === 'bar') {
             this.zIndex = '1';
-            this.cr = plg;
+            this.cr = plgs;
             this.adapter = dataAdapter('point', jsonData);
         } else {
             this.zIndex = '-1';
-            this.cr = pl;
+            this.cr = (jsonData, lineWidth) => tio(jsonData, pl, lineWidth);
             this.adapter = dataAdapter('point', jsonData);
         }
     }
@@ -324,20 +367,22 @@ export class DataService {
     use: UseDataFunction = (
         index: number, vp: Viewport, min: number, max: number,
         use: (topX: number, topY: number, botX: number, botY: number) => void,
+        scales?: number[],
     ) => {
         this.adapter.use(
             index, this.visibility, this.indexRange, this.timeRange,
-            vp, min, max, use,
+            vp, min, max, use, scales,
         )
     }
 
     useMin: UseDataFunction = (
         index: number, vp: Viewport, min: number, max: number,
         use: (topX: number, topY: number, botX: number, botY: number) => void,
+        scales?: number[],
     ) => {
         this.adapter.use(
             index, this.visibility, this.miniMap.indexRange, this.miniMap.timeRange,
-            vp, min, max, use,
+            vp, min, max, use, scales,
         )
     }
 

@@ -1,5 +1,4 @@
 import { drawConvas, map2 } from '../data/const';
-import { ChartItem, Dict } from '../data/models';
 import { DataService } from '../data/service';
 import { drawLens } from './lens';
 
@@ -27,12 +26,7 @@ function toMiniMapSvg(
 
     let lastUpdateCall: number;
 
-    const polylines: Dict<ChartItem> = {};
-
-    const {
-        jsonData: { columns, colors },
-        miniMap: { viewport, indexRange }, min,
-    } = settings;
+    const { miniMap: { viewport, indexRange }, min } = settings;
 
     const canvas = drawConvas(element, viewport.width, viewport.height);
     const context = canvas.getContext('2d');
@@ -43,16 +37,11 @@ function toMiniMapSvg(
         return currentMax.length > 1 ? currentMax[index - 1] : currentMax[0];
     }
 
-    for (let i = 1; i < columns.length; i++) {
-        const key = columns[i][0];
-        drawPolyline(
-            i, key, toCurrentMax(i), colors[key],
-        );
-    }
-
+    const chartItems = settings.cr(settings.jsonData, 1);
+    chartItems.drw(settings.use, context, min, toCurrentMax, viewport);
 
     settings.onVisibilityChange((key, value) => {
-        polylines[key].set(value);
+        chartItems.set(key, value);
         drawCharts();
     });
 
@@ -74,11 +63,7 @@ function toMiniMapSvg(
         lastUpdateCall = requestAnimationFrame(() => {
             context.clearRect(0, 0, canvas.width, canvas.height);
 
-            for (let i = 1; i < columns.length; i++) {
-                polylines[columns[i][0]].sc(
-                    settings.useMin, context, i, min, toCurrentMax(i), viewport,
-                );
-            }
+            chartItems.sc(settings.useMin, context, min, toCurrentMax, viewport);
 
             if (index === 10) return;
             currentMax = map2(
@@ -88,13 +73,5 @@ function toMiniMapSvg(
 
             return scale(index + 1);
         });
-    }
-
-    function drawPolyline(
-        index: number,
-        key: string, max: number, color: string,
-    ) {
-        polylines[key] = settings.cr(color, 1);
-        polylines[key].drw(settings.useMin, context, index, min, max, viewport);
     }
 }

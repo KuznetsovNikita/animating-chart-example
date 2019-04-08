@@ -1,6 +1,5 @@
 import { ChartItem, UseDataFunction, Viewport } from '../data/models';
 
-
 export function pl(
     color: string,
     lineWidth: number,

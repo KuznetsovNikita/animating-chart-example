@@ -1,4 +1,3 @@
-import { ChartItem, Dict, Viewport } from 'src/data/models';
 import { drawConvas, map2 } from '../data/const';
 import { ChangeKind, DataService } from '../data/service';
 import { Line, ln } from './line';
@@ -20,8 +19,6 @@ export function toChart(
 
     let lines: Line[] = [];
     let linesStock: Line[] = [];
-    const polylines: Dict<ChartItem> = {};
-
 
     const {
         jsonData: { columns, colors },
@@ -57,12 +54,8 @@ export function toChart(
         return currentMax.length > 1 ? currentMax[index - 1] : currentMax[0];
     }
 
-    for (let i = 1; i < columns.length; i++) {
-        const key = columns[i][0];
-        drawPolyline(
-            i, key, toCurrentMax(i), colors[key], viewport,
-        );
-    }
+    const chartItems = settings.cr(settings.jsonData, 2);
+    chartItems.drw(settings.use, context, min, toCurrentMax, viewport);
 
     toPopUp(element, context, settings, toCurrentMax);
 
@@ -70,9 +63,8 @@ export function toChart(
         drawCharts(kind);
     });
 
-    let vision: null | number = null;
     settings.onVisibilityChange((key, value) => {
-        polylines[key].set(value);
+        chartItems.set(key, value);
         drawCharts('visible');
     });
 
@@ -101,11 +93,7 @@ export function toChart(
         lastUpdateChart = requestAnimationFrame(() => {
             context.clearRect(0, 0, canvas.width, canvas.height - 20 * devicePixelRatio);
 
-            for (let i = 1; i < columns.length; i++) {
-                polylines[columns[i][0]].sc(
-                    settings.use, context, i, min, toCurrentMax(i), viewport,
-                );
-            }
+            chartItems.sc(settings.use, context, min, toCurrentMax, viewport);
 
             if (index === 10) return;
 
@@ -115,15 +103,6 @@ export function toChart(
             );
             return scaleChart(index + 1);
         });
-    }
-
-
-    function drawPolyline(
-        index: number, key: string, max: number,
-        color: string, viewport: Viewport
-    ) {
-        polylines[key] = settings.cr(color, 2);
-        polylines[key].drw(settings.use, context, index, min, max, viewport);
     }
 
     function drawLine(max: number[], opacity: number): Line[] {
@@ -182,9 +161,7 @@ export function toChart(
 
             lineContext.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
 
-            const [max1] = currentMax;
-
-            const dx1 = height / (max1 - min);
+            const dx1 = height / (currentMax[0] - min);
 
             function update(line: Line): boolean {
                 return line.up(lineContext, (height + 10 - (line.vl - min) * dx1) * devicePixelRatio) != 0;

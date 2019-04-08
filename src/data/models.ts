@@ -21,6 +21,7 @@ export interface Adapter {
         index: number, visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
         vp: Viewport, min: number, max: number,
         use: (topX: number, topY: number, botX: number, botY: number) => void,
+        scales?: number[],
     ) => void;
     toMax: (visibility: Dict<boolean>, indexRange: Range) => number[];
 }
@@ -28,6 +29,7 @@ export interface Adapter {
 export type UseDataFunction = (
     index: number, vp: Viewport, min: number, max: number,
     use: (topX: number, topY: number, botX: number, botY: number) => void,
+    scales?: number[],
 ) => void;
 
 export interface ChartItem {
@@ -39,5 +41,17 @@ export interface ChartItem {
     sc: (
         use: UseDataFunction, context: CanvasRenderingContext2D,
         index: number, min: number, max: number, viewport: Viewport,
+    ) => void;
+}
+
+export interface ChartsItem {
+    drw: (
+        use: UseDataFunction, context: CanvasRenderingContext2D,
+        min: number, toMax: (index: number) => number, viewport: Viewport,
+    ) => void;
+    set: (key: string, value: boolean) => void;
+    sc: (
+        use: UseDataFunction, context: CanvasRenderingContext2D,
+        min: number, toMax: (index: number) => number, viewport: Viewport,
     ) => void;
 }
