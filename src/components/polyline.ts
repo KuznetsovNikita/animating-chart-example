@@ -1,10 +1,10 @@
-import { Adapter, Column, Polyline, Range, TimeColumn, Viewport } from '../data/models';
+import { ChartItem, UseDataFunction, Viewport } from '../data/models';
 
 
 export function pl(
     color: string,
     lineWidth: number,
-): Polyline {
+): ChartItem {
     const devicePixelRatio = window.devicePixelRatio;
     let action: 'none' | 'in' | 'out' = 'none';
     let opacity = 1;
@@ -14,12 +14,8 @@ export function pl(
     }
 
     function sc(
-        adapter: Adapter,
-        context: CanvasRenderingContext2D,
-        index: number,
-        min: number, max: number, values: Column,
-        times: TimeColumn, indexRange: Range,
-        timeRange: Range, viewport: Viewport,
+        use: UseDataFunction, context: CanvasRenderingContext2D,
+        index: number, min: number, max: number, viewport: Viewport,
     ) {
         if (action === 'in') {
             opacity = Math.min(1, opacity + 0.1);
@@ -33,25 +29,22 @@ export function pl(
 
         if (opacity !== 0) {
             drw(
-                adapter, context, index, min, max, values, times, indexRange, timeRange, viewport,
+                use, context, index, min, max, viewport,
             );
         }
     }
 
     function drw(
-        adapter: Adapter,
-        context: CanvasRenderingContext2D,
-        index: number,
-        min: number, max: number, values: Column, times: TimeColumn,
-        indexRange: Range, timeRange: Range, viewport: Viewport,
+        use: UseDataFunction, context: CanvasRenderingContext2D,
+        index: number, min: number, max: number, viewport: Viewport,
     ) {
         context.lineWidth = lineWidth * devicePixelRatio;
         context.globalAlpha = opacity;
         context.strokeStyle = color;
 
         context.beginPath();
-        adapter.use(
-            index, indexRange, timeRange, viewport, min, max,
+        use(
+            index, viewport, min, max,
             (x, y) => context.lineTo(x, y),
         );
         context.stroke();

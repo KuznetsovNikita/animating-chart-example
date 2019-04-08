@@ -1,11 +1,6 @@
 import { plg } from '../components/poligon';
 import { pl } from '../components/polyline';
-import { Adapter, Column, Dict, Polyline, Range, TimeColumn, Viewport } from './models';
-
-// interface Types {
-//     x: string[];
-//     [key: string]: 'line' | 'percent';
-// }
+import { Adapter, ChartItem, Column, Dict, Range, TimeColumn, Viewport } from './models';
 
 export interface JsonData {
     columns: [TimeColumn, ...Array<Column>];
@@ -182,7 +177,7 @@ export class DataService {
     public isMove = false;
 
     public zIndex: string;
-    public cr: (color: string, lineWidth: number) => Polyline;
+    public cr: (color: string, lineWidth: number) => ChartItem;
     public adapter: Adapter;
 
     public jsonData: JsonData;
@@ -237,8 +232,6 @@ export class DataService {
         }
 
         this.min = this.toMinValue();
-
-        const type = jsonData.types[jsonData.columns[1][0]];
 
         if (jsonData.y_scaled) {
             this.zIndex = '-1';
@@ -316,6 +309,13 @@ export class DataService {
 
     toMaxVisibleValue(indexRange: Range): number[] {
         return this.adapter.toMax(this.visibility, indexRange);
+    }
+
+    use = (
+        index: number, vp: Viewport, min: number, max: number,
+        use: (topX: number, topY: number, botX: number, botY: number) => void
+    ) => {
+        this.adapter.use(index, this.indexRange, this.timeRange, vp, min, max, use)
     }
 
     toMinValue() {

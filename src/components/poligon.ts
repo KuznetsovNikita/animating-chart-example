@@ -1,9 +1,9 @@
-import { Adapter, Column, Polyline, Range, TimeColumn, Viewport } from '../data/models';
+import { ChartItem, UseDataFunction, Viewport } from '../data/models';
 
 
 export function plg(
     color: string,
-): Polyline {
+): ChartItem {
     let scale = 1;
 
     function set(value: boolean) {
@@ -11,29 +11,24 @@ export function plg(
     }
 
     function sc(
-        adapter: Adapter,
-        context: CanvasRenderingContext2D,
-        index: number,
-        min: number, max: number, values: Column,
-        times: TimeColumn, indexRange: Range,
-        timeRange: Range, viewport: Viewport,
+        use: UseDataFunction, context: CanvasRenderingContext2D,
+        index: number, min: number, max: number, viewport: Viewport,
     ) {
         if (scale !== 0) {
             drw(
-                adapter, context, index, min, max, values, times, indexRange, timeRange, viewport,
+                use, context, index, min, max, viewport,
             );
         }
         return scale;
     }
 
     function drw(
-        adapter: Adapter, context: CanvasRenderingContext2D,
-        index: number, min: number, max: number, values: Column, times: TimeColumn,
-        indexRange: Range, timeRange: Range, viewport: Viewport,
+        use: UseDataFunction, context: CanvasRenderingContext2D,
+        index: number, min: number, max: number, viewport: Viewport,
     ) {
         context.fillStyle = color;
-        adapter.use(
-            index, indexRange, timeRange, viewport, min, max,
+        use(
+            index, viewport, min, max,
             (x, y, bx, by) => {
                 context.beginPath();
                 context.moveTo(bx, by);

@@ -25,22 +25,19 @@ export interface Adapter {
     toMax: (visibility: Dict<boolean>, indexRange: Range) => number[];
 }
 
-export interface Polyline {
-    drw: (
-        adapter: Adapter,
-        context: CanvasRenderingContext2D,
-        index: number,
-        min: number, max: number, values: Column, times: TimeColumn,
-        indexRange: Range, timeRange: Range, viewport: Viewport,
+export type UseDataFunction = (
+    index: number, vp: Viewport, min: number, max: number,
+    use: (topX: number, topY: number, botX: number, botY: number) => void
+) => void;
 
+export interface ChartItem {
+    drw: (
+        use: UseDataFunction, context: CanvasRenderingContext2D,
+        index: number, min: number, max: number, viewport: Viewport,
     ) => void;
     set: (value: boolean) => void;
     sc: (
-        adapter: Adapter,
-        context: CanvasRenderingContext2D,
-        index: number,
-        min: number, max: number, values: Column,
-        times: TimeColumn, indexRange: Range,
-        timeRange: Range, viewport: Viewport,
+        use: UseDataFunction, context: CanvasRenderingContext2D,
+        index: number, min: number, max: number, viewport: Viewport,
     ) => void;
 }

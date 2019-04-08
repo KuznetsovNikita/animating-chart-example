@@ -1,9 +1,7 @@
-import { Column, Dict, Polyline, Range, TimeColumn, Viewport } from 'src/data/models';
+import { ChartItem, Dict, Viewport } from 'src/data/models';
 import { drawConvas, map2 } from '../data/const';
 import { ChangeKind, DataService } from '../data/service';
 import { Line, ln } from './line';
-import { plg } from './poligon';
-import { pl } from './polyline';
 import { toPopUp } from './pop-up';
 import { toTimes } from './times';
 
@@ -22,23 +20,15 @@ export function toChart(
 
     let lines: Line[] = [];
     let linesStock: Line[] = [];
-    const polylines: Dict<Polyline> = {};
+    const polylines: Dict<ChartItem> = {};
 
 
     const {
-        jsonData: { columns, colors, types },
+        jsonData: { columns, colors },
         viewport: { width, height },
-        indexRange, timeRange, viewport,
+        indexRange, viewport,
         min,
     } = settings;
-
-    function createItem(
-        type: string,
-        color: string,
-        lineWidth: number,
-    ): Polyline {
-        return type === 'line' ? pl(color, lineWidth) : plg(color)
-    }
 
     const devicePixelRatio = window.devicePixelRatio;
     const canvas = drawConvas(element, width, height + 20);
@@ -70,9 +60,7 @@ export function toChart(
     for (let i = 1; i < columns.length; i++) {
         const key = columns[i][0];
         drawPolyline(
-            i, key, toCurrentMax(i), columns[i],
-            columns[0], colors[key],
-            indexRange, timeRange, viewport,
+            i, key, toCurrentMax(i), colors[key], viewport,
         );
     }
 
@@ -115,8 +103,7 @@ export function toChart(
 
             for (let i = 1; i < columns.length; i++) {
                 polylines[columns[i][0]].sc(
-                    settings.adapter, context, i, min, toCurrentMax(i), columns[i], columns[0],
-                    settings.indexRange, settings.timeRange, viewport,
+                    settings.use, context, i, min, toCurrentMax(i), viewport,
                 );
             }
 
@@ -132,13 +119,11 @@ export function toChart(
 
 
     function drawPolyline(
-        index: number,
-        key: string, max: number, values: Column,
-        times: TimeColumn, color: string, indexRange: Range,
-        timeRange: Range, viewport: Viewport
+        index: number, key: string, max: number,
+        color: string, viewport: Viewport
     ) {
         polylines[key] = settings.cr(color, 2);
-        polylines[key].drw(settings.adapter, context, index, min, max, values, times, indexRange, timeRange, viewport);
+        polylines[key].drw(settings.use, context, index, min, max, viewport);
     }
 
     function drawLine(max: number[], opacity: number): Line[] {

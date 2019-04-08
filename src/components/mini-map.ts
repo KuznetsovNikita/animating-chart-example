@@ -1,5 +1,5 @@
 import { drawConvas, map2 } from '../data/const';
-import { Column, Dict, Polyline, TimeColumn } from '../data/models';
+import { ChartItem, Dict } from '../data/models';
 import { DataService } from '../data/service';
 import { drawLens } from './lens';
 
@@ -27,11 +27,11 @@ function toMiniMapSvg(
 
     let lastUpdateCall: number;
 
-    const polylines: Dict<Polyline> = {};
+    const polylines: Dict<ChartItem> = {};
 
     const {
         jsonData: { columns, colors },
-        miniMap: { viewport, indexRange, timeRange }, min,
+        miniMap: { viewport, indexRange }, min,
     } = settings;
 
     const canvas = drawConvas(element, viewport.width, viewport.height);
@@ -46,8 +46,7 @@ function toMiniMapSvg(
     for (let i = 1; i < columns.length; i++) {
         const key = columns[i][0];
         drawPolyline(
-            i, key, toCurrentMax(i), columns[i],
-            columns[0], colors[key],
+            i, key, toCurrentMax(i), colors[key],
         );
     }
 
@@ -77,8 +76,7 @@ function toMiniMapSvg(
 
             for (let i = 1; i < columns.length; i++) {
                 polylines[columns[i][0]].sc(
-                    settings.adapter, context, i, min, toCurrentMax(i), columns[i], columns[0],
-                    indexRange, timeRange, viewport,
+                    settings.use, context, i, min, toCurrentMax(i), viewport,
                 );
             }
 
@@ -94,10 +92,9 @@ function toMiniMapSvg(
 
     function drawPolyline(
         index: number,
-        key: string, max: number, values: Column,
-        times: TimeColumn, color: string,
+        key: string, max: number, color: string,
     ) {
         polylines[key] = settings.cr(color, 1);
-        polylines[key].drw(settings.adapter, context, index, min, max, values, times, indexRange, timeRange, viewport);
+        polylines[key].drw(settings.use, context, index, min, max, viewport);
     }
 }
