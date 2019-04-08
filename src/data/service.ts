@@ -1,6 +1,6 @@
 import { plg } from '../components/poligon';
 import { pl } from '../components/polyline';
-import { Adapter, ChartItem, Column, Dict, Range, TimeColumn, Viewport } from './models';
+import { Adapter, ChartItem, Column, Dict, Range, TimeColumn, UseDataFunction, Viewport } from './models';
 
 export interface JsonData {
     columns: [TimeColumn, ...Array<Column>];
@@ -28,7 +28,7 @@ function dataAdapter(
     const times = jsonData.columns[0];
 
     function points(
-        index: number, indexRange: Range, timeRange: Range,
+        index: number, visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
         vp: Viewport, min: number, max: number,
 
         use: (topX: number, topY: number, botX: number, botY: number) => void
@@ -72,20 +72,24 @@ function dataAdapter(
     }
 
     function summ(
-        index: number, indexRange: Range, timeRange: Range,
+        index: number, visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
         vp: Viewport, min: number, max: number,
 
-        use: (topX: number, topY: number, botX: number, botY: number) => void
+        use: (topX: number, topY: number, botX: number, botY: number) => void,
     ) {
         const dy = vp.height / (max - min);
         const dx = vp.width / (timeRange.end - timeRange.start);
         let botX = 0
         for (let i = indexRange.start; i <= indexRange.end; i++) {
+
             const x = ((times[i] as number) - timeRange.start) * dx * devicePixelRatio;
+
 
             let botY = 0;
             for (let j = 1; j < index; j++) {
-                botY += (jsonData.columns[j][i] as number - min) * dy;
+                if (visibility[jsonData.columns[j][0]]) {
+                    botY += (jsonData.columns[j][i] as number - min) * dy;
+                }
             }
 
             const y = botY + (jsonData.columns[index][i] as number - min) * dy;
@@ -109,7 +113,7 @@ function dataAdapter(
     }
 
     function percent(
-        index: number, indexRange: Range, timeRange: Range,
+        index: number, visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
         vp: Viewport, min: number, max: number,
 
         use: (topX: number, topY: number, botX: number, botY: number) => void
@@ -311,11 +315,24 @@ export class DataService {
         return this.adapter.toMax(this.visibility, indexRange);
     }
 
-    use = (
+    use: UseDataFunction = (
         index: number, vp: Viewport, min: number, max: number,
-        use: (topX: number, topY: number, botX: number, botY: number) => void
+        use: (topX: number, topY: number, botX: number, botY: number) => void,
     ) => {
-        this.adapter.use(index, this.indexRange, this.timeRange, vp, min, max, use)
+        this.adapter.use(
+            index, this.visibility, this.indexRange, this.timeRange,
+            vp, min, max, use,
+        )
+    }
+
+    useMin: UseDataFunction = (
+        index: number, vp: Viewport, min: number, max: number,
+        use: (topX: number, topY: number, botX: number, botY: number) => void,
+    ) => {
+        this.adapter.use(
+            index, this.visibility, this.miniMap.indexRange, this.miniMap.timeRange,
+            vp, min, max, use,
+        )
     }
 
     toMinValue() {

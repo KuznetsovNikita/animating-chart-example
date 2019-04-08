@@ -76,7 +76,7 @@ function toMiniMapSvg(
 
             for (let i = 1; i < columns.length; i++) {
                 polylines[columns[i][0]].sc(
-                    settings.use, context, i, min, toCurrentMax(i), viewport,
+                    settings.useMin, context, i, min, toCurrentMax(i), viewport,
                 );
             }
 
@@ -95,6 +95,6 @@ function toMiniMapSvg(
         key: string, max: number, color: string,
     ) {
         polylines[key] = settings.cr(color, 1);
-        polylines[key].drw(settings.use, context, index, min, max, viewport);
+        polylines[key].drw(settings.useMin, context, index, min, max, viewport);
     }
 }

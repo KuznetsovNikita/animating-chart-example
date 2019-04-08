@@ -19,7 +19,6 @@ export function plg(
                 use, context, index, min, max, viewport,
             );
         }
-        return scale;
     }
 
     function drw(
