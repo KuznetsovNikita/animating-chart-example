@@ -123,11 +123,11 @@ export function drawLens(
             settings.isMove = false;
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('touchmove', onTouchMove);
-            lens.removeEventListener('mouseup', onEnd);
+            document.removeEventListener('mouseup', onEnd);
             lens.removeEventListener('touchend', onEnd);
         }
 
-        lens.addEventListener('mouseup', onEnd);
+        document.addEventListener('mouseup', onEnd);
         lens.addEventListener('touchend', onEnd);
     }
 

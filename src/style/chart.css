@@ -29,8 +29,7 @@
         left: 0;
         width: 1px;
         height: 100%;
-        background-color: #f2f4f5;
-        opacity: .9;
+        background-color: rgba(24, 45, 59, 0.1);
     }
 
     .dot {

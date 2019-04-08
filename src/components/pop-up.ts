@@ -8,7 +8,7 @@ import { PopUpBlock, toPopUpBlock } from './pop-up-block';
 // }
 
 interface Elements {
-    line: HTMLDivElement;
+    line: HTMLDivElement[];
     dots: HTMLDivElement[];
     block: PopUpBlock;
 }
@@ -51,6 +51,7 @@ export function toPopUp(
 
     function cleanUp() {
         container.classList.add('invisible');
+        element.addEventListener('mousemove', onMouseMove);
     }
 
 
@@ -99,6 +100,18 @@ export function toPopUp(
         cleanUp();
     }
 
+    function onClick(event: MouseEvent) {
+        element.removeEventListener('mousemove', onMouseMove);
+
+        const { clientX, clientY, currentTarget } = event;
+        var rect = (currentTarget as HTMLDivElement).getBoundingClientRect();
+        var x = clientX - rect.left;
+        var y = clientY - rect.top;
+        onDrawPopUp(x, y);
+    }
+
+    element.addEventListener('click', onClick);
+
     element.addEventListener('mousemove', onMouseMove);
     element.addEventListener('mouseleave', onMouseOut);
 
@@ -116,6 +129,8 @@ export function toPopUp(
     setting.onTimeRangeChange(() => cleanUp());
 
     setting.onDestroy(() => {
+        element.removeEventListener('click', onClick);
+
         element.removeEventListener('mousemove', onMouseMove);
         element.removeEventListener('mouseleave', onMouseOut);
 
@@ -128,19 +143,27 @@ export function toPopUp(
 
         container.classList.add('invisible');
 
-        const line = toDiv(container, 'line');
+        if (setting.isBars) {
+            elements = {
+                line: [toDiv(container, 'line'), toDiv(container, 'line')],
+                dots: [],
+                block: toPopUpBlock(setting, container),
+            };
+        }
+        else {
+            const line = toDiv(container, 'line');
+            const dots = lines.map(item => {
+                const dot = toDiv(container, 'dot');
+                dot.style.borderColor = colors[item[0]];
+                return dot;
+            });
 
-        const dots = lines.map(item => {
-            const dot = toDiv(container, 'dot');
-            dot.style.borderColor = colors[item[0]];
-            return dot;
-        });
-
-        elements = {
-            line,
-            dots,
-            block: toPopUpBlock(setting, container),
-        };
+            elements = {
+                line: [line],
+                dots,
+                block: toPopUpBlock(setting, container),
+            };
+        }
     }
 
     function drawPopUp(index: number, _offsetY: number) {
@@ -151,20 +174,31 @@ export function toPopUp(
         const [times, ...lines] = columns;
         const time = times[index] as number;
         const dx = width / (end - start);
-        const positionX = (time - start) * dx;
-        const x = positionX.toString();
+        const x = (time - start) * dx;
+        if (!setting.isBars) {
+            elements.line[0].style.transform = `translate(${x}px, 0)`;
 
-        elements.line.style.transform = `translate(${x}px, 0)`;
+            elements.dots.forEach((dot, i) => {
+                const dy = height / (toMax(i + 1) - setting.min);
+                const coordinates = lines[i][index] as number - setting.min;
+                const positionY = height - coordinates * dy;
+                const y = positionY.toString();
+                dot.style.transform = `translate(${x}px, ${y}px)`;
+            });
 
-        elements.dots.forEach((dot, i) => {
-            const dy = height / (toMax(i + 1) - setting.min);
-            const coordinates = lines[i][index] as number - setting.min;
-            const positionY = height - coordinates * dy;
-            const y = positionY.toString();
-            dot.style.transform = `translate(${x}px, ${y}px)`;
-        });
+            elements.block.setData(time, index, x);
+        }
+        else {
+            const next = times[index + 1] as number;
+            if (!next) return;
+            elements.line[0].style.transform = `translate(0, 0)`;
+            elements.line[0].style.width = x + 'px';
+            elements.line[1].style.transform = `translate(${(next - start) * dx}px, 0)`;
+            elements.line[1].style.width = (end - next) * dx + 'px';
+            elements.block.setData(time, index + 1, x);
+        }
 
-        elements.block.setData(time, index, positionX);
+
         container.classList.remove('invisible');
     }
 }

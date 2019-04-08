@@ -54,8 +54,7 @@ export function toPopUpBlock(
                     : value;
         });
 
-        const x = Math.min(Math.max(positionX - 70, 0), width - 140);
-        panel.style.transform = `translate(${x}px ,20px)`;
+        panel.style.transform = `translate(${positionX + (positionX > width / 2 ? -150 : 10)}px, 10px)`;
     }
 
     return {

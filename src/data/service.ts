@@ -45,7 +45,7 @@ function tio(
     function set(key: string, value: boolean) {
         jsonData.columns.forEach((column, index) => {
             if (column[0] === key) {
-                items[index].set(value);
+                items[index - 1].set(value);
             }
         });
     }
@@ -228,6 +228,7 @@ export class DataService {
     public visibility: Dict<boolean> = {};
 
     public isMove = false;
+    public isBars = false;
 
     public zIndex: string;
     public cr: (jsonData: JsonData, lineWidth: number) => ChartsItem;
@@ -285,6 +286,8 @@ export class DataService {
         }
 
         this.min = this.toMinValue();
+
+        this.isBars = (jsonData.types[jsonData.columns[1][0]] === 'bar' || jsonData.stacked) && !jsonData.percentage;
 
         if (jsonData.y_scaled) {
             this.zIndex = '-1';

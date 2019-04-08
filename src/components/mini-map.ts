@@ -38,7 +38,7 @@ function toMiniMapSvg(
     }
 
     const chartItems = settings.cr(settings.jsonData, 1);
-    chartItems.drw(settings.use, context, min, toCurrentMax, viewport);
+    chartItems.drw(settings.useMin, context, min, toCurrentMax, viewport);
 
     settings.onVisibilityChange((key, value) => {
         chartItems.set(key, value);
