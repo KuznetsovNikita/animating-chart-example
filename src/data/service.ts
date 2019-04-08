@@ -1,3 +1,4 @@
+import { ar } from '../components/area';
 import { plg } from '../components/poligon';
 import { pl } from '../components/polyline';
 import { Adapter, ChartItem, Column, Dict, Range, TimeColumn, UseDataFunction, Viewport } from './models';
@@ -114,29 +115,34 @@ function dataAdapter(
 
     function percent(
         index: number, visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
-        vp: Viewport, min: number, max: number,
+        vp: Viewport, _min: number, _max: number,
 
         use: (topX: number, topY: number, botX: number, botY: number) => void
     ) {
 
-        const dy = vp.height / (max - min);
         const dx = vp.width / (timeRange.end - timeRange.start);
+
         for (let i = indexRange.start; i <= indexRange.end; i++) {
             const x = ((times[i] as number) - timeRange.start) * dx * devicePixelRatio;
 
             let botY = 0;
-            for (let j = 1; j < index; j++) {
-                botY += (jsonData.columns[j][i] as number - min) * dy;
-            }
-
             let totalY = 0;
+            let y = 0;
+
             for (let j = 1; j < jsonData.columns.length; j++) {
-                totalY += (jsonData.columns[j][i] as number - min) * dy;
+                if (visibility[jsonData.columns[j][0]]) {
+                    const line = jsonData.columns[j][i] as number;
+                    if (j < index) {
+                        botY += line;
+                    }
+                    if (j <= index) {
+                        y += line;
+                    }
+                    totalY += line;
+                }
             }
 
-            const y = botY + (jsonData.columns[index][i] as number - min) * dy;
-
-            use(x, (vp.height - totalY / y) * devicePixelRatio, 0, (vp.height - totalY / botY) * devicePixelRatio);
+            use(x, (y / totalY * vp.height) * devicePixelRatio, x, (botY / totalY * vp.height) * devicePixelRatio);
         }
 
     }
@@ -244,7 +250,7 @@ export class DataService {
         }
         else if (jsonData.percentage) {
             this.zIndex = '1';
-            this.cr = plg;
+            this.cr = ar;
             this.adapter = dataAdapter('percentage', jsonData);
         }
         else if (jsonData.stacked) {
