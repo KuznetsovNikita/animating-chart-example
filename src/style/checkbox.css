@@ -16,7 +16,6 @@
     border-radius: 25px;
     border: 1px solid #ebf0f3;
     padding: 6px 18px 6px 44px;
-    color: #565b5d;
     box-sizing: border-box;
     cursor: pointer;
     font-family: sans-serif;
@@ -28,6 +27,13 @@
     overflow: hidden;
     position: relative;
 
+    color: #565b5d;
+    transition: color .3s ease;
+    
+    &.as-check {
+        color: #fafafa
+    }
+
     svg {
         position: absolute;
         top: 0;
@@ -35,6 +41,7 @@
         width: 100%;
         height: 44px;
         display: block;
+        z-index: -1;
     }
 
     .check-mark {
@@ -56,16 +63,12 @@
     }
 
     .shadow {
-        fill: transparent;
-        stroke: #7693a9;
-        stroke-opacity: .05;
-        stroke-width: 40px;
         transform-origin: 21px 22px;
         transform: scale(0);
+        transition: transform .3s ease;
     }
 
-    &.as-click .shadow {
+    &.as-check .shadow {
         transform: scale(1);
-        transition: transform .3s ease-out;
     }
 }

@@ -139,6 +139,7 @@ export function toPopUp(
     });
 
     setting.onTimeRangeChange(() => cleanUp());
+    setting.onZoomStart(() => cleanUp());
 
     setting.onDestroy(() => {
         element.removeEventListener('click', onClick);
@@ -159,7 +160,7 @@ export function toPopUp(
             elements = {
                 line: [toDiv(container, 'shadow'), toDiv(container, 'shadow')],
                 dots: [],
-                block: toPopUpBlock(setting, container, () => cleanUp()),
+                block: toPopUpBlock(setting, container),
             };
         }
         else {
@@ -173,7 +174,7 @@ export function toPopUp(
             elements = {
                 line: [line],
                 dots,
-                block: toPopUpBlock(setting, container, () => cleanUp()),
+                block: toPopUpBlock(setting, container),
             };
         }
     }

@@ -8,7 +8,6 @@ export interface PopUpBlock {
 export function toPopUpBlock(
     setting: DataService,
     container: HTMLDivElement,
-    cleanUp: Function,
 ): PopUpBlock {
 
     const {
@@ -21,7 +20,6 @@ export function toPopUpBlock(
     panel.onclick = (_event: MouseEvent) => {
         setting.isZoom ? setting.unzoom() : setting.zoom();
         event.stopPropagation();
-        cleanUp();
     };
 
     setting.onDestroy(() => {
@@ -93,7 +91,7 @@ export function toPopUpBlock(
     function setData(time: number, index: number, positionX: number) {
 
         const d = new Date(time);
-        date.innerHTML = `${days[d.getDay()]}, ${d.getUTCDate()} ${month[d.getMonth()]}`;
+        date.innerHTML = `${days[d.getUTCDay()].slice(0, 3)}, ${d.getUTCDate()} ${month[d.getMonth()].slice(0, 3)}`;
         if (setting.isZoom) {
             date.innerHTML += ` ${('0' + (d.getUTCHours())).slice(-2)}:00`;
         }

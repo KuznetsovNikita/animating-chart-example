@@ -62,7 +62,13 @@ body {
     }
 }
 
-
+.range {
+    position: absolute;
+    top: 35px;
+    right: 5px;
+    text-align: right;
+    font: 600 16px sans-serif;
+}
 
 .mini-map {
     margin: 20px 5px 0;

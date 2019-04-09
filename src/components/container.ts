@@ -1,5 +1,5 @@
-import { DataService } from 'src/data/service';
-import { toDiv } from '../data/const';
+import { days, month, toDiv } from '../data/const';
+import { DataService, day } from '../data/service';
 import { toChart } from './chart';
 import { toMenu } from './menu';
 import { toMiniMap } from './mini-map';
@@ -21,12 +21,32 @@ export function drawContainer(
 }
 
 
+function formatTime(settings: DataService): string {
+    if (settings.isZoom) {
+        const d = new Date(settings.timeRange.start + day / 2);
+        return `${days[d.getUTCDay()]}, ${d.getUTCDate()} ${month[d.getMonth()]} ${d.getFullYear()}`;
+    }
+    else {
+        const s = new Date(settings.timeRange.start);
+        const e = new Date(settings.timeRange.end);
+        return `${s.getUTCDate()} ${month[s.getMonth()]} ${s.getFullYear()} - ${e.getUTCDate()} ${month[e.getMonth()]} ${e.getFullYear()}`;
+    }
+}
 function drawChart(settings: DataService, container: HTMLDivElement) {
     const header = toDiv(container, 'header');
     header.innerHTML = `<h1>Chart #${settings.url}</h1>`;
 
     const zoomOut = toDiv(header, 'zoom');
     zoomOut.innerHTML = '&#128269; Zoom Out';
+
+    const dateRange = toDiv(header, 'range');
+    function update() {
+        dateRange.innerHTML = formatTime(settings);
+    }
+    update();
+
+    settings.onTimeRangeChange(update);
+    settings.onZoom(update);
 
     settings.onZoomStart(() => {
         header.classList.toggle('in-zoom');

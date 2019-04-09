@@ -64,7 +64,7 @@ export function toTimes(
     function formatValue(date: Date): string {
         return settings.isZoom
             ? `${("0" + (date.getUTCHours())).slice(-2)}:00`
-            : `${date.getDate()} ${month[date.getMonth()]}`
+            : `${date.getDate()} ${month[date.getMonth()].slice(0, 3)}`
     }
 
     function drawTime(index: number) {

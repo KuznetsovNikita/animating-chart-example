@@ -36,20 +36,13 @@ function drawCheckbox(
     element.classList.add('checkbox');
     if (value) element.classList.add('as-check');
 
-    element.innerHTML += name;
+    element.innerHTML += `<span>${name}</span>`;
     requestAnimationFrame(() => {
         element.appendChild(drawIcon(color, element.clientWidth));
     });
 
-    let lastUpdate: number;
     element.onclick = () => {
         settings.toggleVisibility(key);
-
-        element.classList.add('as-click');
-        if (lastUpdate) clearTimeout(lastUpdate);
-        lastUpdate = setTimeout(() => {
-            element.classList.remove('as-click');
-        }, 300);
     };
 
     settings.onVisibilityChange(item => {
@@ -67,7 +60,7 @@ function drawCheckbox(
 
 function drawIcon(color: string, width: number) {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.innerHTML += `<circle class="shadow" cx="22" cy="21" r="${width}"></circle><circle cx="22" cy="21" r="13" style="fill: ${color};"></circle>`;
+    svg.innerHTML += `<circle class="shadow" cx="22" cy="21" r="${width}" style="fill: ${color};"></circle><circle cx="22" cy="21" r="13" style="fill: ${color};"></circle>`;
     svg.innerHTML += '<polyline class="check-mark" points="16,21.5 20,25.5 27,17.5"></polyline><circle class="cover" cx="22" cy="21" r="12"></circle>';
     return svg;
 }
