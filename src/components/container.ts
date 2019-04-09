@@ -1,4 +1,5 @@
 import { DataService } from 'src/data/service';
+import { toDiv } from '../data/const';
 import { toChart } from './chart';
 import { toMenu } from './menu';
 import { toMiniMap } from './mini-map';
@@ -12,27 +13,38 @@ export function drawContainer(
     container.id = 'app';
     container.style.width = width + 'px';
 
+    toModeButton(container, servicies);
+
     Promise
         .all(servicies.map(item => item.asSoonAsReady))
-        .then(charts => {
-            charts.forEach(item => {
-                const header = document.createElement('div');
-                container.appendChild(header);
-                header.id = 'header';
-                header.innerHTML = `<h1>Chart #${item.url}</h1>`;
-
-                const chart = document.createElement('div');
-                chart.classList.add('chart');
-                container.appendChild(chart);
-                toChart(chart, item);
-                toMiniMap(chart, item);
-                toMenu(chart, item);
-            });
-        });
-
-    toModeButton(container, servicies);
+        .then(charts => charts.forEach(item => drawChart(item, container)));
 }
 
+
+function drawChart(settings: DataService, container: HTMLDivElement) {
+    const header = toDiv(container, 'header');
+    header.innerHTML = `<h1>Chart #${settings.url}</h1>`;
+
+    const zoomOut = toDiv(header, 'zoom');
+    zoomOut.innerHTML = '&#128269; Zoom Out';
+
+    settings.onZoomStart(() => {
+        header.classList.toggle('in-zoom');
+    });
+
+    zoomOut.onclick = () => {
+        settings.unzoom();
+    }
+
+    settings.onDestroy(() => {
+        zoomOut.onclick = null;
+    })
+
+    const chart = toDiv(container, 'chart');
+    toChart(chart, settings);
+    toMiniMap(chart, settings);
+    toMenu(chart, settings);
+}
 
 function toModeButton(
     container: HTMLDivElement,

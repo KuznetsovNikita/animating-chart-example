@@ -64,7 +64,7 @@ export function toChart(
     const chartItems = settings.cr(settings.jsonData, 2);
     chartItems.drw(settings.use, context, min, toCurrentMax, viewport);
 
-    toPopUp(element, context, settings, toCurrentMax);
+    toPopUp(element, settings, toCurrentMax);
 
     settings.onZoomStart((data, endIndexRanage) => {
         const frames = 20;

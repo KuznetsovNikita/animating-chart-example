@@ -12,14 +12,14 @@ export function toPopUpBlock(
 ): PopUpBlock {
 
     const {
-        jsonData: { columns, colors, names },
+        jsonData: { colors, names },
         viewport: { width },
     } = setting;
 
     const panel = toDiv(container, 'panel');
 
     panel.onclick = (_event: MouseEvent) => {
-        setting.zoom();
+        setting.isZoom ? setting.unzoom() : setting.zoom();
         event.stopPropagation();
         cleanUp();
     };
@@ -33,7 +33,7 @@ export function toPopUpBlock(
     const icon = toDiv(panel, 'icon');
     icon.innerHTML = '&#10095;';
 
-    const [_, ...lines] = columns;
+    const [_, ...lines] = setting.jsonData.columns;
 
     const values = lines.map(item => {
         const block = toDiv(panel, 'block');
@@ -94,6 +94,11 @@ export function toPopUpBlock(
 
         const d = new Date(time);
         date.innerHTML = `${days[d.getDay()]}, ${d.getDate()} ${month[d.getMonth()]}`;
+        if (setting.isZoom) {
+            date.innerHTML += ` ${('0' + (d.getUTCHours())).slice(-2)}:00`;
+        }
+
+        const [_, ...lines] = setting.jsonData.columns;
 
         values.forEach((item, i) => {
             if (item.key !== 'all') {
@@ -120,7 +125,7 @@ export function toPopUpBlock(
                 item.block.classList.add('invisible');
             }
         }
-        panel.style.transform = `translate(${positionX + (positionX > width / 2 ? -160 : 10)}px, 10px)`;
+        panel.style.transform = `translate(${positionX + (positionX > width / 2 ? -170 : 10)}px, 10px)`;
     }
 
     function format(value: number): string {

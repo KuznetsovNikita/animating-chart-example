@@ -233,7 +233,7 @@ const nightStyle = {
     line: 'rgba(255, 255, 255, 0.1)',
 }
 
-const day = 1000 * 60 * 60 * 24;
+export const day = 1000 * 60 * 60 * 24;
 
 export class DataService {
     public lines = 5;
@@ -418,33 +418,91 @@ export class DataService {
 
     isZoom = false;
 
+    yearDatas: YearsData = null;
+
+    unzoom() {
+        this.isZoom = false;
+        const zoomer = dataZoomer('out');
+        const weekData = this.jsonData;
+        const { yearData, miniMapIndexRange, miniMapTimeRange, timeRange, indexRange } = this.yearDatas
+        this.zoomStart(yearData, indexRange, timeRange);
+
+        this.miniMap.indexRange = miniMapIndexRange;
+
+        const frames = 50;
+
+        const initTimeRange = copyRange(this.miniMap.timeRange);
+        const dSr = (timeRange.start - this.timeRange.start) / frames;
+        const dEr = (timeRange.end - this.timeRange.end) / frames;
+
+        const dMSr = (miniMapTimeRange.start - this.miniMap.timeRange.start) / frames;
+        const dMEr = (miniMapTimeRange.end - this.miniMap.timeRange.end) / frames;
+
+        const increment = () => {
+            this.timeRange.start += dSr;
+            this.timeRange.end += dEr;
+
+            this.miniMap.timeRange.start += dMSr;
+            this.miniMap.timeRange.end += dMEr;
+        }
+
+        const zooming = (index: number) => {
+            requestAnimationFrame(() => {
+
+                increment();
+
+                if (index > 5 && index < 35) {
+                    increment();
+                    index--;
+                    increment();
+                    index--;
+                }
+
+                this.jsonData = zoomer.merge(index, yearData, weekData, this.miniMap.timeRange, initTimeRange);
+                this.indexRange = toIndexRange(this.jsonData, this.timeRange);
+                this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
+
+                this.zoomWatchers.forEach(act => act(this.timeRange));
+
+                if (index <= 1) return;
+                zooming(index - 1);
+            });
+        }
+
+        zooming(frames);
+
+    }
     zoom() {
-        this.asSoonAsLoading.then(data => {
+        this.asSoonAsLoading.then(weekData => {
 
             this.isZoom = true;
 
-            const zoomer = dataZoomer();
-            const oldData = this.jsonData;
+            const zoomer = dataZoomer('in');
+            const yearData = this.jsonData;
 
-            const time = data.columns[0];
+            const time = weekData.columns[0];
             const firstTime = time[1];
             const lastTime = time[time.length - 1] as number;
 
-            const newLinsTimeStart = this.zoomedTime;
-            const newLinsTimeEnd = this.zoomedTime + day;
+            const endTimeRange = { start: this.zoomedTime, end: this.zoomedTime + day };
+            const endIndexRange = toIndexRange(weekData, endTimeRange);
 
+            this.yearDatas = {
+                yearData,
+                indexRange: copyRange(this.indexRange),
+                timeRange: copyRange(this.timeRange),
+                miniMapIndexRange: copyRange(this.miniMap.indexRange),
+                miniMapTimeRange: copyRange(this.miniMap.timeRange),
+            }
 
-
-            const endTimeRange = { start: newLinsTimeStart, end: newLinsTimeEnd };
-            const endIndexRange = toIndexRange(data, endTimeRange);
-            this.zoomStart(data, endIndexRange, endTimeRange);
+            this.zoomStart(weekData, endIndexRange, endTimeRange);
 
             this.miniMap.indexRange = { start: 1, end: time.length - 1 };
 
             const frames = 50;
 
-            const dSr = (newLinsTimeStart - this.timeRange.start) / frames;
-            const dEr = (newLinsTimeEnd - this.timeRange.end) / frames;
+            const dSr = (endTimeRange.start - this.timeRange.start) / frames;
+            const dEr = (endTimeRange.end - this.timeRange.end) / frames;
 
             const dMSr = (firstTime - this.miniMap.timeRange.start) / frames;
             const dMEr = (lastTime - this.miniMap.timeRange.end) / frames;
@@ -475,7 +533,7 @@ export class DataService {
                         index++;
                     }
 
-                    this.jsonData = zoomer.merge(index, oldData, data, this.miniMap.timeRange, endTimeRange);
+                    this.jsonData = zoomer.merge(index, yearData, weekData, this.miniMap.timeRange, endTimeRange);
                     this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                     this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
 
@@ -502,68 +560,98 @@ export class DataService {
     zoomStart(data: JsonData, indexRange: Range, timeRange: Range) {
         this.zoomStartWatchers.forEach(act => act(data, indexRange, timeRange))
     }
-
 }
+
+interface YearsData {
+    yearData: JsonData;
+    timeRange: Range;
+    indexRange: Range;
+    miniMapTimeRange: Range;
+    miniMapIndexRange: Range;
+}
+
 type ZoomFunc = (data: JsonData, indexRange: Range, timeRange: Range) => void
 
-function dataZoomer() {
-    let splitterIndex = 0
-    let splitter = 24;
+function copyRange(range: Range): Range {
+    return { start: range.start, end: range.end };
+}
 
-    function toScals() {
-        return splitter === 24
-            ? 1
-            : splitter === 12
-                ? 2
-                : splitter === 6
-                    ? 4
-                    : splitter === 3
-                        ? 8
-                        : 24
-    }
-
-    function toScals2() {
-        return splitter === 24
+function toScals(splitter: number) {
+    return splitter === 24
+        ? 1
+        : splitter === 12
             ? 2
-            : splitter === 12
-                ? 6
-                : 2
-    }
+            : splitter === 6
+                ? 4
+                : splitter === 3
+                    ? 8
+                    : 24
+}
 
-    function merge(frame: number, oldData: JsonData, newData: JsonData, currnetTimeRange: Range, endTimeRange: Range): JsonData {
+function toScals2(splitter: number) {
+    return splitter === 24
+        ? 2
+        : splitter === 12
+            ? 6
+            : 2
+}
 
-        if (splitter === 1) return newData;
+function dataZoomer(kind: 'in' | 'out') {
+    let splitterIndex = 0;
+    let splitter = kind === 'in' ? 24 : 1;
 
-        if (frame < 25) return oldData;
-
-        splitterIndex++;
-        if (splitterIndex > toScals2()) {
-            splitterIndex = 0;
-            if (splitter === 3) {
-                splitter = 1
+    const splilltrRecount = kind === 'in'
+        ? () => {
+            if (splitterIndex > toScals2(splitter)) {
+                splitterIndex = 0;
+                if (splitter === 3) {
+                    splitter = 1
+                }
+                else {
+                    splitter /= 2;
+                }
             }
-            else {
-                splitter = splitter / 2;
+        }
+        : () => {
+            if (splitterIndex > toScals2(splitter)) {
+                splitterIndex = 0;
+
+                if (splitter === 1) {
+                    splitter = 3
+                }
+                else {
+                    splitter *= 2;
+                }
             }
         }
 
-        const { start, end } = toIndexRange(oldData, currnetTimeRange);
-        const columns = oldData.columns.map(column => column.slice(start, end) as number[]);
+    function merge(frame: number, yearData: JsonData, weekData: JsonData, currnetTimeRange: Range, weekTimeRange: Range): JsonData {
 
-        const range = toIndexRange2(columns[0], endTimeRange);
+        if (frame < 25) return yearData;
+
+        if (kind === 'in' && splitter === 1) return weekData;
+        if (kind === 'out' && splitter === 24) return yearData;
+
+        splitterIndex++;
+        splilltrRecount();
+
+        if (kind === 'out' && splitter === 1) return weekData;
+
+        const { start, end } = toIndexRange(yearData, currnetTimeRange);
+        const columns = yearData.columns.map(column => column.slice(start, end) as number[]);
+
+        const range = toIndexRangeIn(columns[0], weekTimeRange);
 
         return {
-            ...newData,
+            ...weekData,
             columns: columns.map((items, index) => {
 
-                const [name, ...values] = newData.columns[index];
+                const [name, ...values] = weekData.columns[index];
 
                 if (name === 'x') {
 
                     const values2 = values.reduce((acc, item, i) => {
-                        if (i % splitter == 0) {
-                            acc.push(item);
-                        }
+                        if (i % splitter == 0) acc.push(item);
                         return acc;
                     }, []);
 
@@ -575,7 +663,7 @@ function dataZoomer() {
                     ];
                 }
                 else {
-                    const scale = toScals();
+                    const scale = toScals(splitter);
 
                     const values2 = values.reduce((acc, item, i) => {
                         if (i % splitter == 0) {
@@ -600,7 +688,26 @@ function dataZoomer() {
         }
     }
 
-    function toIndexRange2(time: number[], timeRange: Range): Range {
+    function toIndexRangeOut(time: number[], timeRange: Range) {
+        let start = 1;
+        while (time[start] < timeRange.start) {
+            start++;
+        }
+        start = Math.max(start - 1, 1);
+
+        let end = time.length - 1;
+        while (time[end] > timeRange.end) {
+            end--;
+        }
+        end = Math.min(end + 1, time.length - 1);
+
+        return {
+            start,
+            end,
+        };
+    }
+
+    function toIndexRangeIn(time: number[], timeRange: Range): Range {
         let start = 1;
         while (time[start] < timeRange.start) {
             start++;

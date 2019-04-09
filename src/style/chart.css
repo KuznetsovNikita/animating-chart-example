@@ -62,7 +62,7 @@
         padding: 10px;
         border-radius: 5px;
         background-color: white;
-        width: 150px;
+        width: 160px;
         box-sizing: border-box;
     }
 
@@ -80,7 +80,7 @@
 
         b {
             display: inline-block;
-            width: 33px;
+            width: 36px;
         }
     }
 

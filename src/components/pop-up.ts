@@ -1,5 +1,5 @@
 import { toDiv } from '../data/const';
-import { DataService } from '../data/service';
+import { DataService, day } from '../data/service';
 import { PopUpBlock, toPopUpBlock } from './pop-up-block';
 
 // interface Dot {
@@ -15,17 +15,15 @@ interface Elements {
 
 export function toPopUp(
     parent: HTMLDivElement,
-    context: CanvasRenderingContext2D,
     setting: DataService,
     toMax: (index: number) => number,
 ) {
     let elements: Elements;
-    const { viewport: { width, height }, jsonData: { columns, colors } } = setting;
+    const { viewport: { width, height }, jsonData: { colors } } = setting;
 
     const element = toDiv(parent, 'hover');
     element.style.height = height + 'px';
     element.style.width = width + 'px';
-
 
     const container = toDiv(element, 'pop-up');
 
@@ -36,21 +34,29 @@ export function toPopUp(
     const onDrawPopUp = (offsetX: number, offsetY: number, shouldLoad: boolean) => {
         if (lastUpdate != null) cancelAnimationFrame(lastUpdate);
         lastUpdate = requestAnimationFrame(() => {
-            const { timeRange: { start, end } } = setting;
 
-            const dx = width / (end - start);
+            const dx = width / (setting.timeRange.end - setting.timeRange.start);
 
-            const time = new Date(start + Math.round(offsetX / dx))
-                .setUTCHours(0, 0, 0, 0);
+            const d = new Date(setting.timeRange.start + Math.round(offsetX / dx));
+            const time = setting.isZoom
+                ? d.setUTCMinutes(0, 0, 0)
+                : d.setUTCHours(0, 0, 0, 0);
 
-            if (shouldLoad) {
-                setting.loadingData(time);
+            const [times] = setting.jsonData.columns;
+            const index = times.findIndex(item => item === time);
+            if (index === -1) {
+                return cleanUp();
+            }
+
+            if (shouldLoad && !setting.isZoom) {
+                setting.loadingData(setting.isBars ? time + day : time);
             }
 
             if (time !== oldTime) {
                 oldTime = time;
-                drawPopUp(time, dx, offsetY);
+                drawPopUp(time, dx, index);
             }
+
         });
     };
 
@@ -145,7 +151,7 @@ export function toPopUp(
     });
 
     function createPopUp() {
-        const [_, ...lines] = columns;
+        const [_, ...lines] = setting.jsonData.columns;
 
         container.classList.add('invisible');
 
@@ -172,15 +178,10 @@ export function toPopUp(
         }
     }
 
-    function drawPopUp(time: number, dx: number, _offsetY: number) {
-        const { timeRange: { start, end } } = setting;
+    function drawPopUp(time: number, dx: number, index: number) {
 
-        const [times, ...lines] = columns;
-        const index = times.findIndex(item => item === time);
-        if (index === -1) {
-            return cleanUp();
-        }
-        const x = (time - start) * dx;
+        const [times, ...lines] = setting.jsonData.columns;
+        const x = (time - setting.timeRange.start) * dx;
         if (!setting.isBars) {
             elements.line[0].style.transform = `translate(${x}px, 0)`;
 
@@ -199,8 +200,8 @@ export function toPopUp(
             if (!next) return;
             elements.line[0].style.transform = `translate(0, 0)`;
             elements.line[0].style.width = x + 'px';
-            elements.line[1].style.transform = `translate(${(next - start) * dx}px, 0)`;
-            elements.line[1].style.width = (end - next) * dx + 'px';
+            elements.line[1].style.transform = `translate(${(next - setting.timeRange.start) * dx}px, 0)`;
+            elements.line[1].style.width = (setting.timeRange.end - next) * dx + 'px';
             elements.block.setData(time, index + 1, x);
         }
         container.classList.remove('invisible');
