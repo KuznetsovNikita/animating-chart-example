@@ -28,13 +28,19 @@ export function toTimes(
 
     settings.onChangeStyle(() => redraw());
 
+    let globalAlpha = 1;
     settings.onZoomStart((data, endIndexRanage, endTimeRange) => {
         jsonData = data;
         dy = width / (endTimeRange.end - endTimeRange.start);
+        globalAlpha = 0;
         countIndexes(endIndexRanage, endTimeRange);
     });
 
-    settings.onZoom(() => redraw());
+    settings.onZoom((range) => {
+        dy = width / (range.end - range.start);
+        redraw();
+    });
+
 
     countIndexes(settings.indexRange, settings.timeRange);
     redraw();
@@ -48,20 +54,16 @@ export function toTimes(
     }
 
     function toLeftByIndex(index: number) {
-        return toLeftByValue(toValue(index));
+        return toLeftByIndexAndRange(index, settings.timeRange);
     }
 
     function toLeftByIndexAndRange(index: number, timeRange: Range) {
-        return (toValue(index) - timeRange.start) * dy;
-    }
-
-    function toLeftByValue(value: number) {
-        return (value - settings.timeRange.start) * dy;
+        return (toValue(index) - timeRange.start) * (width / (timeRange.end - timeRange.start));
     }
 
     function formatValue(date: Date): string {
         return settings.isZoom
-            ? `${("0" + (date.getHours())).slice(-2)}:00`
+            ? `${("0" + (date.getUTCHours())).slice(-2)}:00`
             : `${date.getDate()} ${month[date.getMonth()]}`
     }
 
@@ -74,8 +76,10 @@ export function toTimes(
     }
 
     function redraw() {
+        globalAlpha = Math.min(globalAlpha + 0.05, 1);
         context.clearRect(0, height * devicePixelRatio, width * devicePixelRatio, 20 * devicePixelRatio);
         context.fillStyle = settings.style.text;
+        context.globalAlpha = globalAlpha;
         for (let i = startIndex; i <= endIndex; i += delta) {
             drawTime(i);
         }
