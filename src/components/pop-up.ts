@@ -33,7 +33,7 @@ export function toPopUp(
 
     let oldTime: number | null = null;
     let lastUpdate: number;
-    const onDrawPopUp = (offsetX: number, offsetY: number) => {
+    const onDrawPopUp = (offsetX: number, offsetY: number, shouldLoad: boolean) => {
         if (lastUpdate != null) cancelAnimationFrame(lastUpdate);
         lastUpdate = requestAnimationFrame(() => {
             const { timeRange: { start, end } } = setting;
@@ -42,6 +42,10 @@ export function toPopUp(
 
             const time = new Date(start + Math.round(offsetX / dx))
                 .setUTCHours(0, 0, 0, 0);
+
+            if (shouldLoad) {
+                setting.loadingData(time);
+            }
 
             if (time !== oldTime) {
                 oldTime = time;
@@ -68,7 +72,7 @@ export function toPopUp(
         var rect = (target as SVGSVGElement).getBoundingClientRect();
         var x = clientX - rect.left;
         var y = clientY - rect.top;
-        onDrawPopUp(x, y);
+        onDrawPopUp(x, y, false);
     }
 
     function onTouchMove(event: TouchEvent) {
@@ -90,7 +94,7 @@ export function toPopUp(
             var rect = (currentTarget as HTMLDivElement).getBoundingClientRect();
             var x = clientX - rect.left;
             var y = clientY - rect.top;
-            onDrawPopUp(x, y);
+            onDrawPopUp(x, y, false);
         }
         else {
             cleanUp();
@@ -108,7 +112,8 @@ export function toPopUp(
         var rect = (currentTarget as HTMLDivElement).getBoundingClientRect();
         var x = clientX - rect.left;
         var y = clientY - rect.top;
-        onDrawPopUp(x, y);
+        onDrawPopUp(x, y, true);
+
     }
 
     element.addEventListener('click', onClick);
@@ -148,7 +153,7 @@ export function toPopUp(
             elements = {
                 line: [toDiv(container, 'shadow'), toDiv(container, 'shadow')],
                 dots: [],
-                block: toPopUpBlock(setting, container),
+                block: toPopUpBlock(setting, container, () => cleanUp()),
             };
         }
         else {
@@ -162,7 +167,7 @@ export function toPopUp(
             elements = {
                 line: [line],
                 dots,
-                block: toPopUpBlock(setting, container),
+                block: toPopUpBlock(setting, container, () => cleanUp()),
             };
         }
     }

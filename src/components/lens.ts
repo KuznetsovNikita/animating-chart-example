@@ -1,45 +1,40 @@
 import { Range } from 'src/data/models';
 import { DataService } from 'src/data/service';
+import { toDiv } from '../data/const';
 
 export function drawLens(
     element: HTMLDivElement,
     settings: DataService,
 ) {
-    const lens = document.createElement('div');
-    element.appendChild(lens);
-    lens.className = 'lens';
-
-    const coverLeft = document.createElement('div');
-    element.appendChild(coverLeft);
-    coverLeft.className = 'cover';
+    const lens = toDiv(element, 'lens');
+    const coverLeft = toDiv(element, 'cover');
     coverLeft.style.left = '0px';
-
-    const coverRight = document.createElement('div');
-    element.appendChild(coverRight);
-    coverRight.className = 'cover';
+    const coverRight = toDiv(element, 'cover');
     coverRight.style.right = '0px';
 
     const left = document.createElement('span');
     lens.appendChild(left);
     left.style.left = '-5px';
-
     const right = document.createElement('span');
     lens.appendChild(right);
     right.style.right = '-5px';
 
     const {
-        miniMap: {
-            viewport: { width },
-            timeRange: { start, end },
-        },
-        timeRange,
+        miniMap,
+        miniMap: { viewport: { width } },
     } = settings;
 
-    const dX = width / (end - start);
+    let dX = width / (miniMap.timeRange.end - miniMap.timeRange.start);
+
+    settings.onZoom(range => {
+        dX = width / (miniMap.timeRange.end - miniMap.timeRange.start);
+
+        setStyle(range);
+    });
 
     const setStyle = (range: Range) => {
         const width = Math.floor((range.end - range.start) * dX);
-        const left = Math.floor((range.start - start) * dX);
+        const left = Math.floor((range.start - miniMap.timeRange.start) * dX);
         lens.style.width = width + 'px';
         lens.style.left = left + 'px';
 
@@ -47,7 +42,7 @@ export function drawLens(
         coverRight.style.left = left + width + 'px';
     };
     // set initial style
-    setStyle(timeRange);
+    setStyle(settings.timeRange);
 
     // update style on change
     settings.onTimeRangeChange((_, range) => setStyle(range));
@@ -55,7 +50,7 @@ export function drawLens(
     function onMousedown(target: EventTarget, startX: number) {
         settings.isMove = true;
         const startWidth = (settings.timeRange.end - settings.timeRange.start) * dX;
-        const startLeft = (settings.timeRange.start - start) * dX;
+        const startLeft = (settings.timeRange.start - miniMap.timeRange.start) * dX;
 
         function moveAt(clientX: number) {
             switch (target) {
@@ -64,7 +59,7 @@ export function drawLens(
                     if (newLeft === startLeft) return;
 
                     settings.setTimeRange('left', {
-                        start: Math.floor(start + newLeft / dX),
+                        start: Math.floor(miniMap.timeRange.start + newLeft / dX),
                         end: settings.timeRange.end,
                     });
                     break;
@@ -75,7 +70,7 @@ export function drawLens(
 
                     settings.setTimeRange('right', {
                         start: settings.timeRange.start,
-                        end: Math.floor(start + (startLeft + newWidth) / dX),
+                        end: Math.floor(miniMap.timeRange.start + (startLeft + newWidth) / dX),
                     });
                     break;
                 }
@@ -84,8 +79,8 @@ export function drawLens(
                     if (newLeft === startLeft) return;
 
                     settings.setTimeRange('move', {
-                        start: Math.floor(start + newLeft / dX),
-                        end: Math.floor(start + (newLeft + startWidth) / dX),
+                        start: Math.floor(miniMap.timeRange.start + newLeft / dX),
+                        end: Math.floor(miniMap.timeRange.start + (newLeft + startWidth) / dX),
                     });
                     break;
                 }

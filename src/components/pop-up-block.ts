@@ -8,6 +8,7 @@ export interface PopUpBlock {
 export function toPopUpBlock(
     setting: DataService,
     container: HTMLDivElement,
+    cleanUp: Function,
 ): PopUpBlock {
 
     const {
@@ -16,7 +17,21 @@ export function toPopUpBlock(
     } = setting;
 
     const panel = toDiv(container, 'panel');
+
+    panel.onclick = (_event: MouseEvent) => {
+        setting.zoom();
+        event.stopPropagation();
+        cleanUp();
+    };
+
+    setting.onDestroy(() => {
+        panel.onclick = null;
+    });
+
     const date = toDiv(panel, 'date');
+
+    const icon = toDiv(panel, 'icon');
+    icon.innerHTML = '&#10095;';
 
     const [_, ...lines] = columns;
 
@@ -67,8 +82,7 @@ export function toPopUpBlock(
     });
 
     function updatePersent() {
-        const total = values.filter(item => item.isShow)
-            .map(item => item.num).reduce((s, i) => s + i, 0);
+        const total = values.reduce((s, i) => i.isShow ? s + i.num : s, 0);
         values.forEach(item => {
             if (item.isShow) {
                 item.name.innerHTML = `<b>${Math.round(item.num / total * 100)}%</b> ${item.nameVal}`;
@@ -97,7 +111,7 @@ export function toPopUpBlock(
             const filtered = values.filter(item => item.key !== 'all' && item.isShow);
             if (filtered.length > 1) {
                 item.isShow = true; 
-                item.num = filtered.map(item => item.num).reduce((s, i) => s + i, 0);
+                item.num = filtered.reduce((s, i) => s + i.num, 0);
                 item.value.innerHTML = format(item.num);
                 item.block.classList.remove('invisible');
             }

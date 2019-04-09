@@ -16,16 +16,6 @@ export interface Dict<T> {
     [key: string]: T;
 }
 
-export interface Adapter {
-    use: (
-        index: number, visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
-        vp: Viewport, min: number, max: number,
-        use: (topX: number, topY: number, botX: number, botY: number) => void,
-        scales?: number[],
-    ) => void;
-    toMax: (visibility: Dict<boolean>, indexRange: Range) => number[];
-}
-
 export type UseDataFunction = (
     index: number, vp: Viewport, min: number, max: number,
     use: (topX: number, topY: number, botX: number, botY: number) => void,

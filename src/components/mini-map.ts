@@ -26,19 +26,29 @@ function toMiniMapSvg(
 
     let lastUpdateCall: number;
 
-    const { miniMap: { viewport, indexRange }, min } = settings;
+    const { miniMap, min } = settings;
 
-    const canvas = drawConvas(element, viewport.width, viewport.height);
+    const canvas = drawConvas(element, miniMap.viewport.width, miniMap.viewport.height);
     const context = canvas.getContext('2d');
 
-    currentMax = settings.toMaxVisibleValue(indexRange);
+    currentMax = settings.toMaxVisibleValue(miniMap.indexRange);
 
     function toCurrentMax(index: number) {
         return currentMax.length > 1 ? currentMax[index - 1] : currentMax[0];
     }
 
     const chartItems = settings.cr(settings.jsonData, 1);
-    chartItems.drw(settings.useMin, context, min, toCurrentMax, viewport);
+    chartItems.drw(settings.useMin, context, min, toCurrentMax, miniMap.viewport);
+
+    settings.onZoom(() => {
+        const zoomingMax = settings.toMaxVisibleValue(settings.miniMap.indexRange);
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        chartItems.drw(
+            settings.useMin, context, min,
+            i => zoomingMax.length > 1 ? zoomingMax[i - 1] : zoomingMax[0],
+            miniMap.viewport,
+        );
+    });
 
     settings.onVisibilityChange((key, value) => {
         chartItems.set(key, value);
@@ -50,7 +60,7 @@ function toMiniMapSvg(
             cancelAnimationFrame(lastUpdateCall);
             currentMax = currentMax.map(max => Math.floor(max / 10) * 10); // round current max, if animation wasn't finished
         }
-        targetMax = settings.toMaxVisibleValue(indexRange);
+        targetMax = settings.toMaxVisibleValue(miniMap.indexRange);
         deltaMax = map2(
             targetMax, currentMax,
             (t, c) => Math.round((t - c) / 10),
@@ -63,7 +73,7 @@ function toMiniMapSvg(
         lastUpdateCall = requestAnimationFrame(() => {
             context.clearRect(0, 0, canvas.width, canvas.height);
 
-            chartItems.sc(settings.useMin, context, min, toCurrentMax, viewport);
+            chartItems.sc(settings.useMin, context, min, toCurrentMax, miniMap.viewport);
 
             if (index === 10) return;
             currentMax = map2(

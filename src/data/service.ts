@@ -1,7 +1,7 @@
 import { ar } from '../components/area';
 import { plgs } from '../components/poligon';
 import { pl } from '../components/polyline';
-import { Adapter, ChartItem, ChartsItem, Column, Dict, Range, TimeColumn, UseDataFunction, Viewport } from './models';
+import { ChartItem, ChartsItem, Column, Dict, Range, TimeColumn, UseDataFunction, Viewport } from './models';
 
 export interface JsonData {
     columns: [TimeColumn, ...Array<Column>];
@@ -66,19 +66,32 @@ function tio(
     };
 }
 
+export interface Adapter {
+    use: (
+        jsonData: JsonData,
+        index: number, visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
+        vp: Viewport, min: number, max: number,
+        use: (topX: number, topY: number, botX: number, botY: number) => void,
+        scales?: number[],
+    ) => void;
+    toMax: (jsonData: JsonData, visibility: Dict<boolean>, indexRange: Range) => number[];
+}
+
 function dataAdapter(
     kind: 'point' | 'y_scaled' | 'stacked' | 'percentage',
-    jsonData: JsonData,
+
 ): Adapter {
     const devicePixelRatio = window.devicePixelRatio;
-    const times = jsonData.columns[0];
+
 
     function points(
+        jsonData: JsonData,
         index: number, visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
         vp: Viewport, min: number, max: number,
 
         use: (topX: number, topY: number, botX: number, botY: number) => void
     ) {
+        const times = jsonData.columns[0];
         const dy = vp.height / (max - min);
         const dx = vp.width / (timeRange.end - timeRange.start);
 
@@ -91,7 +104,7 @@ function dataAdapter(
         }
     }
 
-    function pointsMax(visibility: Dict<boolean>, indexRange: Range) {
+    function pointsMax(jsonData: JsonData, visibility: Dict<boolean>, indexRange: Range) {
         let max = 10;
         for (let i = 1; i < jsonData.columns.length; i++) {
             if (visibility[jsonData.columns[i][0]]) {
@@ -103,7 +116,7 @@ function dataAdapter(
         return [Math.ceil(max / 10) * 10];
     }
 
-    function doubleMax(visibility: Dict<boolean>, indexRange: Range) {
+    function doubleMax(jsonData: JsonData, visibility: Dict<boolean>, indexRange: Range) {
         const result: number[] = [];
         for (let i = 1; i < jsonData.columns.length; i++) {
             let max = 10;
@@ -118,12 +131,14 @@ function dataAdapter(
     }
 
     function summ(
+        jsonData: JsonData,
         index: number, _visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
         vp: Viewport, min: number, max: number,
 
         use: (topX: number, topY: number, botX: number, botY: number) => void,
         scales?: number[],
     ) {
+        const times = jsonData.columns[0];
         const dy = vp.height / (max - min);
         const dx = vp.width / (timeRange.end - timeRange.start);
         let botX = 0
@@ -142,7 +157,7 @@ function dataAdapter(
         }
     }
 
-    function summMax(visibility: Dict<boolean>, indexRange: Range) {
+    function summMax(jsonData: JsonData, visibility: Dict<boolean>, indexRange: Range) {
         let max = 10;
         for (let j = indexRange.start; j <= indexRange.end; j++) {
             let summ = 0;
@@ -157,12 +172,13 @@ function dataAdapter(
     }
 
     function percent(
+        jsonData: JsonData,
         index: number, visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
         vp: Viewport, _min: number, _max: number,
 
         use: (topX: number, topY: number, botX: number, botY: number) => void
     ) {
-
+        const times = jsonData.columns[0];
         const dx = vp.width / (timeRange.end - timeRange.start);
 
         for (let i = indexRange.start; i <= indexRange.end; i++) {
@@ -271,7 +287,7 @@ export class DataService {
             start: time[Math.max(Math.round(time.length * 0.8), 1)] as number,
             end: time[time.length - 1] as number,
         };
-        this.indexRange = this.toIndexRange(this.timeRange);
+        this.indexRange = toIndexRange(this.jsonData, this.timeRange);
 
         this.viewport = {
             width,
@@ -302,26 +318,26 @@ export class DataService {
         if (jsonData.y_scaled) {
             this.zIndex = '-1';
             this.cr = (jsonData, lineWidth) => tio(jsonData, pl, lineWidth);
-            this.adapter = dataAdapter('y_scaled', jsonData);
+            this.adapter = dataAdapter('y_scaled');
         }
         else if (jsonData.percentage) {
             this.zIndex = '1';
             this.cr = (jsonData, lineWidth) => tio(jsonData, ar, lineWidth);
-            this.adapter = dataAdapter('percentage', jsonData);
+            this.adapter = dataAdapter('percentage');
         }
         else if (jsonData.stacked) {
             this.zIndex = '1';
             this.cr = plgs;
-            this.adapter = dataAdapter('stacked', jsonData);
+            this.adapter = dataAdapter('stacked');
         }
         else if (jsonData.types[jsonData.columns[1][0]] === 'bar') {
             this.zIndex = '1';
             this.cr = plgs;
-            this.adapter = dataAdapter('point', jsonData);
+            this.adapter = dataAdapter('point');
         } else {
             this.zIndex = '-1';
             this.cr = (jsonData, lineWidth) => tio(jsonData, pl, lineWidth);
-            this.adapter = dataAdapter('point', jsonData);
+            this.adapter = dataAdapter('point');
         }
     }
     private timeChangeWatchers: ((kind: ChangeKind, timeRange: Range) => void)[] = [];
@@ -332,30 +348,9 @@ export class DataService {
     setTimeRange(kind: ChangeKind, timeRange: Range) {
 
         this.timeRange = timeRange;
-        this.indexRange = this.toIndexRange(timeRange);
+        this.indexRange = toIndexRange(this.jsonData, timeRange);
 
         this.timeChangeWatchers.forEach(act => act(kind, timeRange));
-    }
-
-    toIndexRange(timeRange: Range): Range {
-        const time = this.jsonData.columns[0];
-
-        let start = 1;
-        while (time[start] < timeRange.start) {
-            start++;
-        }
-        start = Math.max(start - 1, 1);
-
-        let end = time.length - 1;
-        while (time[end] > timeRange.end) {
-            end--;
-        }
-        end = Math.min(end + 1, time.length - 1);
-
-        return {
-            start,
-            end,
-        };
     }
 
     private visibilityWatchers: ((key: string, value: boolean) => void)[] = [];
@@ -374,7 +369,7 @@ export class DataService {
     }
 
     toMaxVisibleValue(indexRange: Range): number[] {
-        return this.adapter.toMax(this.visibility, indexRange);
+        return this.adapter.toMax(this.jsonData, this.visibility, indexRange);
     }
 
     use: UseDataFunction = (
@@ -383,7 +378,7 @@ export class DataService {
         scales?: number[],
     ) => {
         this.adapter.use(
-            index, this.visibility, this.indexRange, this.timeRange,
+            this.jsonData, index, this.visibility, this.indexRange, this.timeRange,
             vp, min, max, use, scales,
         )
     }
@@ -394,7 +389,7 @@ export class DataService {
         scales?: number[],
     ) => {
         this.adapter.use(
-            index, this.visibility, this.miniMap.indexRange, this.miniMap.timeRange,
+            this.jsonData, index, this.visibility, this.miniMap.indexRange, this.miniMap.timeRange,
             vp, min, max, use, scales,
         )
     }
@@ -412,7 +407,255 @@ export class DataService {
         // }
         return 0;
     }
+
+    asSoonAsLoading: Promise<JsonData>;
+    zoomedTime: number;
+    loadingData(time: number) {
+        this.zoomedTime = time;
+        this.asSoonAsLoading = fetch(toUrl(this.url, time))
+            .then(response => response.json());
+    }
+
+    isZoom = false;
+
+    zoom() {
+        this.asSoonAsLoading.then(data => {
+
+            this.isZoom = true;
+
+            const zoomer = dataZoomer();
+            const oldData = this.jsonData;
+
+            const time = data.columns[0];
+            const firstTime = time[1];
+            const lastTime = time[time.length - 1] as number;
+
+            const newLinsTimeStart = this.zoomedTime;
+            const newLinsTimeEnd = this.zoomedTime + day;
+
+
+
+            const endTimeRange = { start: newLinsTimeStart, end: newLinsTimeEnd };
+            const endIndexRange = toIndexRange(data, endTimeRange);
+            this.zoomStart(data, endIndexRange, endTimeRange);
+
+            this.miniMap.indexRange = { start: 1, end: time.length - 1 };
+
+            const frames = 50;
+
+            const dSr = (newLinsTimeStart - this.timeRange.start) / frames;
+            const dEr = (newLinsTimeEnd - this.timeRange.end) / frames;
+
+            const dMSr = (firstTime - this.miniMap.timeRange.start) / frames;
+            const dMEr = (lastTime - this.miniMap.timeRange.end) / frames;
+
+            const increment = () => {
+                this.timeRange.start += dSr;
+                this.timeRange.end += dEr;
+
+                this.miniMap.timeRange.start += dMSr;
+                this.miniMap.timeRange.end += dMEr;
+            }
+
+            const zooming = (index: number) => {
+                requestAnimationFrame(() => {
+
+                    increment();
+
+                    if (index < 15) {
+                        increment();
+                        index++;
+                        increment();
+                        index++;
+                    }
+                    if (index < 35) {
+                        increment();
+                        index++;
+                        increment();
+                        index++;
+                    }
+
+                    this.jsonData = zoomer.merge(index, oldData, data, this.miniMap.timeRange, endTimeRange);
+                    this.indexRange = toIndexRange(this.jsonData, this.timeRange);
+                    this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
+
+                    this.zoomWatchers.forEach(act => act(this.timeRange));
+
+                    if (index === frames) return;
+                    zooming(index + 1);
+                });
+            }
+
+            zooming(1);
+        })
+    }
+
+    private zoomWatchers: ((timeRange: Range) => void)[] = [];
+    onZoom(act: (timeRange: Range) => void) {
+        this.zoomWatchers.push(act);
+    }
+    private zoomStartWatchers: ZoomFunc[] = [];
+    onZoomStart(act: ZoomFunc) {
+        this.zoomStartWatchers.push(act);
+    }
+
+    zoomStart(data: JsonData, indexRange: Range, timeRange: Range) {
+        this.zoomStartWatchers.forEach(act => act(data, indexRange, timeRange))
+    }
+
+}
+type ZoomFunc = (data: JsonData, indexRange: Range, timeRange: Range) => void
+
+function dataZoomer() {
+    let splitterIndex = 0
+    let splitter = 24;
+
+    function toScals() {
+        return splitter === 24
+            ? 1
+            : splitter === 12
+                ? 2
+                : splitter === 6
+                    ? 4
+                    : splitter === 3
+                        ? 8
+                        : 24
+    }
+
+    function toScals2() {
+        return splitter === 24
+            ? 2
+            : splitter === 12
+                ? 6
+                : 2
+    }
+
+    function merge(frame: number, oldData: JsonData, newData: JsonData, currnetTimeRange: Range, endTimeRange: Range): JsonData {
+
+        if (splitter === 1) return newData;
+
+        if (frame < 25) return oldData;
+
+        splitterIndex++;
+        if (splitterIndex > toScals2()) {
+            splitterIndex = 0;
+            if (splitter === 3) {
+                splitter = 1
+            }
+            else {
+                splitter = splitter / 2;
+            }
+        }
+
+        const { start, end } = toIndexRange(oldData, currnetTimeRange);
+        const columns = oldData.columns.map(column => column.slice(start, end) as number[]);
+
+        const range = toIndexRange2(columns[0], endTimeRange);
+
+        return {
+            ...newData,
+            columns: columns.map((items, index) => {
+
+                const [name, ...values] = newData.columns[index];
+
+                if (name === 'x') {
+
+                    const values2 = values.reduce((acc, item, i) => {
+                        if (i % splitter == 0) {
+                            acc.push(item);
+                        }
+                        return acc;
+                    }, []);
+
+                    return [
+                        name,
+                        ...items.slice(0, range.start),
+                        ...values2,
+                        ...items.slice(range.end, items.length - 1),
+                    ];
+                }
+                else {
+                    const scale = toScals();
+
+                    const values2 = values.reduce((acc, item, i) => {
+                        if (i % splitter == 0) {
+                            acc.push(item);
+                        }
+                        else {
+                            acc[acc.length - 1] += item;
+                        }
+                        return acc;
+                    }, []);
+
+                    return [
+                        name,
+                        ...items.slice(0, range.start).map(item => item / scale),
+                        ...values2,
+                        ...items.slice(range.end, items.length - 1).map(item => item / scale),
+                    ]
+                }
+
+
+            }) as any,
+        }
+    }
+
+    function toIndexRange2(time: number[], timeRange: Range): Range {
+        let start = 1;
+        while (time[start] < timeRange.start) {
+            start++;
+        }
+        start = Math.max(start - 2, 1);
+
+        let end = time.length - 1;
+        while (time[end] > timeRange.end) {
+            end--;
+        }
+        end = Math.min(end + 3, time.length - 1);
+
+        return {
+            start,
+            end,
+        };
+    }
+
+    return {
+        merge,
+    }
 }
 
+function toUrl(url: string, time: number): string {
+    const d = new Date(time);
+    return `./json/${url}/${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}/${("0" + d.getDate()).slice(-2)}.json`;
+}
 
+function toIndexRange(jsonData: JsonData, timeRange: Range): Range {
+    const time = jsonData.columns[0];
 
+    let start = 1;
+    while (time[start] < timeRange.start) {
+        start++;
+    }
+    start = Math.max(start - 1, 1);
+
+    let end = time.length - 1;
+    while (time[end] > timeRange.end) {
+        end--;
+    }
+    end = Math.min(end + 1, time.length - 1);
+
+    return {
+        start,
+        end,
+    };
+}
+
+                    // (this.jsonData.columns as any) = this.jsonData.columns.map((item, index) => {
+                    //     const result = item.slice(0, start);
+
+                    //     const [_, ...items] = data.columns[index];
+                    //     result.push(...items);
+
+                    //     result.push(...item.slice(end + 1, oldTimes.length - 1))
+                    //     return result;
+                    // });

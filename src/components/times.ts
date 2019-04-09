@@ -1,5 +1,6 @@
 import { ChangeKind, DataService } from 'src/data/service';
 import { month } from '../data/const';
+import { Range } from '../data/models';
 
 export interface Times {
     rdt: (kind: ChangeKind) => void;
@@ -23,31 +24,50 @@ export function toTimes(
     let dy: number;
 
     const { viewport: { height, width } } = settings;
+    let jsonData = settings.jsonData;
 
     settings.onChangeStyle(() => redraw());
 
-    drawTimes();
+    settings.onZoomStart((data, endIndexRanage, endTimeRange) => {
+        jsonData = data;
+        dy = width / (endTimeRange.end - endTimeRange.start);
+        countIndexes(endIndexRanage, endTimeRange);
+    });
+
+    settings.onZoom(() => redraw());
+
+    countIndexes(settings.indexRange, settings.timeRange);
+    redraw();
 
     function hasValue(index: number) {
-        return settings.jsonData.columns[0][index] !== undefined;
+        return jsonData.columns[0][index] !== undefined;
     }
 
     function toValue(index: number) {
-        return settings.jsonData.columns[0][index] as number;
+        return jsonData.columns[0][index] as number;
     }
 
     function toLeftByIndex(index: number) {
         return toLeftByValue(toValue(index));
     }
 
+    function toLeftByIndexAndRange(index: number, timeRange: Range) {
+        return (toValue(index) - timeRange.start) * dy;
+    }
+
     function toLeftByValue(value: number) {
         return (value - settings.timeRange.start) * dy;
     }
 
+    function formatValue(date: Date): string {
+        return settings.isZoom
+            ? `${("0" + (date.getHours())).slice(-2)}:00`
+            : `${date.getDate()} ${month[date.getMonth()]}`
+    }
+
     function drawTime(index: number) {
-        const date = new Date(toValue(index));
         context.fillText(
-            `${date.getDate()} ${month[date.getMonth()]}`,
+            formatValue(new Date(toValue(index))),
             toLeftByIndex(index) * devicePixelRatio,
             (height + 15) * devicePixelRatio,
         );
@@ -216,29 +236,25 @@ export function toTimes(
         redraw();
     }
 
-    function drawTimes() {
-        const { indexRange, timeRange } = settings;
+    function countIndexes(indexRange: Range, timeRange: Range) {
         dy = width / (timeRange.end - timeRange.start);
 
         startIndex = indexRange.start;
-        while (toLeftByIndex(startIndex) < firstSpace) {
+        while (toLeftByIndexAndRange(startIndex, timeRange) < firstSpace) {
             startIndex++;
         }
-
-        let deltaIndex = -1;
-        while (toLeftByIndex(startIndex + delta) < minSpace + firstSpace) {
-            deltaIndex++;
-            delta = Math.pow(2, deltaIndex);
+        delta = 1;
+        while (toLeftByIndexAndRange(startIndex + delta, timeRange) < minSpace + firstSpace) {
+            delta *= 2;
         }
         startIndex -= delta;
         endIndex = startIndex;
         while (
             hasValue(endIndex + delta) &&
-            toLeftByIndex(endIndex) <= width
+            toLeftByIndexAndRange(endIndex, timeRange) <= width
         ) {
             endIndex += delta;
         }
-        redraw();
     }
 
     return {

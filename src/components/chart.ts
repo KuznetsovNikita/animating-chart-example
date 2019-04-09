@@ -22,13 +22,12 @@ export function toChart(
 
     const {
         jsonData: { columns, colors },
-        viewport: { width, height },
-        indexRange, viewport,
+        viewport,
         min,
     } = settings;
 
     const devicePixelRatio = window.devicePixelRatio;
-    const canvas = drawConvas(element, width, height + 20);
+    const canvas = drawConvas(element, viewport.width, viewport.height + 20);
     const context = canvas.getContext('2d');
 
     context.textAlign = "center";
@@ -37,7 +36,7 @@ export function toChart(
 
     const times = toTimes(context, settings);
 
-    const lineCanvas = drawConvas(element, width - 10, height + 11, 'lines');
+    const lineCanvas = drawConvas(element, viewport.width - 10, viewport.height + 11, 'lines');
     const lineContext = lineCanvas.getContext('2d');
     lineContext.font = (10 * devicePixelRatio) + 'px Arial';
 
@@ -53,7 +52,7 @@ export function toChart(
     lineContext.lineWidth = devicePixelRatio;
     lineCanvas.style.zIndex = settings.zIndex;
 
-    currentMax = settings.toMaxVisibleValue(indexRange);
+    currentMax = settings.toMaxVisibleValue(settings.indexRange);
 
     lines = drawLine(currentMax, 1);
     lines.forEach(line => line.drw(lineContext));
@@ -67,6 +66,27 @@ export function toChart(
 
     toPopUp(element, context, settings, toCurrentMax);
 
+    settings.onZoomStart((data, endIndexRanage) => {
+        const frames = 20;
+        targetMax = settings.adapter.toMax(data, settings.visibility, endIndexRanage);
+        deltaMax = map2(
+            targetMax, currentMax,
+            (t, c) => (t - c) / frames
+        );
+        redrawLines(deltaMax, frames);
+        countMaxValue(frames);
+    });
+
+    settings.onZoom(() => {
+        const zoomingMax = settings.toMaxVisibleValue(settings.indexRange);
+        context.clearRect(0, 0, canvas.width, canvas.height - 19 * devicePixelRatio);
+        chartItems.sc(
+            settings.use, context, min,
+            i => zoomingMax.length > 1 ? zoomingMax[i - 1] : zoomingMax[0],
+            viewport,
+        );
+    });
+
     settings.onTimeRangeChange(kind => {
         drawCharts(kind);
     });
@@ -75,6 +95,25 @@ export function toChart(
         chartItems.set(key, value);
         drawCharts('visible');
     });
+
+    let lastCountUpdate = null
+    function countMaxValue(count: number) {
+        if (lastCountUpdate != null) cancelAnimationFrame(lastCountUpdate);
+        incrementValue(1, count)
+    }
+
+    function incrementValue(index, count) {
+        lastCountUpdate = requestAnimationFrame(() => {
+
+            currentMax = map2(
+                currentMax, deltaMax,
+                (c, d) => c + d,
+            );
+
+            if (index === count) return;
+            incrementValue(index + 1, count);
+        })
+    }
 
     function drawCharts(kind: ChangeKind) {
         if (lastUpdateChart) {
@@ -92,24 +131,19 @@ export function toChart(
             (t, c) => Math.round((t - c) / 10)
         );
 
-        scaleChart(0);
-
-        redrawLines(deltaMax);
+        scaleChart(0, 10);
+        redrawLines(deltaMax, 10);
+        countMaxValue(10);
     }
 
-    function scaleChart(index: number) {
+    function scaleChart(index: number, frames: number) {
         lastUpdateChart = requestAnimationFrame(() => {
             context.clearRect(0, 0, canvas.width, canvas.height - 20 * devicePixelRatio);
 
             chartItems.sc(settings.use, context, min, toCurrentMax, viewport);
 
-            if (index === 10) return;
-
-            currentMax = map2(
-                currentMax, deltaMax,
-                (c, d) => c + d,
-            );
-            return scaleChart(index + 1);
+            if (index === frames) return;
+            return scaleChart(index + 1, frames);
         });
     }
 
@@ -120,7 +154,7 @@ export function toChart(
         let items = max.map((maxValue, i) => {
             const lastLine = Math.floor(maxValue / 10) * 10;
             return {
-                dx: height / (maxValue - min),
+                dx: viewport.height / (maxValue - min),
                 lastLine,
                 dOneLine: (lastLine - min) / settings.lines,
                 color: colors[columns[i + 1][0]],
@@ -130,8 +164,8 @@ export function toChart(
         });
 
         do {
-            const x = height + 10 - (items[0].label - min) * items[0].dx;
-            lines.push(ln(items, x * devicePixelRatio, (width - 10) * devicePixelRatio, opacity));
+            const x = viewport.height + 10 - (items[0].label - min) * items[0].dx;
+            lines.push(ln(items, x * devicePixelRatio, (viewport.width - 10) * devicePixelRatio, opacity));
             items = items.map(item => ({ ...item, label: item.label + item.dOneLine }));
         }
         while (items[0].label <= items[0].lastLine);
@@ -145,7 +179,7 @@ export function toChart(
         lines.forEach(line => line.drw(lineContext));
     }
 
-    function redrawLines(deltaMax: number[]) {
+    function redrawLines(deltaMax: number[], frames: number) {
         if (deltaMax.every(item => item === 0)) return;
 
         if (lastUpdateLine != null) cancelAnimationFrame(lastUpdateLine);
@@ -157,24 +191,25 @@ export function toChart(
 
         lines = drawLine(targetMax, 0);
 
-        scaleLines(0);
+        scaleLines(0, frames);
     }
 
-    function scaleLines(index: number) {
+    function scaleLines(index: number, frames: number) {
         lastUpdateLine = requestAnimationFrame(() => {
 
             lineContext.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
 
-            const dx1 = height / (currentMax[0] - min);
+            const dx1 = viewport.height / (currentMax[0] - min);
 
             function update(line: Line): boolean {
-                return line.up(lineContext, (height + 10 - (line.vl[0].label - min) * dx1) * devicePixelRatio) != 0;
+                return line.up(lineContext, (viewport.height + 10 - (line.vl[0].label - min) * dx1) * devicePixelRatio) != 0;
             }
 
             lines.forEach(update);
             linesStock = linesStock.filter(update);
-            if (index > 10) return;
-            scaleLines(index + 1);
+            if (index >= frames) return;
+
+            scaleLines(index + 1, frames);
         });
     }
 }
