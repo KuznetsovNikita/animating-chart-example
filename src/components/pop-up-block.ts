@@ -93,7 +93,7 @@ export function toPopUpBlock(
     function setData(time: number, index: number, positionX: number) {
 
         const d = new Date(time);
-        date.innerHTML = `${days[d.getDay()]}, ${d.getDate()} ${month[d.getMonth()]}`;
+        date.innerHTML = `${days[d.getDay()]}, ${d.getUTCDate()} ${month[d.getMonth()]}`;
         if (setting.isZoom) {
             date.innerHTML += ` ${('0' + (d.getUTCHours())).slice(-2)}:00`;
         }

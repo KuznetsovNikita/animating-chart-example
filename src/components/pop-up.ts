@@ -202,7 +202,7 @@ export function toPopUp(
             elements.line[0].style.width = x + 'px';
             elements.line[1].style.transform = `translate(${(next - setting.timeRange.start) * dx}px, 0)`;
             elements.line[1].style.width = (setting.timeRange.end - next) * dx + 'px';
-            elements.block.setData(time, index + 1, x);
+            elements.block.setData(time + (setting.isBars && !setting.isZoom ? day : 0), index + 1, x);
         }
         container.classList.remove('invisible');
     }
