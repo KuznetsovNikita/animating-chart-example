@@ -492,7 +492,7 @@ export class DataService {
         this.isZoom = false;
 
         const { yearData, miniMapTimeRange, timeRange, indexRange } = this.yearDatas
-        this.zoomStart(yearData, indexRange, timeRange);
+
 
         const frames = 50;
 
@@ -511,9 +511,12 @@ export class DataService {
         }
 
         if (this.isSingleton) {
+            this.zoomStart(yearData, indexRange, timeRange, yearData.columns.map(() => true));
             this.singletonUnzooming(frames, yearData, increment);
+
         }
         else {
+            this.zoomStart(yearData, indexRange, timeRange, this.visibility);
             this.simpleUnzooming(frames, yearData, this.jsonData, increment);
         }
 
@@ -527,13 +530,7 @@ export class DataService {
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
 
-
                 if (index === frames) {
-                    this.visibility = this.visibility.map(() => false);
-                    this.visibilityWatchers.forEach(act => act(this.visibility));
-                }
-
-                if (index === 40) {
                     this.jsonData = yearData;
                     this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                     this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
@@ -544,7 +541,7 @@ export class DataService {
 
                     this.cfw.forEach(act => act(false));
                 }
-                if (index < 40) {
+                else {
                     increment();
                     increment();
                     increment();
@@ -553,9 +550,9 @@ export class DataService {
 
                     this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                     this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
-                    this.zw.forEach(act => act(this.timeRange, (40 - index) / 10));
+                    this.zw.forEach(act => act(this.timeRange, (frames - index) / 10));
 
-                    if (index === 30) {
+                    if (index === 40) {
                         return;
                     }
                 }
@@ -619,9 +616,6 @@ export class DataService {
             const endTimeRange = { start: this.zoomedTime, end: this.zoomedTime + day };
             const endIndexRange = toIndexRange(weekData, endTimeRange);
 
-
-            this.zoomStart(weekData, endIndexRange, endTimeRange);
-
             const frames = 50;
 
             const dSr = (endTimeRange.start - this.timeRange.start) / frames;
@@ -639,9 +633,11 @@ export class DataService {
             }
 
             if (this.isSingleton) {
+                this.zoomStart(weekData, endIndexRange, endTimeRange, weekData.columns.map(() => true));
                 this.singletonZoomin(weekData, increment);
             }
             else {
+                this.zoomStart(weekData, endIndexRange, endTimeRange, this.visibility);
                 this.simpleZooming(endTimeRange, frames, this.jsonData, weekData, increment);
             }
         })
@@ -740,8 +736,8 @@ export class DataService {
         this.cfw.push(act);
     }
 
-    zoomStart(data: JsonData, indexRange: Range, timeRange: Range) {
-        this.zsw.forEach(act => act(data, indexRange, timeRange))
+    zoomStart(data: JsonData, indexRange: Range, timeRange: Range, vision: boolean[]) {
+        this.zsw.forEach(act => act(data, indexRange, timeRange, vision))
     }
 }
 
@@ -753,7 +749,7 @@ interface YearsData {
     miniMapIndexRange: Range;
 }
 
-type ZoomFunc = (data: JsonData, indexRange: Range, timeRange: Range) => void
+type ZoomFunc = (data: JsonData, indexRange: Range, timeRange: Range, vision: boolean[]) => void
 
 function copyRange(range: Range): Range {
     return { start: range.start, end: range.end };

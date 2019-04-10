@@ -65,9 +65,9 @@ export function toChart(
 
     toPopUp(element, settings, toCurrentMax);
 
-    settings.onZoomStart((data, endIndexRanage) => {
+    settings.onZoomStart((data, endIndexRanage, _, visibility) => {
         const frames = 10;
-        targetMax = settings.adapter.toMax(data, settings.visibility, endIndexRanage);
+        targetMax = settings.adapter.toMax(data, visibility, endIndexRanage);
         deltaMax = map2MaxMin(
             targetMax, currentMax,
             (target, current) => (target - current) / frames,
@@ -76,11 +76,9 @@ export function toChart(
         countMaxValue(frames);
     });
 
-    settings.onChangeFactory(shouldRender => {
-        chartItems = settings.cr(settings.jsonData, 2, 0);
-        shouldRender
-            ? drawCharts('visible')
-            : chartItems.drw(settings.use, context, toCurrentMax, viewport);
+    settings.onChangeFactory(() => {
+        chartItems = settings.cr(settings.jsonData, 2, 1);
+        chartItems.drw(settings.use, context, () => targetMax[0], viewport);
     });
 
     settings.onZoom((_, opacity) => {
@@ -99,9 +97,7 @@ export function toChart(
 
     settings.onVisibilityChange(visible => {
         chartItems.set(visible);
-        if (visible.some(v => v)) {
-            drawCharts('visible');
-        }
+        drawCharts('visible');
     });
 
     let lastCountUpdate = null

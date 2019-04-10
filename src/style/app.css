@@ -77,7 +77,7 @@ body {
     padding: 1px 0;
     box-sizing: border-box;
     opacity: 1;
-    transition: opacity ease .3s;
+    transition: opacity ease .1s;
 
     .cover {
         position: absolute;
