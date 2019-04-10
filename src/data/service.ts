@@ -530,7 +530,7 @@ export class DataService {
                 this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                 this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
 
-                this.zoomWatchers.forEach(act => act(this.timeRange));
+                this.zw.forEach(act => act(this.timeRange));
 
                 if (index <= 1) return;
                 zooming(index - 1);
@@ -605,7 +605,7 @@ export class DataService {
                     this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                     this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
 
-                    this.zoomWatchers.forEach(act => act(this.timeRange));
+                    this.zw.forEach(act => act(this.timeRange));
 
                     if (index === frames) return;
                     zooming(index + 1);
@@ -616,17 +616,17 @@ export class DataService {
         })
     }
 
-    private zoomWatchers: ((timeRange: Range) => void)[] = [];
+    private zw: ((timeRange: Range) => void)[] = [];
     onZoom(act: (timeRange: Range) => void) {
-        this.zoomWatchers.push(act);
+        this.zw.push(act);
     }
-    private zoomStartWatchers: ZoomFunc[] = [];
+    private zsw: ZoomFunc[] = [];
     onZoomStart(act: ZoomFunc) {
-        this.zoomStartWatchers.push(act);
+        this.zsw.push(act);
     }
 
     zoomStart(data: JsonData, indexRange: Range, timeRange: Range) {
-        this.zoomStartWatchers.forEach(act => act(data, indexRange, timeRange))
+        this.zsw.forEach(act => act(data, indexRange, timeRange))
     }
 }
 
@@ -824,13 +824,3 @@ function toIndexRange(jsonData: JsonData, timeRange: Range): Range {
         end,
     };
 }
-
-                    // (this.jsonData.columns as any) = this.jsonData.columns.map((item, index) => {
-                    //     const result = item.slice(0, start);
-
-                    //     const [_, ...items] = data.columns[index];
-                    //     result.push(...items);
-
-                    //     result.push(...item.slice(end + 1, oldTimes.length - 1))
-                    //     return result;
-                    // });

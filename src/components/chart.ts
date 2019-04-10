@@ -66,11 +66,11 @@ export function toChart(
     toPopUp(element, settings, toCurrentMax);
 
     settings.onZoomStart((data, endIndexRanage) => {
-        const frames = 20;
+        const frames = 10;
         targetMax = settings.adapter.toMax(data, settings.visibility, endIndexRanage);
         deltaMax = map2MaxMin(
             targetMax, currentMax,
-            (target, current) => target - current / frames,
+            (target, current) => (target - current) / frames,
         );
         redrawLines(deltaMax, frames);
         countMaxValue(frames);

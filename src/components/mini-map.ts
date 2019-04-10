@@ -64,7 +64,7 @@ function toMiniMapSvg(
         targetMax = settings.toMaxVisibleValue(miniMap.indexRange);
         deltaMax = map2MaxMin(
             targetMax, currentMax,
-            (target, current) => Math.round((target - current) / 10)
+            (target, current) => Math.round((target - current) / 10),
         );
 
         scale(0);
