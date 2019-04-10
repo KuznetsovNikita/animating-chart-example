@@ -3,15 +3,15 @@ import { toDiv, toggleClass } from '../data/const';
 import { DataService, day } from '../data/service';
 import { PopUpBlock, toPopUpBlock } from './pop-up-block';
 
-// interface Dot {
-//     innerCircle: SVGCircleElement;
-//     circle: SVGCircleElement;
-// }
-
 interface Elements {
     line: HTMLDivElement[];
     dots: HTMLDivElement[];
     block: PopUpBlock;
+}
+
+function getRoundedDate(minutes: number, date: Date): number {
+    let ms = 1000 * 60 * minutes;
+    return Math.round(date.getTime() / ms) * ms;
 }
 
 export function toPopUp(
@@ -39,11 +39,6 @@ export function toPopUp(
 
     createPopUp();
 
-    function getRoundedDate(minutes: number, date: Date): number {
-        let ms = 1000 * 60 * minutes; // convert minutes to ms
-        return Math.round(date.getTime() / ms) * ms;
-    }
-
     let oldTime: number | null = null;
     let lastUpdate: number;
     const onDrawPopUp = (offsetX: number, _offsetY: number, shouldLoad: boolean) => {
@@ -51,8 +46,6 @@ export function toPopUp(
         lastUpdate = requestAnimationFrame(() => {
 
             const dx = width / (setting.timeRange.end - setting.timeRange.start);
-
-            new Date().getMinutes() - (new Date().getMinutes() % 5)
 
             const d = new Date(setting.timeRange.start + Math.round(offsetX / dx));
             const time = setting.isZoom

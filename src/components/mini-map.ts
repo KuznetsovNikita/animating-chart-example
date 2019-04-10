@@ -1,5 +1,5 @@
 import { MaxMin } from 'src/data/models';
-import { drawConvas, map2MaxMin, mapMaxMin } from '../data/const';
+import { drawConvas, map2MaxMin, mapMaxMin, toDiv, toggleClass } from '../data/const';
 import { DataService } from '../data/service';
 import { drawLens } from './lens';
 
@@ -7,16 +7,17 @@ export function toMiniMap(
     container: HTMLDivElement,
     settings: DataService,
 ) {
-    const element = document.createElement('div');
-    container.appendChild(element);
-    element.classList.add('mini-map');
+    const element = toDiv(container, 'mini-map');
 
-    toMiniMapSvg(element, settings);
+    toMiniMapCanvas(element, settings);
     drawLens(element, settings);
 
+    settings.onChangeFactory(shouldRender => {
+        toggleClass(element, shouldRender, 'fade');
+    });
 }
 
-function toMiniMapSvg(
+function toMiniMapCanvas(
     element: HTMLDivElement,
     settings: DataService,
 ) {

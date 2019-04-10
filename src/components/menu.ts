@@ -5,43 +5,62 @@ export function toMenu(
     container: HTMLDivElement,
     settings: DataService,
 ) {
-    if (settings.jsonData.columns.length > 2) {
-        const element = document.createElement('div');
 
-        container.appendChild(element);
-        element.classList.add('menu');
+    const element = toDiv(container, 'menu');
 
-        const checkboxes: Checkbox[] = [];
+    let checkboxes: Checkbox[] = [];
+
+    function drawCheckboxes() {
         settings.jsonData.columns.forEach(([key], index) => {
             if (key === 'x') {
-                checkboxes.push({ setValue: () => { } });
+                checkboxes.push(fake);
             }
             else {
-                const checkbox = drawCheckbox(
+                checkboxes.push(drawCheckbox(
                     index,
                     settings.visibility[index],
                     settings.jsonData.colors[key],
                     settings.jsonData.names[key],
                     settings,
                     container,
-                );
-                checkboxes.push(checkbox);
+                ));
             }
         });
-
-        settings.onVisibilityChange(items => items.forEach(
-            (value, index) => checkboxes[index].setValue(value),
-        ));
-
-        settings.onDestroy(() => {
-            container.removeChild(element);
-        });
     }
+
+    if (!settings.isSingleton) {
+        drawCheckboxes();
+    }
+
+    settings.onChangeFactory(shouldRender => {
+        if (shouldRender) {
+            drawCheckboxes();
+        }
+        else {
+            checkboxes.forEach(item => item.destroy());
+            checkboxes = [];
+        }
+    });
+
+    settings.onVisibilityChange(items => items.forEach(
+        (value, index) => checkboxes.length && checkboxes[index].setValue(value),
+    ));
+
+    settings.onDestroy(() => {
+        checkboxes.forEach(item => item.destroy());
+        container.removeChild(element);
+    });
 }
 
 interface Checkbox {
     setValue: (value: boolean) => void;
+    destroy: () => void;
 }
+
+const fake: Checkbox = {
+    setValue: () => { },
+    destroy: () => { },
+};
 
 function drawCheckbox(
     index: number,
@@ -85,16 +104,20 @@ function drawCheckbox(
 
     setValue(value);
 
-    settings.onDestroy(() => {
+    function destroy() {
         element.onclick = null;
         element.onmousedown = null;
         element.onmouseup = null;
         element.ontouchstart = null;
         element.ontouchend = null;
-    });
+
+        container.removeChild(element);
+        container = null;
+    }
 
     return {
         setValue,
+        destroy,
     };
 }
 
