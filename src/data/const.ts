@@ -59,3 +59,7 @@ export function map2MaxMin(
         ] as MaxMin
     );
 }
+
+export function toggleClass(element: HTMLElement, value: boolean, className: string) {
+    value ? element.classList.add(className) : element.classList.remove(className);
+}

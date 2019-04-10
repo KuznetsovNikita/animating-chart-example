@@ -52,6 +52,6 @@ export type ChartsItemFunction = (
 
 export interface ChartsItem {
     drw: ChartsItemFunction;
-    set: (key: string, value: boolean) => void;
+    set: (visible: boolean[]) => void;
     sc: ChartsItemFunction;
 }

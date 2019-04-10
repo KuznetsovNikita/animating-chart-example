@@ -1,10 +1,19 @@
-import { days, month, toDiv } from '../data/const';
+import { days, month, toDiv, toggleClass } from '../data/const';
 import { DataService } from '../data/service';
 
 export interface PopUpBlock {
     setData: (time: number, index: number, positionX: number) => void;
 }
 
+interface Row {
+    block: HTMLDivElement;
+    value: HTMLDivElement;
+    num: number;
+    name: HTMLDivElement;
+    nameVal: string;
+    key: string;
+    isShow: boolean;
+}
 export function toPopUpBlock(
     setting: DataService,
     container: HTMLDivElement,
@@ -33,7 +42,7 @@ export function toPopUpBlock(
 
     const [_, ...lines] = setting.jsonData.columns;
 
-    const values = lines.map(item => {
+    const values = lines.map<Row>(item => {
         const block = toDiv(panel, 'block');
         const name = toDiv(block, 'name');
         const value = toDiv(block, 'value');
@@ -66,13 +75,15 @@ export function toPopUpBlock(
         });
     }
 
-    setting.onVisibilityChange(key => {
-        values.forEach(item => {
-            if (item.key === key) {
-                item.isShow = !item.isShow;
-                item.block.classList.toggle('invisible');
-            }
-        });
+    function setShow(row: Row, value: boolean) {
+        row.isShow = value;
+        toggleClass(row.block, value, 'invisible');
+    }
+
+    setting.onVisibilityChange(visible => {
+        for (let i = 1; i < visible.length; i++) {
+            setShow(values[i - 1], visible[i]);
+        }
 
         if (setting.isPercentage) {
             updatePersent();
@@ -113,14 +124,13 @@ export function toPopUpBlock(
             const item = values[values.length - 1];
             const filtered = values.filter(item => item.key !== 'all' && item.isShow);
             if (filtered.length > 1) {
-                item.isShow = true; 
+                
                 item.num = filtered.reduce((s, i) => s + i.num, 0);
                 item.value.innerHTML = format(item.num);
-                item.block.classList.remove('invisible');
+                setShow(item, true);
             }
             else {
-                item.isShow = false;
-                item.block.classList.add('invisible');
+                setShow(item, false);
             }
         }
         panel.style.transform = `translate(${positionX + (positionX > width / 2 ? -170 : 10)}px, 10px)`;

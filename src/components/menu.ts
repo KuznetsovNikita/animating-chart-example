@@ -1,4 +1,5 @@
 import { DataService } from 'src/data/service';
+import { toDiv, toggleClass } from '../data/const';
 
 export function toMenu(
     container: HTMLDivElement,
@@ -10,14 +11,27 @@ export function toMenu(
         container.appendChild(element);
         element.classList.add('menu');
 
-        for (let key in settings.visibility) {
-            element.appendChild(drawCheckbox(
-                key, settings.visibility[key],
-                settings.jsonData.colors[key],
-                settings.jsonData.names[key],
-                settings,
-            ));
-        }
+        const checkboxes: Checkbox[] = [];
+        settings.jsonData.columns.forEach(([key], index) => {
+            if (key === 'x') {
+                checkboxes.push({ setValue: () => { } });
+            }
+            else {
+                const checkbox = drawCheckbox(
+                    index,
+                    settings.visibility[index],
+                    settings.jsonData.colors[key],
+                    settings.jsonData.names[key],
+                    settings,
+                    container,
+                );
+                checkboxes.push(checkbox);
+            }
+        });
+
+        settings.onVisibilityChange(items => items.forEach(
+            (value, index) => checkboxes[index].setValue(value),
+        ));
 
         settings.onDestroy(() => {
             container.removeChild(element);
@@ -25,37 +39,62 @@ export function toMenu(
     }
 }
 
+interface Checkbox {
+    setValue: (value: boolean) => void;
+}
 function drawCheckbox(
-    key: string,
+    index: number,
     value: boolean,
     color: string,
     name: string,
     settings: DataService,
-) {
-    const element = document.createElement('div');
-    element.classList.add('checkbox');
-    if (value) element.classList.add('as-check');
+    container: HTMLDivElement,
+): Checkbox {
+    const element = toDiv(container, 'checkbox');
 
-    element.innerHTML += `<span>${name}</span>`;
+    element.innerHTML += name;
     requestAnimationFrame(() => {
         element.appendChild(drawIcon(color, element.clientWidth));
     });
 
-    element.onclick = () => {
-        settings.toggleVisibility(key);
+    let isLongPress = false;
+    let timer = null;
+    element.onmousedown = element.ontouchstart = () => {
+        timer = setTimeout(() => {
+            isLongPress = true;
+            settings.uncheckOther(index);
+        }, 500);
     };
 
-    settings.onVisibilityChange(item => {
-        if (item === key) {
-            element.classList.toggle('as-check');
+    element.onmouseup = element.ontouchend = (event: Event) => {
+        if (timer) clearTimeout(timer);
+    };
+
+    element.onclick = () => {
+        if (!isLongPress) {
+            settings.toggleVisibility(index);
         }
-    });
+        isLongPress = false;
+    };
+
+    function setValue(newValue: boolean) {
+        value = newValue;
+        toggleClass(element, value, 'as-check');
+    }
+
+    setValue(value);
 
     settings.onDestroy(() => {
         element.onclick = null;
+        element.onmousedown = null;
+        element.onmouseup = null;
+        element.ontouchstart = null;
+        element.ontouchend = null;
     });
 
-    return element;
+    return {
+        setValue,
+    };
 }
 
 function drawIcon(color: string, width: number) {

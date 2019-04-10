@@ -1,5 +1,5 @@
 import { MaxMin } from 'src/data/models';
-import { toDiv } from '../data/const';
+import { toDiv, toggleClass } from '../data/const';
 import { DataService, day } from '../data/service';
 import { PopUpBlock, toPopUpBlock } from './pop-up-block';
 
@@ -131,13 +131,13 @@ export function toPopUp(
     element.addEventListener('touchstart', onTouchStart, { passive: false });
     element.addEventListener('touchend', touchEnd);
 
-    setting.onVisibilityChange(key => {
+    setting.onVisibilityChange(visible => {
         cleanUp();
-        elements.dots.forEach((dot, i) => {
-            if (setting.jsonData.columns[i + 1][0] === key) {
-                dot.classList.toggle('invisible');
+        if (elements.dots.length) {
+            for (let i = 1; i < visible.length; i++) {
+                toggleClass(elements.dots[i - 1], visible[i], 'invisible');
             }
-        });
+        }
     });
 
     setting.onTimeRangeChange(() => cleanUp());

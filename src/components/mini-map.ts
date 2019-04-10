@@ -51,8 +51,8 @@ function toMiniMapSvg(
         );
     });
 
-    settings.onVisibilityChange((key, value) => {
-        chartItems.set(key, value);
+    settings.onVisibilityChange(visible => {
+        chartItems.set(visible);
         drawCharts();
     });
 

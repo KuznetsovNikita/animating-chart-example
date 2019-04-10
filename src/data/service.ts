@@ -45,12 +45,10 @@ export function toScalesItemOver(jsonData: JsonData, toItem: (color: string) => 
         });
     }
 
-    function set(key: string, value: boolean) {
-        jsonData.columns.forEach((column, index) => {
-            if (column[0] === key) {
-                actions[index - 1] = value ? 'in' : 'out';
-            }
-        });
+    function set(visible: boolean[]) {
+        for (let i = 1; i < visible.length; i++) {
+            actions[i - 1] = visible[i] ? 'in' : 'out';
+        }
     }
 
     function sc(
@@ -103,12 +101,10 @@ function toItemsOver(
         });
     }
 
-    function set(key: string, value: boolean) {
-        jsonData.columns.forEach((column, index) => {
-            if (column[0] === key) {
-                items[index - 1].set(value);
-            }
-        });
+    function set(visible: boolean[]) {
+        for (let i = 1; i < visible.length; i++) {
+            items[i - 1].set(visible[i]);
+        }
     }
 
     function sc(
@@ -130,12 +126,12 @@ function toItemsOver(
 export interface Adapter {
     use: (
         jsonData: JsonData,
-        index: number, visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
+        index: number, visibility: boolean[], indexRange: Range, timeRange: Range,
         vp: Viewport, min: number, max: number,
         use: (topX: number, topY: number, botX: number, botY: number) => void,
         scales?: number[],
     ) => void;
-    toMax: (jsonData: JsonData, visibility: Dict<boolean>, indexRange: Range) => MaxMin[];
+    toMax: (jsonData: JsonData, visibility: boolean[], indexRange: Range) => MaxMin[];
 }
 
 function dataAdapter(
@@ -147,7 +143,7 @@ function dataAdapter(
 
     function points(
         jsonData: JsonData,
-        index: number, visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
+        index: number, _visibility: boolean[], indexRange: Range, timeRange: Range,
         vp: Viewport, min: number, max: number,
 
         use: (topX: number, topY: number, botX: number, botY: number) => void
@@ -165,19 +161,19 @@ function dataAdapter(
         }
     }
 
-    function toFastValue(jsonData: JsonData, visibility: Dict<boolean>, index: number): number {
+    function toFastValue(jsonData: JsonData, visibility: boolean[], index: number): number {
         for (let i = 1; i < jsonData.columns.length; i++) {
-            if (visibility[jsonData.columns[i][0]]) {
+            if (visibility[i]) {
                 return jsonData.columns[i][index] as number;
             }
         }
         return 0;
     }
-    function pointsMax(jsonData: JsonData, visibility: Dict<boolean>, indexRange: Range): MaxMin[] {
+    function pointsMax(jsonData: JsonData, visibility: boolean[], indexRange: Range): MaxMin[] {
         let max = 10;
         let min = toFastValue(jsonData, visibility, indexRange.start);
         for (let i = 1; i < jsonData.columns.length; i++) {
-            if (visibility[jsonData.columns[i][0]]) {
+            if (visibility[i]) {
                 for (let j = indexRange.start; j <= indexRange.end; j++) {
                     max = Math.max(max, jsonData.columns[i][j] as number);
                     min = Math.min(min, jsonData.columns[i][j] as number);
@@ -187,12 +183,12 @@ function dataAdapter(
         return [[Math.ceil(max / 10) * 10, Math.floor(min / 10) * 10]];
     }
 
-    function doubleMax(jsonData: JsonData, visibility: Dict<boolean>, indexRange: Range): MaxMin[] {
+    function doubleMax(jsonData: JsonData, visibility: boolean[], indexRange: Range): MaxMin[] {
         const result: MaxMin[] = [];
         for (let i = 1; i < jsonData.columns.length; i++) {
             let max = 10;
             let min = 0;
-            if (visibility[jsonData.columns[i][0]]) {
+            if (visibility[i]) {
                 min = jsonData.columns[i][indexRange.start] as number;
                 for (let j = indexRange.start; j <= indexRange.end; j++) {
                     max = Math.max(max, jsonData.columns[i][j] as number);
@@ -208,7 +204,7 @@ function dataAdapter(
 
     function summ(
         jsonData: JsonData,
-        index: number, _visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
+        index: number, _visibility: boolean[], indexRange: Range, timeRange: Range,
         vp: Viewport, min: number, max: number,
 
         use: (topX: number, topY: number, botX: number, botY: number) => void,
@@ -233,12 +229,12 @@ function dataAdapter(
         }
     }
 
-    function summMax(jsonData: JsonData, visibility: Dict<boolean>, indexRange: Range): MaxMin[] {
+    function summMax(jsonData: JsonData, visibility: boolean[], indexRange: Range): MaxMin[] {
         let max = 10;
         for (let j = indexRange.start; j <= indexRange.end; j++) {
             let summ = 0;
             for (let i = 1; i < jsonData.columns.length; i++) {
-                if (visibility[jsonData.columns[i][0]]) {
+                if (visibility[i]) {
                     summ += jsonData.columns[i][j] as number;
                 }
             }
@@ -249,7 +245,7 @@ function dataAdapter(
 
     function percent(
         jsonData: JsonData,
-        index: number, _visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
+        index: number, _visibility: boolean[], indexRange: Range, timeRange: Range,
         vp: Viewport, _min: number, _max: number,
 
         use: (topX: number, topY: number, botX: number, botY: number) => void,
@@ -317,7 +313,7 @@ export class DataService {
     public indexRange: Range;
     public viewport: Viewport;
     public miniMap: MiniMap;
-    public visibility: Dict<boolean> = {};
+    public visibility: boolean[] = [];
 
     public isMove = false;
     public isBars = false;
@@ -380,9 +376,7 @@ export class DataService {
             },
         };
 
-        for (let key in jsonData.names) {
-            this.visibility[key] = true;
-        }
+        this.visibility = jsonData.columns.map(() => true);
 
         this.isBars = (jsonData.types[jsonData.columns[1][0]] === 'bar' || jsonData.stacked) && !jsonData.percentage;
         this.isPercentage = jsonData.percentage;
@@ -421,13 +415,18 @@ export class DataService {
         this.timeChangeWatchers.forEach(act => act(kind, timeRange));
     }
 
-    private visibilityWatchers: ((key: string, value: boolean) => void)[] = [];
-    toggleVisibility(key: string) {
-        this.visibility[key] = !this.visibility[key];
-        this.visibilityWatchers.forEach(act => act(key, this.visibility[key]));
+    private visibilityWatchers: ((vis: boolean[]) => void)[] = [];
+
+    uncheckOther(index: number) {
+        this.visibility = this.visibility.map((_, i) => i === index);
+        this.visibilityWatchers.forEach(act => act(this.visibility));
+    }
+    toggleVisibility(index: number) {
+        this.visibility[index] = !this.visibility[index];
+        this.visibilityWatchers.forEach(act => act(this.visibility));
     }
 
-    onVisibilityChange(act: (key: string, value: boolean) => void) {
+    onVisibilityChange(act: (vis: boolean[]) => void) {
         this.visibilityWatchers.push(act);
     }
 
