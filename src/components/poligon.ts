@@ -7,9 +7,10 @@ export function plg(
     function drw(
         use: UseDataFunction, context: CanvasRenderingContext2D,
         index: number, min: number, max: number, viewport: Viewport,
-        scales: number[],
+        scales: number[], opacity = 1,
     ) {
         context.fillStyle = color;
+        context.globalAlpha = opacity;
         use(
             index, viewport, min, max,
             (x, y, bx, by) => {

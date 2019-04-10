@@ -36,11 +36,12 @@ export function toScalesItemOver(jsonData: JsonData, toItem: (color: string) => 
     function drw(
         use: UseDataFunction, context: CanvasRenderingContext2D,
         toMax: (index: number) => MaxMin, viewport: Viewport,
+        opacity?: number,
     ) {
         items.forEach((item, index) => {
             item.drw(
                 use, context, index + 1, toMax(index + 1)[1],
-                toMax(index + 1)[0], viewport, scales,
+                toMax(index + 1)[0], viewport, scales, opacity,
             );
         });
     }
@@ -53,7 +54,7 @@ export function toScalesItemOver(jsonData: JsonData, toItem: (color: string) => 
 
     function sc(
         use: UseDataFunction, context: CanvasRenderingContext2D,
-        toMax: (index: number) => MaxMin, viewport: Viewport,
+        toMax: (index: number) => MaxMin, viewport: Viewport, opacity?: number,
     ) {
         actions.forEach((action, index) => {
             if (action === 'in') {
@@ -68,7 +69,10 @@ export function toScalesItemOver(jsonData: JsonData, toItem: (color: string) => 
         });
         items.forEach((item, index) => {
             if (scales[index] !== 0) {
-                item.drw(use, context, index + 1, toMax(index + 1)[1], toMax(index + 1)[0], viewport, scales);
+                item.drw(
+                    use, context, index + 1, toMax(index + 1)[1],
+                    toMax(index + 1)[0], viewport, scales, opacity,
+                );
             }
         });
     }
@@ -523,14 +527,13 @@ export class DataService {
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
 
+
                 if (index === frames) {
-                    this.visibility = this.visibility.map(() => false)
+                    this.visibility = this.visibility.map(() => false);
                     this.visibilityWatchers.forEach(act => act(this.visibility));
                 }
-                else if (index > 40) {
-                    //   this.zw.forEach(act => act(this.timeRange));
-                }
-                else if (index === 40) {
+
+                if (index === 40) {
                     this.jsonData = yearData;
                     this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                     this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
@@ -541,15 +544,18 @@ export class DataService {
 
                     this.cfw.forEach(act => act(false));
                 }
-                else if (index < 40) {
+                if (index < 40) {
+                    increment();
+                    increment();
+                    increment();
                     increment();
                     increment();
 
                     this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                     this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
-                    this.zw.forEach(act => act(this.timeRange));
+                    this.zw.forEach(act => act(this.timeRange, (40 - index) / 10));
 
-                    if (index === 15) {
+                    if (index === 30) {
                         return;
                     }
                 }
@@ -648,14 +654,18 @@ export class DataService {
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
 
-                if (index <= 25) {
+
+                if (index <= 10) {
+                    increment();
+                    increment();
+                    increment();
                     increment();
                     increment();
 
                     this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                     this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
 
-                    this.zw.forEach(act => act(this.timeRange));
+                    this.zw.forEach(act => act(this.timeRange, (10 - index) / 10));
                 } else {
                     this.jsonData = weekData;
                     this.visibility = weekData.columns.map(() => true);
@@ -717,8 +727,8 @@ export class DataService {
         zooming(1);
     }
 
-    private zw: ((timeRange: Range) => void)[] = [];
-    onZoom(act: (timeRange: Range) => void) {
+    private zw: ((timeRange: Range, opacity?: number) => void)[] = [];
+    onZoom(act: (timeRange: Range, opacity?: number) => void) {
         this.zw.push(act);
     }
     private zsw: ZoomFunc[] = [];

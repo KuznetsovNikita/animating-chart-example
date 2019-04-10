@@ -22,7 +22,7 @@ export function toMenu(
                     settings.jsonData.colors[key],
                     settings.jsonData.names[key],
                     settings,
-                    container,
+                    element,
                 ));
             }
         });

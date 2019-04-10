@@ -61,6 +61,8 @@ function drawChart(settings: DataService, container: HTMLDivElement) {
     })
 
     const chart = toDiv(container, 'chart');
+    if (settings.isSingleton) chart.classList.add('as-sg');
+
     toChart(chart, settings);
     toMiniMap(chart, settings);
     toMenu(chart, settings);

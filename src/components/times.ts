@@ -258,7 +258,7 @@ export function toTimes(
         while (toLeftByIndexAndRange(startIndex + delta, timeRange) < minSpace + firstSpace) {
             delta *= 2;
         }
-        startIndex -= delta;
+        if (startIndex - delta > indexRange.start) startIndex -= delta;
         endIndex = startIndex;
         while (
             hasValue(endIndex + delta) &&

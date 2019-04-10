@@ -83,13 +83,13 @@ export function toChart(
             : chartItems.drw(settings.use, context, toCurrentMax, viewport);
     });
 
-    settings.onZoom(() => {
+    settings.onZoom((_, opacity) => {
         const zoomingMax = settings.toMaxVisibleValue(settings.indexRange);
         context.clearRect(0, 0, canvas.width, canvas.height);
         chartItems.sc(
             settings.use, context,
             i => zoomingMax.length > 1 ? zoomingMax[i - 1] : zoomingMax[0],
-            viewport,
+            viewport, opacity,
         );
     });
 
