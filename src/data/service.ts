@@ -494,7 +494,7 @@ export class DataService {
         const { yearData, miniMapTimeRange, timeRange, indexRange } = this.yearDatas
 
 
-        const frames = 50;
+        const frames = 16;
 
         const dSr = (timeRange.start - this.timeRange.start) / frames;
         const dEr = (timeRange.end - this.timeRange.end) / frames;
@@ -530,7 +530,9 @@ export class DataService {
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
 
-                if (index === frames) {
+                increment();
+
+                if (index === 16) {
                     this.jsonData = yearData;
                     this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                     this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
@@ -539,22 +541,15 @@ export class DataService {
                     this.isBars = true;
                     this.cr = jsonData => toScalesItemOver(jsonData, plg);
 
-                    this.cfw.forEach(act => act(false));
+                    this.changeFactoryWatchers.forEach(act => act(false));
                 }
                 else {
-                    increment();
-                    increment();
-                    increment();
-                    increment();
-                    increment();
 
                     this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                     this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
-                    this.zw.forEach(act => act(this.timeRange, (frames - index) / 10));
+                    this.zoomWatchers.forEach(act => act(this.timeRange, (frames - index) / 10));
 
-                    if (index === 40) {
-                        return;
-                    }
+                    if (index === 1) return;
                 }
 
                 zooming(index - 1);
@@ -570,27 +565,40 @@ export class DataService {
         increment: () => void,
     ) {
         const initTimeRange = copyRange(this.miniMap.timeRange);
-        const zoomer = dataZoomer('out');
 
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
 
                 increment();
 
-                if (index > 5 && index < 35) {
-                    increment();
-                    index--;
-                    increment();
-                    index--;
+                if (index === 15) {
+                    this.jsonData = mergeJsonForSimpleZoom(
+                        3, yearData, weekData, this.miniMap.timeRange, initTimeRange
+                    );
                 }
 
-                this.jsonData = zoomer.merge(index, yearData, weekData, this.miniMap.timeRange, initTimeRange);
+                if (index === 13) {
+                    this.jsonData = mergeJsonForSimpleZoom(
+                        6, yearData, weekData, this.miniMap.timeRange, initTimeRange
+                    );
+                }
+
+                if (index === 11) {
+                    this.jsonData = mergeJsonForSimpleZoom(
+                        12, yearData, weekData, this.miniMap.timeRange, initTimeRange
+                    );
+                }
+
+                if (index === 10) {
+                    this.jsonData = yearData;
+                }
+
                 this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                 this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
 
-                this.zw.forEach(act => act(this.timeRange));
+                this.zoomWatchers.forEach(act => act(this.timeRange));
 
-                if (index <= 1) return;
+                if (index === 1) return;
                 zooming(index - 1);
             });
         }
@@ -616,7 +624,7 @@ export class DataService {
             const endTimeRange = { start: this.zoomedTime, end: this.zoomedTime + day };
             const endIndexRange = toIndexRange(weekData, endTimeRange);
 
-            const frames = 50;
+            const frames = 16;
 
             const dSr = (endTimeRange.start - this.timeRange.start) / frames;
             const dEr = (endTimeRange.end - this.timeRange.end) / frames;
@@ -650,19 +658,13 @@ export class DataService {
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
 
+                increment();
 
-                if (index <= 10) {
-                    increment();
-                    increment();
-                    increment();
-                    increment();
-                    increment();
+                this.indexRange = toIndexRange(this.jsonData, this.timeRange);
+                this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
+                this.zoomWatchers.forEach(act => act(this.timeRange, (16 - index) / 10));
 
-                    this.indexRange = toIndexRange(this.jsonData, this.timeRange);
-                    this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
-
-                    this.zw.forEach(act => act(this.timeRange, (10 - index) / 10));
-                } else {
+                if (index === 16) {
                     this.jsonData = weekData;
                     this.visibility = weekData.columns.map(() => true);
 
@@ -671,7 +673,7 @@ export class DataService {
 
                     this.isBars = false;
                     this.cr = (jsonData, lineWidth, opacity) => toItemsOver(jsonData, pl, lineWidth, opacity);
-                    this.cfw.forEach(act => act(true));
+                    this.changeFactoryWatchers.forEach(act => act(true));
                     return;
                 }
 
@@ -689,31 +691,38 @@ export class DataService {
         weekData: JsonData,
         increment: () => void,
     ) {
-        const zoomer = dataZoomer('in');
+
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
 
                 increment();
 
-                if (index < 15) {
-                    increment();
-                    index++;
-                    increment();
-                    index++;
-                }
-                if (index < 35) {
-                    increment();
-                    index++;
-                    increment();
-                    index++;
+                if (index === 11) {
+                    this.jsonData = mergeJsonForSimpleZoom(
+                        12, yearData, weekData, this.miniMap.timeRange, endTimeRange
+                    );
                 }
 
+                if (index === 13) {
+                    this.jsonData = mergeJsonForSimpleZoom(
+                        6, yearData, weekData, this.miniMap.timeRange, endTimeRange
+                    );
+                }
 
-                this.jsonData = zoomer.merge(index, yearData, weekData, this.miniMap.timeRange, endTimeRange);
+                if (index === 15) {
+                    this.jsonData = mergeJsonForSimpleZoom(
+                        3, yearData, weekData, this.miniMap.timeRange, endTimeRange
+                    );
+                }
+
+                if (index === 16) {
+                    this.jsonData = weekData;
+                }
+
                 this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                 this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
 
-                this.zw.forEach(act => act(this.timeRange));
+                this.zoomWatchers.forEach(act => act(this.timeRange));
 
                 if (index === frames) return;
                 zooming(index + 1);
@@ -723,21 +732,21 @@ export class DataService {
         zooming(1);
     }
 
-    private zw: ((timeRange: Range, opacity?: number) => void)[] = [];
+    private zoomWatchers: ((timeRange: Range, opacity?: number) => void)[] = [];
     onZoom(act: (timeRange: Range, opacity?: number) => void) {
-        this.zw.push(act);
+        this.zoomWatchers.push(act);
     }
-    private zsw: ZoomFunc[] = [];
+    private zoomStartWatchers: ZoomFunc[] = [];
     onZoomStart(act: ZoomFunc) {
-        this.zsw.push(act);
+        this.zoomStartWatchers.push(act);
     }
-    private cfw: ((shouldRender: boolean) => void)[] = [];
+    private changeFactoryWatchers: ((shouldRender: boolean) => void)[] = [];
     onChangeFactory(act: (shouldRender: boolean) => void) {
-        this.cfw.push(act);
+        this.changeFactoryWatchers.push(act);
     }
 
     zoomStart(data: JsonData, indexRange: Range, timeRange: Range, vision: boolean[]) {
-        this.zsw.forEach(act => act(data, indexRange, timeRange, vision))
+        this.zoomStartWatchers.forEach(act => act(data, indexRange, timeRange, vision))
     }
 }
 
@@ -755,140 +764,85 @@ function copyRange(range: Range): Range {
     return { start: range.start, end: range.end };
 }
 
-function toScals(splitter: number) {
-    return splitter === 24
-        ? 1
-        : splitter === 12
-            ? 2
-            : splitter === 6
-                ? 4
-                : splitter === 3
-                    ? 8
-                    : 24
+function toScals(splitter: 3 | 6 | 12) {
+    return splitter === 12 ? 2 : splitter === 6 ? 4 : 8;
 }
 
-function toScals2(splitter: number) {
-    return splitter === 24
-        ? 2
-        : splitter === 12
-            ? 6
-            : 2
-}
+function mergeJsonForSimpleZoom(
+    splitter: 3 | 6 | 12,
+    yearData: JsonData,
+    weekData: JsonData,
+    currnetTimeRange: Range,
+    weekTimeRange: Range
+): JsonData {
+    const { start, end } = toIndexRange(yearData, currnetTimeRange);
+    const columns = yearData.columns.map(column => column.slice(start, end) as number[]);
 
-function dataZoomer(kind: 'in' | 'out') {
-    let splitterIndex = 0;
-    let splitter = kind === 'in' ? 24 : 1;
-
-    const splilltrRecount = kind === 'in'
-        ? () => {
-            if (splitterIndex > toScals2(splitter)) {
-                splitterIndex = 0;
-                if (splitter === 3) {
-                    splitter = 1
-                }
-                else {
-                    splitter /= 2;
-                }
-            }
-        }
-        : () => {
-            if (splitterIndex > toScals2(splitter)) {
-                splitterIndex = 0;
-
-                if (splitter === 1) {
-                    splitter = 3
-                }
-                else {
-                    splitter *= 2;
-                }
-            }
-        }
-
-    function merge(frame: number, yearData: JsonData, weekData: JsonData, currnetTimeRange: Range, weekTimeRange: Range): JsonData {
-
-        if (frame < 25) return yearData;
-
-        if (kind === 'in' && splitter === 1) return weekData;
-        if (kind === 'out' && splitter === 24) return yearData;
-
-        splitterIndex++;
-        splilltrRecount();
-
-        if (kind === 'out' && splitter === 1) return weekData;
-
-        const { start, end } = toIndexRange(yearData, currnetTimeRange);
-        const columns = yearData.columns.map(column => column.slice(start, end) as number[]);
-
-        const range = toIndexRangeZoom(columns[0], weekTimeRange);
-
-        return {
-            ...weekData,
-            columns: columns.map((items, index) => {
-
-                const [name, ...values] = weekData.columns[index];
-
-                if (name === 'x') {
-
-                    const values2 = values.reduce((acc, item, i) => {
-                        if (i % splitter == 0) acc.push(item);
-                        return acc;
-                    }, []);
-
-                    return [
-                        name,
-                        ...items.slice(0, range.start),
-                        ...values2,
-                        ...items.slice(range.end, items.length - 1),
-                    ];
-                }
-                else {
-                    const scale = toScals(splitter);
-
-                    const values2 = values.reduce((acc, item, i) => {
-                        if (i % splitter == 0) {
-                            acc.push(item);
-                        }
-                        else {
-                            acc[acc.length - 1] += item;
-                        }
-                        return acc;
-                    }, []);
-
-                    return [
-                        name,
-                        ...items.slice(0, range.start).map(item => item / scale),
-                        ...values2,
-                        ...items.slice(range.end, items.length - 1).map(item => item / scale),
-                    ]
-                }
-
-
-            }) as any,
-        }
-    }
-
-    function toIndexRangeZoom(time: number[], timeRange: Range): Range {
-        let start = 1;
-        while (time[start] < timeRange.start) {
-            start++;
-        }
-        start = Math.max(start - 2, 1);
-
-        let end = time.length - 1;
-        while (time[end] > timeRange.end) {
-            end--;
-        }
-        end = Math.min(end + 3, time.length - 1);
-
-        return {
-            start,
-            end,
-        };
-    }
+    const range = toIndexRangeZoom(columns[0], weekTimeRange);
 
     return {
-        merge,
+        ...weekData,
+        columns: columns.map((items, index) => {
+
+            const [name, ...values] = weekData.columns[index];
+
+            if (name === 'x') {
+
+                const values2 = values.reduce((acc, item, i) => {
+                    if (i % splitter == 0) acc.push(item);
+                    return acc;
+                }, []);
+
+                return [
+                    name,
+                    ...items.slice(0, range.start),
+                    ...values2,
+                    ...items.slice(range.end, items.length - 1),
+                ];
+            }
+            else {
+                const scale = toScals(splitter);
+
+                const values2 = values.reduce((acc, item, i) => {
+                    if (i % splitter == 0) {
+                        acc.push(item);
+                    }
+                    else {
+                        acc[acc.length - 1] += item;
+                    }
+                    return acc;
+                }, []);
+
+                return [
+                    name,
+                    ...items.slice(0, range.start).map(item => item / scale),
+                    ...values2,
+                    ...items.slice(range.end, items.length - 1).map(item => item / scale),
+                ]
+            }
+
+
+        }) as any,
     }
+}
+
+function toIndexRangeZoom(time: number[], timeRange: Range): Range {
+    let start = 1;
+    while (time[start] < timeRange.start) {
+        start++;
+    }
+    start = Math.max(start - 1, 1);
+
+    let end = time.length - 1;
+    while (time[end] > timeRange.end) {
+        end--;
+    }
+    end = Math.min(end + 1, time.length - 1);
+
+    return {
+        start,
+        end,
+    };
 }
 
 function toUrl(url: string, time: number): string {

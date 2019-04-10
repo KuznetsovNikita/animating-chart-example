@@ -46,7 +46,7 @@ export function toTimes(
 
     settings.onZoom((range) => {
         dy = width / (range.end - range.start);
-        globalAlpha = Math.min(globalAlpha + 0.05, 1);
+        globalAlpha = Math.min(globalAlpha + 0.1, 1);
         redraw();
     });
 
