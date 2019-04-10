@@ -107,7 +107,7 @@ export function toPopUpBlock(
         date.innerHTML = `${days[d.getUTCDay()].slice(0, 3)}, ${d.getUTCDate()} ${month[d.getMonth()].slice(0, 3)}`;
         if (setting.isZoom) {
             if (setting.isSingleton) {
-                date.innerHTML += ` ${('0' + (d.getUTCHours())).slice(-2)}:${('0' + d.getMinutes()).slice(-2)}`;
+                date.innerHTML = `${('0' + (d.getUTCHours())).slice(-2)}:${('0' + d.getMinutes()).slice(-2)}`;
             }
             else {
                 date.innerHTML += ` ${('0' + (d.getUTCHours())).slice(-2)}:00`;
