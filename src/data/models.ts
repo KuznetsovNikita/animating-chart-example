@@ -12,6 +12,10 @@ export interface Range {
 export type Column = [string, ...Array<number>];
 export type TimeColumn = ['x', ...Array<number>];
 
+
+export type MaxMin = [number, number];
+
+
 export interface Dict<T> {
     [key: string]: T;
 }
@@ -22,26 +26,24 @@ export type UseDataFunction = (
     scales?: number[],
 ) => void;
 
+export type ChartItemFunction = (
+    use: UseDataFunction, context: CanvasRenderingContext2D,
+    index: number, min: number, max: number, viewport: Viewport,
+) => void;
+
 export interface ChartItem {
-    drw: (
-        use: UseDataFunction, context: CanvasRenderingContext2D,
-        index: number, min: number, max: number, viewport: Viewport,
-    ) => void;
+    drw: ChartItemFunction;
     set: (value: boolean) => void;
-    sc: (
-        use: UseDataFunction, context: CanvasRenderingContext2D,
-        index: number, min: number, max: number, viewport: Viewport,
-    ) => void;
+    sc: ChartItemFunction;
 }
 
+export type ChartsItemFunction = (
+    use: UseDataFunction, context: CanvasRenderingContext2D,
+    toMax: (index: number) => MaxMin, viewport: Viewport,
+) => void;
+
 export interface ChartsItem {
-    drw: (
-        use: UseDataFunction, context: CanvasRenderingContext2D,
-        min: number, toMax: (index: number) => number, viewport: Viewport,
-    ) => void;
+    drw: ChartsItemFunction;
     set: (key: string, value: boolean) => void;
-    sc: (
-        use: UseDataFunction, context: CanvasRenderingContext2D,
-        min: number, toMax: (index: number) => number, viewport: Viewport,
-    ) => void;
+    sc: ChartsItemFunction;
 }

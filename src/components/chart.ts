@@ -1,6 +1,7 @@
-import { drawConvas, map2 } from '../data/const';
+import { MaxMin } from 'src/data/models';
+import { drawConvas, map2MaxMin, mapMaxMin } from '../data/const';
 import { ChangeKind, DataService } from '../data/service';
-import { Line, ln } from './line';
+import { Line, LineValue, ln } from './line';
 import { toPopUp } from './pop-up';
 import { toTimes } from './times';
 
@@ -9,10 +10,10 @@ export function toChart(
     element: HTMLDivElement,
     settings: DataService,
 ) {
-    let currentMax: number[];
-    let targetMax: number[];
+    let currentMax: MaxMin[];
+    let targetMax: MaxMin[];
 
-    let deltaMax: number[];
+    let deltaMax: MaxMin[];
 
     let lastUpdateChart: number;
     let lastUpdateLine: number;
@@ -21,9 +22,7 @@ export function toChart(
     let linesStock: Line[] = [];
 
     const {
-        jsonData: { columns, colors },
-        viewport,
-        min,
+        jsonData: { columns, colors }, viewport,
     } = settings;
 
     const devicePixelRatio = window.devicePixelRatio;
@@ -62,16 +61,16 @@ export function toChart(
     }
 
     const chartItems = settings.cr(settings.jsonData, 2);
-    chartItems.drw(settings.use, context, min, toCurrentMax, viewport);
+    chartItems.drw(settings.use, context, toCurrentMax, viewport);
 
     toPopUp(element, settings, toCurrentMax);
 
     settings.onZoomStart((data, endIndexRanage) => {
         const frames = 20;
         targetMax = settings.adapter.toMax(data, settings.visibility, endIndexRanage);
-        deltaMax = map2(
+        deltaMax = map2MaxMin(
             targetMax, currentMax,
-            (t, c) => (t - c) / frames
+            (target, current) => target - current / frames,
         );
         redrawLines(deltaMax, frames);
         countMaxValue(frames);
@@ -81,7 +80,7 @@ export function toChart(
         const zoomingMax = settings.toMaxVisibleValue(settings.indexRange);
         context.clearRect(0, 0, canvas.width, canvas.height - 19 * devicePixelRatio);
         chartItems.sc(
-            settings.use, context, min,
+            settings.use, context,
             i => zoomingMax.length > 1 ? zoomingMax[i - 1] : zoomingMax[0],
             viewport,
         );
@@ -105,9 +104,9 @@ export function toChart(
     function incrementValue(index, count) {
         lastCountUpdate = requestAnimationFrame(() => {
 
-            currentMax = map2(
+            currentMax = map2MaxMin(
                 currentMax, deltaMax,
-                (c, d) => c + d,
+                (current, delta) => current + delta,
             );
 
             if (index === count) return;
@@ -118,7 +117,7 @@ export function toChart(
     function drawCharts(kind: ChangeKind) {
         if (lastUpdateChart) {
             cancelAnimationFrame(lastUpdateChart);
-            currentMax = currentMax.map(max => Math.floor(max / 10) * 10); // round current max, if animation wasn't finished
+            currentMax = mapMaxMin(currentMax, val => Math.floor(val / 10) * 10); // round current max, if animation wasn't finished
         }
 
         times.rdt(kind);
@@ -126,9 +125,9 @@ export function toChart(
         targetMax = settings.toMaxVisibleValue(
             settings.indexRange,
         );
-        deltaMax = map2(
+        deltaMax = map2MaxMin(
             targetMax, currentMax,
-            (t, c) => Math.round((t - c) / 10)
+            (target, current) => Math.round((target - current) / 10)
         );
 
         scaleChart(0, 10);
@@ -140,31 +139,32 @@ export function toChart(
         lastUpdateChart = requestAnimationFrame(() => {
             context.clearRect(0, 0, canvas.width, canvas.height - 20 * devicePixelRatio);
 
-            chartItems.sc(settings.use, context, min, toCurrentMax, viewport);
+            chartItems.sc(settings.use, context, toCurrentMax, viewport);
 
             if (index === frames) return;
             return scaleChart(index + 1, frames);
         });
     }
 
-    function drawLine(max: number[], opacity: number): Line[] {
+    function drawLine(max: MaxMin[], opacity: number): Line[] {
 
         const lines = [];
 
-        let items = max.map((maxValue, i) => {
-            const lastLine = Math.floor(maxValue / 10) * 10;
+        let items = max.map<LineValue>(([max, min], i) => {
+            const lastLine = Math.floor(max / 10) * 10;
             return {
-                dx: viewport.height / (maxValue - min),
+                dx: viewport.height / (max - min),
                 lastLine,
                 dOneLine: (lastLine - min) / settings.lines,
                 color: colors[columns[i + 1][0]],
                 isShow: settings.visibility[columns[i + 1][0]],
                 label: min,
+                min,
             };
         });
 
         do {
-            const x = viewport.height + 10 - (items[0].label - min) * items[0].dx;
+            const x = viewport.height + 10 - (items[0].label - items[0].min) * items[0].dx;
             lines.push(ln(items, x * devicePixelRatio, (viewport.width - 10) * devicePixelRatio, opacity));
             items = items.map(item => ({ ...item, label: item.label + item.dOneLine }));
         }
@@ -179,8 +179,8 @@ export function toChart(
         lines.forEach(line => line.drw(lineContext));
     }
 
-    function redrawLines(deltaMax: number[], frames: number) {
-        if (deltaMax.every(item => item === 0)) return;
+    function redrawLines(deltaMax: MaxMin[], frames: number) {
+        if (deltaMax.every(([max, min]) => max === 0 && min === 0)) return;
 
         if (lastUpdateLine != null) cancelAnimationFrame(lastUpdateLine);
 
@@ -199,10 +199,10 @@ export function toChart(
 
             lineContext.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
 
-            const dx1 = viewport.height / (currentMax[0] - min);
+            const dx1 = viewport.height / (currentMax[0][0] - currentMax[0][1]);
 
             function update(line: Line): boolean {
-                return line.up(lineContext, (viewport.height + 10 - (line.vl[0].label - min) * dx1) * devicePixelRatio) != 0;
+                return line.up(lineContext, (viewport.height + 10 - (line.vl[0].label - currentMax[0][1]) * dx1) * devicePixelRatio) != 0;
             }
 
             lines.forEach(update);

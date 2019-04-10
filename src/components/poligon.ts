@@ -1,5 +1,5 @@
 import { JsonData } from 'src/data/service';
-import { ChartsItem, UseDataFunction, Viewport } from '../data/models';
+import { ChartsItem, MaxMin, UseDataFunction, Viewport } from '../data/models';
 
 interface Poligon {
     draw: (
@@ -23,12 +23,12 @@ export function plgs(jsonData: JsonData): ChartsItem {
 
     function drw(
         use: UseDataFunction, context: CanvasRenderingContext2D,
-        min: number, toMax: (index: number) => number, viewport: Viewport,
+        toMax: (index: number) => MaxMin, viewport: Viewport,
     ) {
         items.forEach((item, index) => {
             item.draw(
-                use, context, index + 1, min,
-                toMax(index + 1), viewport, scales,
+                use, context, index + 1, toMax(index + 1)[1],
+                toMax(index + 1)[0], viewport, scales,
             );
         });
     }
@@ -43,7 +43,7 @@ export function plgs(jsonData: JsonData): ChartsItem {
 
     function sc(
         use: UseDataFunction, context: CanvasRenderingContext2D,
-        min: number, toMax: (index: number) => number, viewport: Viewport,
+        toMax: (index: number) => MaxMin, viewport: Viewport,
     ) {
         actions.forEach((action, index) => {
             if (action === 'in') {
@@ -58,7 +58,7 @@ export function plgs(jsonData: JsonData): ChartsItem {
         });
         items.forEach((item, index) => {
             if (scales[index] !== 0) {
-                item.draw(use, context, index + 1, min, toMax(index + 1), viewport, scales);
+                item.draw(use, context, index + 1, toMax(index + 1)[1], toMax(index + 1)[0], viewport, scales);
             }
         });
     }

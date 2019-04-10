@@ -12,6 +12,7 @@ export interface LineValue {
     color: string;
     isShow: boolean;
     label: number;
+    min: number;
 }
 
 export function ln(

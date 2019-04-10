@@ -1,4 +1,5 @@
-import { drawConvas, map2 } from '../data/const';
+import { MaxMin } from 'src/data/models';
+import { drawConvas, map2MaxMin, mapMaxMin } from '../data/const';
 import { DataService } from '../data/service';
 import { drawLens } from './lens';
 
@@ -19,14 +20,14 @@ function toMiniMapSvg(
     element: HTMLDivElement,
     settings: DataService,
 ) {
-    let currentMax: number[];
-    let targetMax: number[];
+    let currentMax: MaxMin[];
+    let targetMax: MaxMin[];
 
-    let deltaMax: number[];
+    let deltaMax: MaxMin[];
 
     let lastUpdateCall: number;
 
-    const { miniMap, min } = settings;
+    const { miniMap } = settings;
 
     const canvas = drawConvas(element, miniMap.viewport.width, miniMap.viewport.height);
     const context = canvas.getContext('2d');
@@ -38,13 +39,13 @@ function toMiniMapSvg(
     }
 
     const chartItems = settings.cr(settings.jsonData, 1);
-    chartItems.drw(settings.useMin, context, min, toCurrentMax, miniMap.viewport);
+    chartItems.drw(settings.useMin, context, toCurrentMax, miniMap.viewport);
 
     settings.onZoom(() => {
         const zoomingMax = settings.toMaxVisibleValue(settings.miniMap.indexRange);
         context.clearRect(0, 0, canvas.width, canvas.height);
         chartItems.drw(
-            settings.useMin, context, min,
+            settings.useMin, context,
             i => zoomingMax.length > 1 ? zoomingMax[i - 1] : zoomingMax[0],
             miniMap.viewport,
         );
@@ -58,12 +59,12 @@ function toMiniMapSvg(
     function drawCharts() {
         if (lastUpdateCall) {
             cancelAnimationFrame(lastUpdateCall);
-            currentMax = currentMax.map(max => Math.floor(max / 10) * 10); // round current max, if animation wasn't finished
+            currentMax = mapMaxMin(currentMax, val => Math.floor(val / 10) * 10); // round current max, if animation wasn't finished
         }
         targetMax = settings.toMaxVisibleValue(miniMap.indexRange);
-        deltaMax = map2(
+        deltaMax = map2MaxMin(
             targetMax, currentMax,
-            (t, c) => Math.round((t - c) / 10),
+            (target, current) => Math.round((target - current) / 10)
         );
 
         scale(0);
@@ -73,12 +74,13 @@ function toMiniMapSvg(
         lastUpdateCall = requestAnimationFrame(() => {
             context.clearRect(0, 0, canvas.width, canvas.height);
 
-            chartItems.sc(settings.useMin, context, min, toCurrentMax, miniMap.viewport);
+            chartItems.sc(settings.useMin, context, toCurrentMax, miniMap.viewport);
 
             if (index === 10) return;
-            currentMax = map2(
+
+            currentMax = map2MaxMin(
                 currentMax, deltaMax,
-                (c, d) => c + d,
+                (current, delta) => current + delta,
             );
 
             return scale(index + 1);

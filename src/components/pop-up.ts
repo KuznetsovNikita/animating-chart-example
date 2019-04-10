@@ -1,3 +1,4 @@
+import { MaxMin } from 'src/data/models';
 import { toDiv } from '../data/const';
 import { DataService, day } from '../data/service';
 import { PopUpBlock, toPopUpBlock } from './pop-up-block';
@@ -16,7 +17,7 @@ interface Elements {
 export function toPopUp(
     parent: HTMLDivElement,
     setting: DataService,
-    toMax: (index: number) => number,
+    toMax: (index: number) => MaxMin,
 ) {
     let elements: Elements;
     const { viewport: { width, height }, jsonData: { colors } } = setting;
@@ -131,6 +132,7 @@ export function toPopUp(
     element.addEventListener('touchend', touchEnd);
 
     setting.onVisibilityChange(key => {
+        cleanUp();
         elements.dots.forEach((dot, i) => {
             if (setting.jsonData.columns[i + 1][0] === key) {
                 dot.classList.toggle('invisible');
@@ -187,8 +189,8 @@ export function toPopUp(
             elements.line[0].style.transform = `translate(${x}px, 0)`;
 
             elements.dots.forEach((dot, i) => {
-                const dy = height / (toMax(i + 1) - setting.min);
-                const coordinates = lines[i][index] as number - setting.min;
+                const dy = height / (toMax(i + 1)[0] - toMax(i + 1)[1]);
+                const coordinates = lines[i][index] as number - toMax(i + 1)[1];
                 const positionY = height - coordinates * dy;
                 const y = positionY.toString();
                 dot.style.transform = `translate(${x}px, ${y}px)`;
