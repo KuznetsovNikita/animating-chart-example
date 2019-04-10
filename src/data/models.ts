@@ -37,6 +37,14 @@ export interface ChartItem {
     sc: ChartItemFunction;
 }
 
+export interface ScalesChartItem {
+    drw: (
+        use: UseDataFunction, context: CanvasRenderingContext2D,
+        index: number, min: number, max: number, viewport: Viewport,
+        scale: number[],
+    ) => void;
+}
+
 export type ChartsItemFunction = (
     use: UseDataFunction, context: CanvasRenderingContext2D,
     toMax: (index: number) => MaxMin, viewport: Viewport,

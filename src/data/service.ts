@@ -1,7 +1,7 @@
 import { ar } from '../components/area';
-import { plgs } from '../components/poligon';
+import { plg } from '../components/poligon';
 import { pl } from '../components/polyline';
-import { ChartItem, ChartsItem, Column, Dict, MaxMin, Range, TimeColumn, UseDataFunction, Viewport } from './models';
+import { ChartItem, ChartsItem, Column, Dict, MaxMin, Range, ScalesChartItem, TimeColumn, UseDataFunction, Viewport } from './models';
 
 export interface JsonData {
     columns: [TimeColumn, ...Array<Column>];
@@ -20,6 +20,67 @@ interface MiniMap {
 }
 
 export type ChangeKind = 'left' | 'right' | 'move' | 'visible';
+
+export function toScalesItemOver(jsonData: JsonData, toItem: (color: string) => ScalesChartItem): ChartsItem {
+    const items: ScalesChartItem[] = [];
+    const scales: number[] = [];
+    const actions: ('none' | 'in' | 'out')[] = [];
+
+    for (let i = 1; i < jsonData.columns.length; i++) {
+        const key = jsonData.columns[i][0];
+        items.push(toItem(jsonData.colors[key]));
+        scales.push(1);
+        actions.push('none');
+    }
+
+    function drw(
+        use: UseDataFunction, context: CanvasRenderingContext2D,
+        toMax: (index: number) => MaxMin, viewport: Viewport,
+    ) {
+        items.forEach((item, index) => {
+            item.drw(
+                use, context, index + 1, toMax(index + 1)[1],
+                toMax(index + 1)[0], viewport, scales,
+            );
+        });
+    }
+
+    function set(key: string, value: boolean) {
+        jsonData.columns.forEach((column, index) => {
+            if (column[0] === key) {
+                actions[index - 1] = value ? 'in' : 'out';
+            }
+        });
+    }
+
+    function sc(
+        use: UseDataFunction, context: CanvasRenderingContext2D,
+        toMax: (index: number) => MaxMin, viewport: Viewport,
+    ) {
+        actions.forEach((action, index) => {
+            if (action === 'in') {
+                scales[index] = Math.min(1, scales[index] + 0.1);
+                if (scales[index] === 1) action = 'none';
+            }
+
+            if (action === 'out') {
+                scales[index] = Math.max(0, scales[index] - 0.1);
+                if (scales[index] === 0) action = 'none';
+            }
+        });
+        items.forEach((item, index) => {
+            if (scales[index] !== 0) {
+                item.drw(use, context, index + 1, toMax(index + 1)[1], toMax(index + 1)[0], viewport, scales);
+            }
+        });
+    }
+
+    return {
+        drw,
+        set,
+        sc,
+    };
+}
 
 function toItemsOver(
     jsonData: JsonData,
@@ -188,10 +249,11 @@ function dataAdapter(
 
     function percent(
         jsonData: JsonData,
-        index: number, visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
+        index: number, _visibility: Dict<boolean>, indexRange: Range, timeRange: Range,
         vp: Viewport, _min: number, _max: number,
 
-        use: (topX: number, topY: number, botX: number, botY: number) => void
+        use: (topX: number, topY: number, botX: number, botY: number) => void,
+        scales?: number[],
     ) {
         const times = jsonData.columns[0];
         const dx = vp.width / (timeRange.end - timeRange.start);
@@ -204,16 +266,14 @@ function dataAdapter(
             let y = 0;
 
             for (let j = 1; j < jsonData.columns.length; j++) {
-                if (visibility[jsonData.columns[j][0]]) {
-                    const line = jsonData.columns[j][i] as number;
-                    if (j < index) {
-                        botY += line;
-                    }
-                    if (j <= index) {
-                        y += line;
-                    }
-                    totalY += line;
+                const line = jsonData.columns[j][i] as number * scales[j - 1];
+                if (j < index) {
+                    botY += line;
                 }
+                if (j <= index) {
+                    y += line;
+                }
+                totalY += line;
             }
 
             use(x, (y / totalY * vp.height) * devicePixelRatio, x, (botY / totalY * vp.height) * devicePixelRatio);
@@ -334,12 +394,12 @@ export class DataService {
         }
         else if (jsonData.percentage) {
             this.zIndex = '1';
-            this.cr = (jsonData, lineWidth) => toItemsOver(jsonData, ar, lineWidth);
+            this.cr = jsonData => toScalesItemOver(jsonData, ar);
             this.adapter = dataAdapter('percentage');
         }
         else if (jsonData.stacked || jsonData.types[jsonData.columns[1][0]] === 'bar') {
             this.zIndex = '1';
-            this.cr = plgs;
+            this.cr = jsonData => toScalesItemOver(jsonData, plg);
             this.adapter = dataAdapter('stacked');
         }
         else {

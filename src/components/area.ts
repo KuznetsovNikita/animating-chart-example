@@ -1,28 +1,13 @@
-import { ChartItem, UseDataFunction, Viewport } from 'src/data/models';
+import { ScalesChartItem, UseDataFunction, Viewport } from 'src/data/models';
 
 export function ar(
     color: string,
-): ChartItem {
-    let scale = 1;
-
-    function set(value: boolean) {
-        scale = value ? 1 : 0;
-    }
-
-    function sc(
-        use: UseDataFunction, context: CanvasRenderingContext2D,
-        index: number, min: number, max: number, viewport: Viewport,
-    ) {
-        if (scale !== 0) {
-            drw(
-                use, context, index, min, max, viewport,
-            );
-        }
-    }
+): ScalesChartItem {
 
     function drw(
         use: UseDataFunction, context: CanvasRenderingContext2D,
         index: number, min: number, max: number, viewport: Viewport,
+        scales: number[],
     ) {
         context.fillStyle = color;
         context.beginPath();
@@ -34,6 +19,7 @@ export function ar(
                 context.lineTo(x, y);
                 pair.push([bx, by]);
             },
+            scales,
         );
         for (let i = pair.length - 1; i >= 0; i--) {
             const [x, y] = pair[i];
@@ -45,7 +31,5 @@ export function ar(
 
     return {
         drw,
-        set,
-        sc,
     };
 }
