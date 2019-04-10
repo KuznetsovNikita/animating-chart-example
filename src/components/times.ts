@@ -1,5 +1,5 @@
 import { ChangeKind, DataService } from 'src/data/service';
-import { month } from '../data/const';
+import { drawConvas, month } from '../data/const';
 import { Range } from '../data/models';
 
 export interface Times {
@@ -7,11 +7,17 @@ export interface Times {
 }
 
 export function toTimes(
-    context: CanvasRenderingContext2D,
+    element: HTMLDivElement,
     settings: DataService,
 ): Times {
+
+    const { viewport: { width } } = settings;
     const devicePixelRatio = window.devicePixelRatio;
+
+    const canvas = drawConvas(element, width, 16, 'text');
+    const context = canvas.getContext('2d');
     context.font = (10 * devicePixelRatio) + 'px Arial';
+    context.fillStyle = settings.style.text;
 
     const viewportSpace = 30;
     const minSpace = 70;
@@ -23,10 +29,12 @@ export function toTimes(
 
     let dy: number;
 
-    const { viewport: { height, width } } = settings;
     let jsonData = settings.jsonData;
 
-    settings.onChangeStyle(() => redraw());
+    settings.onChangeStyle(() => {
+        context.fillStyle = settings.style.text;
+        redraw()
+    });
 
     let globalAlpha = 1;
     settings.onZoomStart((data, endIndexRanage, endTimeRange) => {
@@ -38,6 +46,7 @@ export function toTimes(
 
     settings.onZoom((range) => {
         dy = width / (range.end - range.start);
+        globalAlpha = Math.min(globalAlpha + 0.05, 1);
         redraw();
     });
 
@@ -71,14 +80,12 @@ export function toTimes(
         context.fillText(
             formatValue(new Date(toValue(index))),
             toLeftByIndex(index) * devicePixelRatio,
-            (height + 15) * devicePixelRatio,
+            13 * devicePixelRatio,
         );
     }
 
     function redraw() {
-        globalAlpha = Math.min(globalAlpha + 0.05, 1);
-        context.clearRect(0, height * devicePixelRatio, width * devicePixelRatio, 20 * devicePixelRatio);
-        context.fillStyle = settings.style.text;
+        context.clearRect(0, 0, canvas.width, canvas.height);
         context.globalAlpha = globalAlpha;
         for (let i = startIndex; i <= endIndex; i += delta) {
             drawTime(i);

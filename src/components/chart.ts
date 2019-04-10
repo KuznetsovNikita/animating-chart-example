@@ -26,14 +26,14 @@ export function toChart(
     } = settings;
 
     const devicePixelRatio = window.devicePixelRatio;
-    const canvas = drawConvas(element, viewport.width, viewport.height + 20);
+    const canvas = drawConvas(element, viewport.width, viewport.height + 2);
     const context = canvas.getContext('2d');
 
     context.textAlign = "center";
     context.lineJoin = 'bevel';
     context.lineCap = 'butt';
 
-    const times = toTimes(context, settings);
+    const times = toTimes(element, settings);
 
     const lineCanvas = drawConvas(element, viewport.width - 10, viewport.height + 11, 'lines');
     const lineContext = lineCanvas.getContext('2d');
@@ -78,7 +78,7 @@ export function toChart(
 
     settings.onZoom(() => {
         const zoomingMax = settings.toMaxVisibleValue(settings.indexRange);
-        context.clearRect(0, 0, canvas.width, canvas.height - 19 * devicePixelRatio);
+        context.clearRect(0, 0, canvas.width, canvas.height);
         chartItems.sc(
             settings.use, context,
             i => zoomingMax.length > 1 ? zoomingMax[i - 1] : zoomingMax[0],
@@ -137,7 +137,7 @@ export function toChart(
 
     function scaleChart(index: number, frames: number) {
         lastUpdateChart = requestAnimationFrame(() => {
-            context.clearRect(0, 0, canvas.width, canvas.height - 20 * devicePixelRatio);
+            context.clearRect(0, 0, canvas.width, canvas.height);
 
             chartItems.sc(settings.use, context, toCurrentMax, viewport);
 
