@@ -38,7 +38,7 @@ function toMiniMapSvg(
         return currentMax.length > 1 ? currentMax[index - 1] : currentMax[0];
     }
 
-    const chartItems = settings.cr(settings.jsonData, 1);
+    const chartItems = settings.cr(settings.jsonData, 1, 1);
     chartItems.drw(settings.useMin, context, toCurrentMax, miniMap.viewport);
 
     settings.onZoom(() => {

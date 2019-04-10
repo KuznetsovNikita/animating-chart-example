@@ -20,7 +20,7 @@ export function toPopUp(
     toMax: (index: number) => MaxMin,
 ) {
     let elements: Elements;
-    const { viewport: { width, height }, jsonData: { colors } } = setting;
+    const { viewport: { width, height } } = setting;
 
     const element = toDiv(parent, 'hover');
     element.style.height = height + 'px';
@@ -28,19 +28,37 @@ export function toPopUp(
 
     const container = toDiv(element, 'pop-up');
 
+    setting.onVisibilityChange(visible => {
+        elements.block.setVisibility(visible);
+    });
+
+    setting.onChangeFactory(() => {
+        destroyElements();
+        createPopUp();
+    });
+
     createPopUp();
+
+    function getRoundedDate(minutes: number, date: Date): number {
+        let ms = 1000 * 60 * minutes; // convert minutes to ms
+        return Math.round(date.getTime() / ms) * ms;
+    }
 
     let oldTime: number | null = null;
     let lastUpdate: number;
-    const onDrawPopUp = (offsetX: number, offsetY: number, shouldLoad: boolean) => {
+    const onDrawPopUp = (offsetX: number, _offsetY: number, shouldLoad: boolean) => {
         if (lastUpdate != null) cancelAnimationFrame(lastUpdate);
         lastUpdate = requestAnimationFrame(() => {
 
             const dx = width / (setting.timeRange.end - setting.timeRange.start);
 
+            new Date().getMinutes() - (new Date().getMinutes() % 5)
+
             const d = new Date(setting.timeRange.start + Math.round(offsetX / dx));
             const time = setting.isZoom
-                ? d.setUTCMinutes(0, 0, 0)
+                ? setting.isSingleton
+                    ? getRoundedDate(5, d)
+                    : d.setUTCMinutes(0, 0, 0)
                 : d.setUTCHours(0, 0, 0, 0);
 
             const [times] = setting.jsonData.columns;
@@ -154,7 +172,7 @@ export function toPopUp(
     });
 
     function createPopUp() {
-        const [_, ...lines] = setting.jsonData.columns;
+        const { columns: [_, ...lines], colors } = setting.jsonData;
 
         container.classList.add('invisible');
 
@@ -179,6 +197,14 @@ export function toPopUp(
                 block: toPopUpBlock(setting, container),
             };
         }
+    }
+
+    function destroyElements() {
+        elements.line.forEach(line => container.removeChild(line));
+        elements.dots.forEach(dot => container.removeChild(dot));
+        elements.block.destroy();
+        container.removeChild(elements.block.panel);
+        elements = null;
     }
 
     function drawPopUp(time: number, dx: number, index: number) {

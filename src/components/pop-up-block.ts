@@ -3,6 +3,9 @@ import { DataService } from '../data/service';
 
 export interface PopUpBlock {
     setData: (time: number, index: number, positionX: number) => void;
+    setVisibility: (vision: boolean[]) => void;
+    destroy: () => void;
+    panel: HTMLDivElement;
 }
 
 interface Row {
@@ -14,15 +17,13 @@ interface Row {
     key: string;
     isShow: boolean;
 }
+
 export function toPopUpBlock(
     setting: DataService,
     container: HTMLDivElement,
 ): PopUpBlock {
 
-    const {
-        jsonData: { colors, names },
-        viewport: { width },
-    } = setting;
+    const { viewport: { width }, } = setting;
 
     const panel = toDiv(container, 'panel');
 
@@ -31,18 +32,18 @@ export function toPopUpBlock(
         event.stopPropagation();
     };
 
-    setting.onDestroy(() => {
+    function destroy() {
         panel.onclick = null;
-    });
+    }
 
     const date = toDiv(panel, 'date');
 
     const icon = toDiv(panel, 'icon');
     icon.innerHTML = '&#10095;';
 
-    const [_, ...lines] = setting.jsonData.columns;
+    const { columns: [_, ...lines], names, colors } = setting.jsonData;
 
-    const values = lines.map<Row>(item => {
+    let values = lines.map<Row>(item => {
         const block = toDiv(panel, 'block');
         const name = toDiv(block, 'name');
         const value = toDiv(block, 'value');
@@ -80,7 +81,8 @@ export function toPopUpBlock(
         toggleClass(row.block, !value, 'invisible');
     }
 
-    setting.onVisibilityChange(visible => {
+
+    function setVisibility(visible: boolean[]) {
         for (let i = 1; i < visible.length; i++) {
             setShow(values[i - 1], visible[i]);
         }
@@ -88,7 +90,7 @@ export function toPopUpBlock(
         if (setting.isPercentage) {
             updatePersent();
         }
-    });
+    }
 
     function updatePersent() {
         const total = values.reduce((s, i) => i.isShow ? s + i.num : s, 0);
@@ -104,7 +106,12 @@ export function toPopUpBlock(
         const d = new Date(time);
         date.innerHTML = `${days[d.getUTCDay()].slice(0, 3)}, ${d.getUTCDate()} ${month[d.getMonth()].slice(0, 3)}`;
         if (setting.isZoom) {
-            date.innerHTML += ` ${('0' + (d.getUTCHours())).slice(-2)}:00`;
+            if (setting.isSingleton) {
+                date.innerHTML += ` ${('0' + (d.getUTCHours())).slice(-2)}:${('0' + d.getMinutes()).slice(-2)}`;
+            }
+            else {
+                date.innerHTML += ` ${('0' + (d.getUTCHours())).slice(-2)}:00`;
+            }
         }
 
         const [_, ...lines] = setting.jsonData.columns;
@@ -112,7 +119,7 @@ export function toPopUpBlock(
         values.forEach((item, i) => {
             if (item.key !== 'all') {
                 item.num = lines[i][index] as number;
-                item.value.innerHTML = format(item.num);
+                item.value.innerHTML = formatDateToShortString(item.num);
             }
         });
 
@@ -127,7 +134,7 @@ export function toPopUpBlock(
             if (filtered.length > 1) {
                 
                 item.num = filtered.reduce((s, i) => s + i.num, 0);
-                item.value.innerHTML = format(item.num);
+                item.value.innerHTML = formatDateToShortString(item.num);
                 setShow(item, true);
             }
             else {
@@ -137,18 +144,22 @@ export function toPopUpBlock(
         panel.style.transform = `translate(${positionX + (positionX > width / 2 ? -170 : 10)}px, 10px)`;
     }
 
-    function format(value: number): string {
-        const str = value.toString();
-        return str.length > 6
-            ? str.substr(0, str.length - 6) + '.' + str.substr(str.length - 6, 1) + 'M'
-            : str.length > 4
-                ? str.substr(0, str.length - 3) + 'K'
-                : str;
-    }
 
     return {
         setData,
+        setVisibility,
+        destroy,
+        panel,
     };
+}
+
+function formatDateToShortString(value: number): string {
+    const str = value.toString();
+    return str.length > 6
+        ? str.substr(0, str.length - 6) + '.' + str.substr(str.length - 6, 1) + 'M'
+        : str.length > 4
+            ? str.substr(0, str.length - 3) + 'K'
+            : str;
 }
 
 

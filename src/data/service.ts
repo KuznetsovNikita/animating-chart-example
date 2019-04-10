@@ -82,14 +82,15 @@ export function toScalesItemOver(jsonData: JsonData, toItem: (color: string) => 
 
 function toItemsOver(
     jsonData: JsonData,
-    toItem: (color: string, lineWidth?: number) => ChartItem,
-    lineWidth?: number
+    toItem: (color: string, lineWidth?: number, opacity?: number) => ChartItem,
+    lineWidth?: number,
+    opacity?: number,
 ): ChartsItem {
     const items: ChartItem[] = [];
 
     for (let i = 1; i < jsonData.columns.length; i++) {
         const key = jsonData.columns[i][0];
-        items.push(toItem(jsonData.colors[key], lineWidth));
+        items.push(toItem(jsonData.colors[key], lineWidth, opacity));
     }
 
     function drw(
@@ -134,167 +135,156 @@ export interface Adapter {
     toMax: (jsonData: JsonData, visibility: boolean[], indexRange: Range) => MaxMin[];
 }
 
-function dataAdapter(
-    kind: 'point' | 'y_scaled' | 'stacked' | 'percentage',
+const devicePixelRatio = window.devicePixelRatio;
 
-): Adapter {
-    const devicePixelRatio = window.devicePixelRatio;
+function recountAndUseSimplePintsChart(
+    jsonData: JsonData,
+    index: number, _visibility: boolean[], indexRange: Range, timeRange: Range,
+    vp: Viewport, min: number, max: number,
 
+    use: (topX: number, topY: number, botX: number, botY: number) => void
+) {
+    const times = jsonData.columns[0];
+    const dy = vp.height / (max - min);
+    const dx = vp.width / (timeRange.end - timeRange.start);
 
-    function points(
-        jsonData: JsonData,
-        index: number, _visibility: boolean[], indexRange: Range, timeRange: Range,
-        vp: Viewport, min: number, max: number,
-
-        use: (topX: number, topY: number, botX: number, botY: number) => void
-    ) {
-        const times = jsonData.columns[0];
-        const dy = vp.height / (max - min);
-        const dx = vp.width / (timeRange.end - timeRange.start);
-
-        let botX = 0
-        for (let i = indexRange.start; i <= indexRange.end; i++) {
-            const x = ((times[i] as number) - timeRange.start) * dx * devicePixelRatio;
-            const y = (vp.height - (jsonData.columns[index][i] as number - min) * dy) * devicePixelRatio;
-            use(x, y, botX == 0 ? x : botX, vp.height * devicePixelRatio);
-            botX = x;
-        }
-    }
-
-    function toFastValue(jsonData: JsonData, visibility: boolean[], index: number): number {
-        for (let i = 1; i < jsonData.columns.length; i++) {
-            if (visibility[i]) {
-                return jsonData.columns[i][index] as number;
-            }
-        }
-        return 0;
-    }
-    function pointsMax(jsonData: JsonData, visibility: boolean[], indexRange: Range): MaxMin[] {
-        let max = 10;
-        let min = toFastValue(jsonData, visibility, indexRange.start);
-        for (let i = 1; i < jsonData.columns.length; i++) {
-            if (visibility[i]) {
-                for (let j = indexRange.start; j <= indexRange.end; j++) {
-                    max = Math.max(max, jsonData.columns[i][j] as number);
-                    min = Math.min(min, jsonData.columns[i][j] as number);
-                }
-            }
-        }
-        return [[Math.ceil(max / 10) * 10, Math.floor(min / 10) * 10]];
-    }
-
-    function doubleMax(jsonData: JsonData, visibility: boolean[], indexRange: Range): MaxMin[] {
-        const result: MaxMin[] = [];
-        for (let i = 1; i < jsonData.columns.length; i++) {
-            let max = 10;
-            let min = 0;
-            if (visibility[i]) {
-                min = jsonData.columns[i][indexRange.start] as number;
-                for (let j = indexRange.start; j <= indexRange.end; j++) {
-                    max = Math.max(max, jsonData.columns[i][j] as number);
-                    min = Math.min(min, jsonData.columns[i][j] as number)
-                }
-            }
-            result.push([Math.ceil(max / 10) * 10, Math.floor(min / 10) * 10]);
-        }
-        let [[oneMax, oneMin], [twoMax, twoMin]] = result;
-        oneMax > twoMax ? twoMax *= 1.2 : oneMax *= 1.2;
-        return [[oneMax, oneMin], [twoMax, twoMin]];
-    }
-
-    function summ(
-        jsonData: JsonData,
-        index: number, _visibility: boolean[], indexRange: Range, timeRange: Range,
-        vp: Viewport, min: number, max: number,
-
-        use: (topX: number, topY: number, botX: number, botY: number) => void,
-        scales?: number[],
-    ) {
-        const times = jsonData.columns[0];
-        const dy = vp.height / (max - min);
-        const dx = vp.width / (timeRange.end - timeRange.start);
-        let botX = 0
-        for (let i = indexRange.start; i <= indexRange.end; i++) {
-
-            const x = ((times[i] as number) - timeRange.start) * dx * devicePixelRatio;
-
-            let botY = 0;
-            for (let j = 1; j < index; j++) {
-                botY += (jsonData.columns[j][i] as number - min) * dy * scales[j - 1];
-            }
-
-            const y = botY + (jsonData.columns[index][i] as number - min) * dy * scales[index - 1];
-            use(x, (vp.height - y) * devicePixelRatio, botX === 0 ? x : botX, (vp.height - botY) * devicePixelRatio);
-            botX = x;
-        }
-    }
-
-    function summMax(jsonData: JsonData, visibility: boolean[], indexRange: Range): MaxMin[] {
-        let max = 10;
-        for (let j = indexRange.start; j <= indexRange.end; j++) {
-            let summ = 0;
-            for (let i = 1; i < jsonData.columns.length; i++) {
-                if (visibility[i]) {
-                    summ += jsonData.columns[i][j] as number;
-                }
-            }
-            max = Math.max(max, summ);
-        }
-        return [[Math.ceil(max / 10) * 10, 0]];
-    }
-
-    function percent(
-        jsonData: JsonData,
-        index: number, _visibility: boolean[], indexRange: Range, timeRange: Range,
-        vp: Viewport, _min: number, _max: number,
-
-        use: (topX: number, topY: number, botX: number, botY: number) => void,
-        scales?: number[],
-    ) {
-        const times = jsonData.columns[0];
-        const dx = vp.width / (timeRange.end - timeRange.start);
-
-        for (let i = indexRange.start; i <= indexRange.end; i++) {
-            const x = ((times[i] as number) - timeRange.start) * dx * devicePixelRatio;
-
-            let botY = 0;
-            let totalY = 0;
-            let y = 0;
-
-            for (let j = 1; j < jsonData.columns.length; j++) {
-                const line = jsonData.columns[j][i] as number * scales[j - 1];
-                if (j < index) {
-                    botY += line;
-                }
-                if (j <= index) {
-                    y += line;
-                }
-                totalY += line;
-            }
-
-            use(x, (y / totalY * vp.height) * devicePixelRatio, x, (botY / totalY * vp.height) * devicePixelRatio);
-        }
-
-    }
-    switch (kind) {
-        case 'point': return {
-            use: points,
-            toMax: pointsMax,
-        };
-        case 'y_scaled': return {
-            use: points,
-            toMax: doubleMax,
-        }
-        case 'stacked': return {
-            use: summ,
-            toMax: summMax,
-        }
-        case 'percentage': return {
-            use: percent,
-            toMax: () => [[100, 0]],
-        }
+    let botX = 0
+    for (let i = indexRange.start; i <= indexRange.end; i++) {
+        const x = ((times[i] as number) - timeRange.start) * dx * devicePixelRatio;
+        const y = (vp.height - (jsonData.columns[index][i] as number - min) * dy) * devicePixelRatio;
+        use(x, y, botX == 0 ? x : botX, vp.height * devicePixelRatio);
+        botX = x;
     }
 }
+
+function toFastVisibleValue(jsonData: JsonData, visibility: boolean[], index: number): number {
+    for (let i = 1; i < jsonData.columns.length; i++) {
+        if (visibility[i]) {
+            return jsonData.columns[i][index] as number;
+        }
+    }
+    return 0;
+}
+
+function recountSimpleMax(jsonData: JsonData, visibility: boolean[], indexRange: Range): MaxMin[] {
+    let max = 10;
+    for (let i = 1; i < jsonData.columns.length; i++) {
+        if (visibility[i]) {
+            for (let j = indexRange.start; j <= indexRange.end; j++) {
+                max = Math.max(max, jsonData.columns[i][j] as number);
+            }
+        }
+    }
+    return [[Math.ceil(max / 10) * 10, 0]];
+}
+
+function recountSimpleMaxAndMin(jsonData: JsonData, visibility: boolean[], indexRange: Range): MaxMin[] {
+    let max = 10;
+    let min = toFastVisibleValue(jsonData, visibility, indexRange.start);
+    for (let i = 1; i < jsonData.columns.length; i++) {
+        if (visibility[i]) {
+            for (let j = indexRange.start; j <= indexRange.end; j++) {
+                max = Math.max(max, jsonData.columns[i][j] as number);
+                min = Math.min(min, jsonData.columns[i][j] as number);
+            }
+        }
+    }
+    return [[Math.ceil(max / 10) * 10, Math.floor(min / 10) * 10]];
+}
+
+function recountDoubleMax(jsonData: JsonData, visibility: boolean[], indexRange: Range): MaxMin[] {
+    const result: MaxMin[] = [];
+    for (let i = 1; i < jsonData.columns.length; i++) {
+        let max = 10;
+        let min = 0;
+        if (visibility[i]) {
+            min = jsonData.columns[i][indexRange.start] as number;
+            for (let j = indexRange.start; j <= indexRange.end; j++) {
+                max = Math.max(max, jsonData.columns[i][j] as number);
+                min = Math.min(min, jsonData.columns[i][j] as number)
+            }
+        }
+        result.push([Math.ceil(max / 10) * 10, Math.floor(min / 10) * 10]);
+    }
+    let [[oneMax, oneMin], [twoMax, twoMin]] = result;
+    oneMax > twoMax ? twoMax *= 1.2 : oneMax *= 1.2;
+    return [[oneMax, oneMin], [twoMax, twoMin]];
+}
+
+function recountAndUseChartBySumm(
+    jsonData: JsonData,
+    index: number, _visibility: boolean[], indexRange: Range, timeRange: Range,
+    vp: Viewport, min: number, max: number,
+
+    use: (topX: number, topY: number, botX: number, botY: number) => void,
+    scales?: number[],
+) {
+    const times = jsonData.columns[0];
+    const dy = vp.height / (max - min);
+    const dx = vp.width / (timeRange.end - timeRange.start);
+    let botX = 0
+    for (let i = indexRange.start; i <= indexRange.end; i++) {
+
+        const x = ((times[i] as number) - timeRange.start) * dx * devicePixelRatio;
+
+        let botY = 0;
+        for (let j = 1; j < index; j++) {
+            botY += (jsonData.columns[j][i] as number - min) * dy * scales[j - 1];
+        }
+
+        const y = botY + (jsonData.columns[index][i] as number - min) * dy * scales[index - 1];
+        use(x, (vp.height - y) * devicePixelRatio, botX === 0 ? x : botX, (vp.height - botY) * devicePixelRatio);
+        botX = x;
+    }
+}
+
+function recountMaxBySumm(jsonData: JsonData, visibility: boolean[], indexRange: Range): MaxMin[] {
+    let max = 10;
+    for (let j = indexRange.start; j <= indexRange.end; j++) {
+        let summ = 0;
+        for (let i = 1; i < jsonData.columns.length; i++) {
+            if (visibility[i]) {
+                summ += jsonData.columns[i][j] as number;
+            }
+        }
+        max = Math.max(max, summ);
+    }
+    return [[Math.ceil(max / 10) * 10, 0]];
+}
+
+function recountAndUsePercentChart(
+    jsonData: JsonData,
+    index: number, _visibility: boolean[], indexRange: Range, timeRange: Range,
+    vp: Viewport, _min: number, _max: number,
+
+    use: (topX: number, topY: number, botX: number, botY: number) => void,
+    scales?: number[],
+) {
+    const times = jsonData.columns[0];
+    const dx = vp.width / (timeRange.end - timeRange.start);
+
+    for (let i = indexRange.start; i <= indexRange.end; i++) {
+        const x = ((times[i] as number) - timeRange.start) * dx * devicePixelRatio;
+
+        let botY = 0;
+        let totalY = 0;
+        let y = 0;
+
+        for (let j = 1; j < jsonData.columns.length; j++) {
+            const line = jsonData.columns[j][i] as number * scales[j - 1];
+            if (j < index) {
+                botY += line;
+            }
+            if (j <= index) {
+                y += line;
+            }
+            totalY += line;
+        }
+
+        use(x, (y / totalY * vp.height) * devicePixelRatio, x, (botY / totalY * vp.height) * devicePixelRatio);
+    }
+}
+
 const dayStyle = {
     text: 'rgba(37, 37, 41, 0.5)',
     line: 'rgba(24, 45, 59, 0.1)',
@@ -318,9 +308,10 @@ export class DataService {
     public isMove = false;
     public isBars = false;
     public isPercentage = false;
+    public isSingleton = false;
 
     public zIndex: string;
-    public cr: (jsonData: JsonData, lineWidth: number) => ChartsItem;
+    public cr: (jsonData: JsonData, lineWidth: number, opacity: number) => ChartsItem;
     public adapter: Adapter;
 
     public jsonData: JsonData;
@@ -380,26 +371,47 @@ export class DataService {
 
         this.isBars = (jsonData.types[jsonData.columns[1][0]] === 'bar' || jsonData.stacked) && !jsonData.percentage;
         this.isPercentage = jsonData.percentage;
+        this.isSingleton = jsonData.columns.length === 2;
 
         if (jsonData.y_scaled) {
             this.zIndex = '-1';
-            this.cr = (jsonData, lineWidth) => toItemsOver(jsonData, pl, lineWidth);
-            this.adapter = dataAdapter('y_scaled');
+            this.cr = (jsonData, lineWidth, opacity) => toItemsOver(jsonData, pl, lineWidth, opacity);
+            this.adapter = {
+                use: recountAndUseSimplePintsChart,
+                toMax: recountDoubleMax,
+            };
         }
         else if (jsonData.percentage) {
             this.zIndex = '1';
             this.cr = jsonData => toScalesItemOver(jsonData, ar);
-            this.adapter = dataAdapter('percentage');
+            this.adapter = {
+                use: recountAndUsePercentChart,
+                toMax: () => [[100, 0]],
+            };
         }
-        else if (jsonData.stacked || jsonData.types[jsonData.columns[1][0]] === 'bar') {
+        else if (jsonData.stacked) {
             this.zIndex = '1';
             this.cr = jsonData => toScalesItemOver(jsonData, plg);
-            this.adapter = dataAdapter('stacked');
+            this.adapter = {
+                use: recountAndUseChartBySumm,
+                toMax: recountMaxBySumm,
+            };
+        }
+        else if (this.isSingleton) {
+            this.zIndex = '1';
+            this.cr = jsonData => toScalesItemOver(jsonData, plg);
+            this.adapter = {
+                use: recountAndUseSimplePintsChart,
+                toMax: recountSimpleMax,
+            };
         }
         else {
             this.zIndex = '-1';
-            this.cr = (jsonData, lineWidth) => toItemsOver(jsonData, pl, lineWidth);
-            this.adapter = dataAdapter('point');
+            this.cr = (jsonData, lineWidth, opacity) => toItemsOver(jsonData, pl, lineWidth, opacity);
+            this.adapter = {
+                use: recountAndUseSimplePintsChart,
+                toMax: recountSimpleMaxAndMin,
+            };
         }
     }
     private timeChangeWatchers: ((kind: ChangeKind, timeRange: Range) => void)[] = [];
@@ -461,20 +473,6 @@ export class DataService {
         )
     }
 
-    toMinValue() {
-        // const { jsonData: { columns } } = this;
-        // let min = columns[1][1] as number;
-        // for (let i = 1; i < columns.length; i++) {
-        //     for (let j = 1; j < columns[0].length; j++) {
-        //         min = Math.min(min, columns[i][j] as number);
-        //     }
-        // }
-        // if (min > 1000) {
-        //     return min - min % 100;
-        // }
-        return 0;
-    }
-
     asSoonAsLoading: Promise<JsonData>;
     zoomedTime: number;
     loadingData(time: number) {
@@ -484,21 +482,16 @@ export class DataService {
     }
 
     isZoom = false;
-
     yearDatas: YearsData = null;
 
     unzoom() {
         this.isZoom = false;
-        const zoomer = dataZoomer('out');
-        const weekData = this.jsonData;
-        const { yearData, miniMapIndexRange, miniMapTimeRange, timeRange, indexRange } = this.yearDatas
-        this.zoomStart(yearData, indexRange, timeRange);
 
-        this.miniMap.indexRange = miniMapIndexRange;
+        const { yearData, miniMapTimeRange, timeRange, indexRange } = this.yearDatas
+        this.zoomStart(yearData, indexRange, timeRange);
 
         const frames = 50;
 
-        const initTimeRange = copyRange(this.miniMap.timeRange);
         const dSr = (timeRange.start - this.timeRange.start) / frames;
         const dEr = (timeRange.end - this.timeRange.end) / frames;
 
@@ -512,6 +505,69 @@ export class DataService {
             this.miniMap.timeRange.start += dMSr;
             this.miniMap.timeRange.end += dMEr;
         }
+
+        if (this.isSingleton) {
+            this.singletonUnzooming(frames, yearData, increment);
+        }
+        else {
+            this.simpleUnzooming(frames, yearData, this.jsonData, increment);
+        }
+
+    }
+
+    singletonUnzooming(
+        frames: number,
+        yearData: JsonData,
+        increment: () => void,
+    ) {
+        const zooming = (index: number) => {
+            requestAnimationFrame(() => {
+
+                if (index === frames) {
+                    this.visibility = this.visibility.map(() => false)
+                    this.visibilityWatchers.forEach(act => act(this.visibility));
+                }
+                else if (index > 40) {
+                    //   this.zw.forEach(act => act(this.timeRange));
+                }
+                else if (index === 40) {
+                    this.jsonData = yearData;
+                    this.indexRange = toIndexRange(this.jsonData, this.timeRange);
+                    this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
+                    this.visibility = yearData.columns.map(() => true);
+
+                    this.isBars = true;
+                    this.cr = jsonData => toScalesItemOver(jsonData, plg);
+
+                    this.cfw.forEach(act => act(false));
+                }
+                else if (index < 40) {
+                    increment();
+                    increment();
+
+                    this.indexRange = toIndexRange(this.jsonData, this.timeRange);
+                    this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
+                    this.zw.forEach(act => act(this.timeRange));
+
+                    if (index === 15) {
+                        return;
+                    }
+                }
+
+                zooming(index - 1);
+            });
+        }
+
+        zooming(frames);
+    }
+    simpleUnzooming(
+        frames: number,
+        yearData: JsonData,
+        weekData: JsonData,
+        increment: () => void,
+    ) {
+        const initTimeRange = copyRange(this.miniMap.timeRange);
+        const zoomer = dataZoomer('out');
 
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
@@ -537,15 +593,18 @@ export class DataService {
         }
 
         zooming(frames);
-
     }
     zoom() {
+        this.yearDatas = {
+            yearData: this.jsonData,
+            indexRange: copyRange(this.indexRange),
+            timeRange: copyRange(this.timeRange),
+            miniMapIndexRange: copyRange(this.miniMap.indexRange),
+            miniMapTimeRange: copyRange(this.miniMap.timeRange),
+        }
+
         this.asSoonAsLoading.then(weekData => {
-
             this.isZoom = true;
-
-            const zoomer = dataZoomer('in');
-            const yearData = this.jsonData;
 
             const time = weekData.columns[0];
             const firstTime = time[1];
@@ -554,17 +613,8 @@ export class DataService {
             const endTimeRange = { start: this.zoomedTime, end: this.zoomedTime + day };
             const endIndexRange = toIndexRange(weekData, endTimeRange);
 
-            this.yearDatas = {
-                yearData,
-                indexRange: copyRange(this.indexRange),
-                timeRange: copyRange(this.timeRange),
-                miniMapIndexRange: copyRange(this.miniMap.indexRange),
-                miniMapTimeRange: copyRange(this.miniMap.timeRange),
-            }
 
             this.zoomStart(weekData, endIndexRange, endTimeRange);
-
-            this.miniMap.indexRange = { start: 1, end: time.length - 1 };
 
             const frames = 50;
 
@@ -582,37 +632,89 @@ export class DataService {
                 this.miniMap.timeRange.end += dMEr;
             }
 
-            const zooming = (index: number) => {
-                requestAnimationFrame(() => {
+            if (this.isSingleton) {
+                this.singletonZoomin(weekData, increment);
+            }
+            else {
+                this.simpleZooming(endTimeRange, frames, this.jsonData, weekData, increment);
+            }
+        })
+    }
 
+    singletonZoomin(
+        weekData: JsonData,
+        increment: () => void,
+    ) {
+        const zooming = (index: number) => {
+            requestAnimationFrame(() => {
+
+                if (index <= 25) {
+                    increment();
                     increment();
 
-                    if (index < 15) {
-                        increment();
-                        index++;
-                        increment();
-                        index++;
-                    }
-                    if (index < 35) {
-                        increment();
-                        index++;
-                        increment();
-                        index++;
-                    }
-
-                    this.jsonData = zoomer.merge(index, yearData, weekData, this.miniMap.timeRange, endTimeRange);
                     this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                     this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
 
                     this.zw.forEach(act => act(this.timeRange));
+                } else {
+                    this.jsonData = weekData;
+                    this.visibility = weekData.columns.map(() => true);
 
-                    if (index === frames) return;
-                    zooming(index + 1);
-                });
-            }
+                    this.indexRange = toIndexRange(this.jsonData, this.timeRange);
+                    this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
 
-            zooming(1);
-        })
+                    this.isBars = false;
+                    this.cr = (jsonData, lineWidth, opacity) => toItemsOver(jsonData, pl, lineWidth, opacity);
+                    this.cfw.forEach(act => act(true));
+                    return;
+                }
+
+                zooming(index + 1);
+            });
+        }
+
+        zooming(1);
+    }
+
+    simpleZooming(
+        endTimeRange: Range,
+        frames: number,
+        yearData: JsonData,
+        weekData: JsonData,
+        increment: () => void,
+    ) {
+        const zoomer = dataZoomer('in');
+        const zooming = (index: number) => {
+            requestAnimationFrame(() => {
+
+                increment();
+
+                if (index < 15) {
+                    increment();
+                    index++;
+                    increment();
+                    index++;
+                }
+                if (index < 35) {
+                    increment();
+                    index++;
+                    increment();
+                    index++;
+                }
+
+
+                this.jsonData = zoomer.merge(index, yearData, weekData, this.miniMap.timeRange, endTimeRange);
+                this.indexRange = toIndexRange(this.jsonData, this.timeRange);
+                this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
+
+                this.zw.forEach(act => act(this.timeRange));
+
+                if (index === frames) return;
+                zooming(index + 1);
+            });
+        }
+
+        zooming(1);
     }
 
     private zw: ((timeRange: Range) => void)[] = [];
@@ -622,6 +724,10 @@ export class DataService {
     private zsw: ZoomFunc[] = [];
     onZoomStart(act: ZoomFunc) {
         this.zsw.push(act);
+    }
+    private cfw: ((shouldRender: boolean) => void)[] = [];
+    onChangeFactory(act: (shouldRender: boolean) => void) {
+        this.cfw.push(act);
     }
 
     zoomStart(data: JsonData, indexRange: Range, timeRange: Range) {
@@ -707,7 +813,7 @@ function dataZoomer(kind: 'in' | 'out') {
         const { start, end } = toIndexRange(yearData, currnetTimeRange);
         const columns = yearData.columns.map(column => column.slice(start, end) as number[]);
 
-        const range = toIndexRangeIn(columns[0], weekTimeRange);
+        const range = toIndexRangeZoom(columns[0], weekTimeRange);
 
         return {
             ...weekData,
@@ -755,26 +861,7 @@ function dataZoomer(kind: 'in' | 'out') {
         }
     }
 
-    function toIndexRangeOut(time: number[], timeRange: Range) {
-        let start = 1;
-        while (time[start] < timeRange.start) {
-            start++;
-        }
-        start = Math.max(start - 1, 1);
-
-        let end = time.length - 1;
-        while (time[end] > timeRange.end) {
-            end--;
-        }
-        end = Math.min(end + 1, time.length - 1);
-
-        return {
-            start,
-            end,
-        };
-    }
-
-    function toIndexRangeIn(time: number[], timeRange: Range): Range {
+    function toIndexRangeZoom(time: number[], timeRange: Range): Range {
         let start = 1;
         while (time[start] < timeRange.start) {
             start++;
@@ -823,3 +910,91 @@ function toIndexRange(jsonData: JsonData, timeRange: Range): Range {
         end,
     };
 }
+
+
+// function toSinglton(
+//     url: string,
+//     setJson: (jsonData: JsonData) => void,
+//     setIndexRange: (range: Range) => void,
+//     setTimeRange: (range: Range) => void,
+//     setMiniMapIndexRange: (range: Range) => void,
+//     setMiniMapTimeRange: (range: Range) => void,
+//     zoomStart: (data: JsonData, indexRange: Range, timeRange: Range) => void,
+// ) {
+//     let asSoonAsLoading: Promise<JsonData>;
+//     let zoomedTime: number;
+//     let yearsDataCopy: YearsData;
+
+//     const frames = 50;
+
+//     function loadingData(time: number) {
+//         zoomedTime = time;
+//         asSoonAsLoading = fetch(toUrl(url, time)).then(response => response.json());
+//     }
+
+//     function zoom(
+//         yearsData: YearsData,
+//     ) {
+//         yearsDataCopy = {
+//             yearData: yearsData.yearData,
+//             indexRange: copyRange(yearsData.indexRange),
+//             timeRange: copyRange(yearsData.timeRange),
+//             miniMapIndexRange: copyRange(yearsData.miniMapIndexRange),
+//             miniMapTimeRange: copyRange(yearsData.miniMapTimeRange),
+//         }
+
+//         asSoonAsLoading.then(jsonData => {
+
+//             const time = jsonData.columns[0];
+//             const firstTime = time[1];
+//             const lastTime = time[time.length - 1] as number;
+
+//             const endTimeRange = { start: zoomedTime, end: zoomedTime + day };
+//             const endIndexRange = toIndexRange(jsonData, endTimeRange);
+
+//             zoomStart(jsonData, endIndexRange, endTimeRange)
+//             setMiniMapIndexRange({ start: 1, end: time.length - 1 });
+
+//             const dSr = (endTimeRange.start - yearsData.timeRange.start) / frames;
+//             const dEr = (endTimeRange.end - yearsData.timeRange.end) / frames;
+
+//             const dMSr = (firstTime - yearsData.miniMapTimeRange.start) / frames;
+//             const dMEr = (lastTime - yearsData.miniMapTimeRange.end) / frames;
+
+//             const increment = () => {
+//                 this.timeRange.start += dSr;
+//                 this.timeRange.end += dEr;
+
+//                 this.miniMap.timeRange.start += dMSr;
+//                 this.miniMap.timeRange.end += dMEr;
+//             }
+
+//             const zoomin = (index: number) => {
+//                 requestAnimationFrame(() => {
+//                     increment();
+
+//                     if (index === 25) {
+
+//                     }
+//                     else {
+
+//                     }
+
+//                     if (index > frames) return;
+//                     zoomin(index + 1);
+//                 });
+//             };
+//             zoomin(0);
+//         });
+//     }
+
+//     function unzoom() {
+
+//     }
+
+//     return {
+//         loadingData,
+//         zoom,
+//         unzoom,
+//     }
+// }

@@ -3,10 +3,11 @@ import { ChartItem, UseDataFunction, Viewport } from '../data/models';
 export function pl(
     color: string,
     lineWidth: number,
+    opacity?: number,
 ): ChartItem {
     const devicePixelRatio = window.devicePixelRatio;
-    let action: 'none' | 'in' | 'out' = 'none';
-    let opacity = 1;
+    let action: 'none' | 'in' | 'out' = opacity === 1 ? 'none' : 'in';
+    // let opacity = 1;
 
     function set(value: boolean) {
         action = value ? 'in' : 'out';

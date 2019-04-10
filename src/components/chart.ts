@@ -60,7 +60,7 @@ export function toChart(
         return currentMax.length > 1 ? currentMax[index - 1] : currentMax[0];
     }
 
-    const chartItems = settings.cr(settings.jsonData, 2);
+    let chartItems = settings.cr(settings.jsonData, 2, 1);
     chartItems.drw(settings.use, context, toCurrentMax, viewport);
 
     toPopUp(element, settings, toCurrentMax);
@@ -74,6 +74,13 @@ export function toChart(
         );
         redrawLines(deltaMax, frames);
         countMaxValue(frames);
+    });
+
+    settings.onChangeFactory(shouldRender => {
+        chartItems = settings.cr(settings.jsonData, 2, 0);
+        shouldRender
+            ? drawCharts('visible')
+            : chartItems.drw(settings.use, context, toCurrentMax, viewport);
     });
 
     settings.onZoom(() => {
@@ -92,7 +99,9 @@ export function toChart(
 
     settings.onVisibilityChange(visible => {
         chartItems.set(visible);
-        drawCharts('visible');
+        if (visible.some(v => v)) {
+            drawCharts('visible');
+        }
     });
 
     let lastCountUpdate = null
