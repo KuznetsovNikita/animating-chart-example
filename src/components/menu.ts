@@ -42,6 +42,7 @@ export function toMenu(
 interface Checkbox {
     setValue: (value: boolean) => void;
 }
+
 function drawCheckbox(
     index: number,
     value: boolean,
@@ -66,7 +67,7 @@ function drawCheckbox(
         }, 500);
     };
 
-    element.onmouseup = element.ontouchend = (event: Event) => {
+    element.onmouseup = element.ontouchend = () => {
         if (timer) clearTimeout(timer);
     };
 

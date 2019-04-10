@@ -157,7 +157,7 @@ export function toChart(
                 lastLine,
                 dOneLine: (lastLine - min) / settings.lines,
                 color: colors[columns[i + 1][0]],
-                isShow: settings.visibility[columns[i + 1][0]],
+                isShow: settings.visibility[i + 1],
                 label: min,
                 min,
             };

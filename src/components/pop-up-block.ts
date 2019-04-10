@@ -77,7 +77,7 @@ export function toPopUpBlock(
 
     function setShow(row: Row, value: boolean) {
         row.isShow = value;
-        toggleClass(row.block, value, 'invisible');
+        toggleClass(row.block, !value, 'invisible');
     }
 
     setting.onVisibilityChange(visible => {
@@ -123,6 +123,7 @@ export function toPopUpBlock(
         if (setting.isBars && values.length > 1) {
             const item = values[values.length - 1];
             const filtered = values.filter(item => item.key !== 'all' && item.isShow);
+
             if (filtered.length > 1) {
                 
                 item.num = filtered.reduce((s, i) => s + i.num, 0);

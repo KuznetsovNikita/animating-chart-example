@@ -135,7 +135,7 @@ export function toPopUp(
         cleanUp();
         if (elements.dots.length) {
             for (let i = 1; i < visible.length; i++) {
-                toggleClass(elements.dots[i - 1], visible[i], 'invisible');
+                toggleClass(elements.dots[i - 1], !visible[i], 'invisible');
             }
         }
     });
@@ -167,9 +167,9 @@ export function toPopUp(
         }
         else {
             const line = toDiv(container, 'line');
-            const dots = setting.isPercentage ? [] : lines.map(item => {
+            const dots = setting.isPercentage ? [] : lines.map(([key]) => {
                 const dot = toDiv(container, 'dot');
-                dot.style.borderColor = colors[item[0]];
+                dot.style.borderColor = colors[key];
                 return dot;
             });
 
