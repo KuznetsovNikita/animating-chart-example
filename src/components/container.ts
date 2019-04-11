@@ -37,7 +37,7 @@ function drawChart(settings: DataService, container: HTMLDivElement) {
     header.innerHTML = `<h1>Chart ${settings.url}</h1>`;
 
     const zoomOut = toDiv(header, 'zoom');
-    zoomOut.innerHTML = '&#128269; Zoom Out';
+    zoomOut.innerHTML = '<svg class="loupe" height="27" width="27"><circle cx="12" cy="12" r="9"></circle><line x1="7" x2="17" y1="12" y2="12"></line><line x1="19" x2="27" y1="19" y2="27"></line></svg><span>Zoom Out</span>';
 
     const dateRange = toDiv(header, 'range');
     function update() {
