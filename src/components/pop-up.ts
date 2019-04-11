@@ -28,6 +28,8 @@ export function toPopUp(
 
     const container = toDiv(element, 'pop-up');
 
+    let disabled = false;
+
     setting.onVisibilityChange(visible => {
         elements.block.setVisibility(visible);
     });
@@ -37,11 +39,21 @@ export function toPopUp(
         createPopUp();
     });
 
+    setting.onDrawPie(() => {
+        cleanUp();
+        disabled = true;
+    });
+
+    setting.onDrawPersent(() => {
+        disabled = false;
+    });
+
     createPopUp();
 
     let oldTime: number | null = null;
     let lastUpdate: number;
     const onDrawPopUp = (offsetX: number, _offsetY: number, shouldLoad: boolean) => {
+        if (disabled) return;
         if (lastUpdate != null) cancelAnimationFrame(lastUpdate);
         lastUpdate = requestAnimationFrame(() => {
 

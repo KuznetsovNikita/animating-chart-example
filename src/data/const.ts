@@ -3,6 +3,8 @@ import { MaxMin } from "./models";
 export const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 export const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+export const devicePixelRatio = window.devicePixelRatio;
+
 export function drawConvas(
     element: HTMLDivElement,
     width: number,
@@ -12,8 +14,8 @@ export function drawConvas(
     const canvas = document.createElement('canvas');
     className && canvas.classList.add(className);
 
-    canvas.setAttribute('width', (width * window.devicePixelRatio).toString());
-    canvas.setAttribute('height', (height * window.devicePixelRatio).toString());
+    canvas.setAttribute('width', (width * devicePixelRatio).toString());
+    canvas.setAttribute('height', (height * devicePixelRatio).toString());
 
     canvas.style.height = height + 'px';
     canvas.style.width = width + 'px';
@@ -62,4 +64,22 @@ export function map2MaxMin(
 
 export function toggleClass(element: HTMLElement, value: boolean, className: string) {
     value ? element.classList.add(className) : element.classList.remove(className);
+}
+
+
+export function toRadian(a: number) {
+    return a * Math.PI / 180;
+}
+
+export function scaleAngle(alfa: number, persent: number) {
+    return persent * alfa * 360 / 100;
+}
+
+export function toAngle(alfa: number, persent: number) {
+    const a = 90 + 60 + scaleAngle(alfa, persent);
+    return toRadian(a);
+}
+
+export function toPieAngle(persent: number) {
+    return toAngle(1, persent);
 }

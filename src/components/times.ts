@@ -1,5 +1,5 @@
 import { ChangeKind, DataService } from 'src/data/service';
-import { drawConvas, month } from '../data/const';
+import { devicePixelRatio, drawConvas, month } from '../data/const';
 import { Range } from '../data/models';
 
 export interface Times {
@@ -12,7 +12,6 @@ export function toTimes(
 ): Times {
 
     const { viewport: { width } } = settings;
-    const devicePixelRatio = window.devicePixelRatio;
 
     const canvas = drawConvas(element, width, 16, 'text');
     const context = canvas.getContext('2d');
@@ -30,6 +29,7 @@ export function toTimes(
     let dy: number;
 
     let jsonData = settings.jsonData;
+    let disabled = false;
 
     settings.onChangeStyle(() => {
         context.fillStyle = settings.style.text;
@@ -50,6 +50,15 @@ export function toTimes(
         redraw();
     });
 
+    settings.onDrawPie(() => {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        disabled = true;
+    });
+
+    settings.onDrawPersent(() => {
+        disabled = false;
+        redraw();
+    });
 
     countIndexes(settings.indexRange, settings.timeRange);
     redraw();
@@ -85,6 +94,7 @@ export function toTimes(
     }
 
     function redraw() {
+        if (disabled) return;
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.globalAlpha = globalAlpha;
         for (let i = startIndex; i <= endIndex; i += delta) {

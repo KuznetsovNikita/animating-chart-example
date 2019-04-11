@@ -1,6 +1,8 @@
 import { ar } from '../components/area';
+import { pie } from '../components/pie';
 import { plg } from '../components/poligon';
 import { pl } from '../components/polyline';
+import { devicePixelRatio } from '../data/const';
 import { ChartItem, ChartsItem, Column, Dict, MaxMin, Range, ScalesChartItem, TimeColumn, UseDataFunction, Viewport } from './models';
 
 export interface JsonData {
@@ -138,8 +140,6 @@ export interface Adapter {
     ) => void;
     toMax: (jsonData: JsonData, visibility: boolean[], indexRange: Range) => MaxMin[];
 }
-
-const devicePixelRatio = window.devicePixelRatio;
 
 function recountAndUseSimplePintsChart(
     jsonData: JsonData,
@@ -287,6 +287,41 @@ function recountAndUsePercentChart(
 
         use(x, (y / totalY * vp.height) * devicePixelRatio, x, (botY / totalY * vp.height) * devicePixelRatio);
     }
+}
+
+function recountPercent(
+    jsonData: JsonData,
+    indexRange: Range,
+    scales?: number[],
+) {
+    const result: number[] = [];
+
+    for (let j = 1; j < jsonData.columns.length; j++) {
+        result.push(0);
+        for (let i = indexRange.start; i <= indexRange.end; i++) {
+            result[result.length - 1] += jsonData.columns[j][i] as number * scales[j - 1]
+        }
+    }
+
+    const total = result.reduce((t, i) => t + i, 0);
+    return result.map(item => item / total * 100);
+}
+
+function recountAndUsePercent(
+    jsonData: JsonData,
+    index: number, _visibility: boolean[], indexRange: Range, _timeRange: Range,
+    vp: Viewport, _min: number, _max: number,
+
+    use: (topX: number, topY: number, botX: number, botY: number) => void,
+    scales?: number[],
+) {
+    index = jsonData.columns.length - index;
+    let last = 0;
+    const persent = recountPercent(jsonData, indexRange, scales).reverse();
+    for (let i = 1; i < index; i++) {
+        last += persent[i - 1];
+    }
+    use(last, last + persent[index - 1], vp.width / 2, vp.height / 2);
 }
 
 const dayStyle = {
@@ -480,6 +515,7 @@ export class DataService {
     asSoonAsLoading: Promise<JsonData>;
     zoomedTime: number;
     loadingData(time: number) {
+        if (this.isPercentage) return;
         this.zoomedTime = time;
         this.asSoonAsLoading = fetch(toUrl(this.url, time))
             .then(response => response.json());
@@ -489,10 +525,10 @@ export class DataService {
     yearDatas: YearsData = null;
 
     unzoom() {
+        if (this.isPercentage) return this.percentageUnZoom();
         this.isZoom = false;
 
         const { yearData, miniMapTimeRange, timeRange, indexRange } = this.yearDatas
-
 
         const frames = 16;
 
@@ -602,6 +638,9 @@ export class DataService {
         zooming(20);
     }
     zoom() {
+
+        if (this.isPercentage) return this.percentageZoom();
+
         this.yearDatas = {
             yearData: this.jsonData,
             indexRange: copyRange(this.indexRange),
@@ -739,8 +778,44 @@ export class DataService {
     zoomStart(data: JsonData, indexRange: Range, timeRange: Range, vision: boolean[]) {
         this.zoomStartWatchers.forEach(act => act(data, indexRange, timeRange, vision))
     }
+
+    percentageZoom() {
+        const percents = recountPercent(this.jsonData, this.indexRange, toScales(this.visibility));
+        this.drawPieWatchers.forEach(act => act(percents));
+    }
+
+    setPieFactory() {
+        this.adapter.use = recountAndUsePercent;
+        this.cr = jsonData => toScalesItemOver(jsonData, pie);
+    }
+
+    setPersentFactory() {
+        this.adapter.use = recountAndUsePercentChart;
+        this.cr = jsonData => toScalesItemOver(jsonData, ar);
+    }
+
+    private drawPieWatchers: ((percents: number[]) => void)[] = [];
+    onDrawPie(act: (percents: number[]) => void) {
+        this.drawPieWatchers.push(act);
+    }
+
+    private drawPersentsWatchers: ((percents: number[]) => void)[] = [];
+    onDrawPersent(act: (percents: number[]) => void) {
+        this.drawPersentsWatchers.push(act);
+    }
+
+    percentageUnZoom() {
+        const percents = recountPercent(this.jsonData, this.indexRange, toScales(this.visibility));
+        this.drawPersentsWatchers.forEach(act => act(percents));
+    }
 }
 
+function toScales(vision: boolean[]) {
+    return vision.reduce((acc, item, index) => {
+        if (index !== 0) acc.push(item ? 1 : 0);
+        return acc;
+    }, [])
+}
 type Increment = (freezer: number) => void;
 
 interface YearsData {

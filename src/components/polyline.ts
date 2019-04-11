@@ -1,3 +1,4 @@
+import { devicePixelRatio } from '../data/const';
 import { ChartItem, UseDataFunction, Viewport } from '../data/models';
 
 export function pl(
@@ -5,7 +6,6 @@ export function pl(
     lineWidth: number,
     opacity?: number,
 ): ChartItem {
-    const devicePixelRatio = window.devicePixelRatio;
     let action: 'none' | 'in' | 'out' = opacity === 1 ? 'none' : 'in';
     // let opacity = 1;
 
