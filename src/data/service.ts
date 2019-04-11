@@ -22,15 +22,15 @@ interface MiniMap {
 
 export type ChangeKind = 'left' | 'right' | 'move' | 'visible';
 
-export function toScalesItemOver(jsonData: JsonData, toItem: (color: string) => ScalesChartItem): ChartsItem {
+export function toScalesItemOver(jsonData: JsonData, toItem: (color: string) => ScalesChartItem, scales: number[]): ChartsItem {
     const items: ScalesChartItem[] = [];
-    const scales: number[] = [];
+    // const scales: number[] = [];
     const actions: ('none' | 'in' | 'out')[] = [];
 
     for (let i = 1; i < jsonData.columns.length; i++) {
         const key = jsonData.columns[i][0];
         items.push(toItem(jsonData.colors[key]));
-        scales.push(1);
+        //   scales.push(1);
         actions.push('none');
     }
 
@@ -403,7 +403,7 @@ export class DataService {
         }
         else if (jsonData.percentage) {
             this.zIndex = '1';
-            this.cr = jsonData => toScalesItemOver(jsonData, ar);
+            this.cr = jsonData => toScalesItemOver(jsonData, ar, toScales(this.visibility));
             this.adapter = {
                 use: recountAndUsePercentChart,
                 toMax: () => [[100, 0]],
@@ -411,7 +411,7 @@ export class DataService {
         }
         else if (jsonData.stacked) {
             this.zIndex = '1';
-            this.cr = jsonData => toScalesItemOver(jsonData, plg);
+            this.cr = jsonData => toScalesItemOver(jsonData, plg, toScales(this.visibility));
             this.adapter = {
                 use: recountAndUseChartBySumm,
                 toMax: recountMaxBySumm,
@@ -419,7 +419,7 @@ export class DataService {
         }
         else if (this.isSingleton) {
             this.zIndex = '1';
-            this.cr = jsonData => toScalesItemOver(jsonData, plg);
+            this.cr = jsonData => toScalesItemOver(jsonData, plg, toScales(this.visibility));
             this.adapter = {
                 use: recountAndUseSimplePintsChart,
                 toMax: recountSimpleMax,
@@ -558,7 +558,7 @@ export class DataService {
                     this.visibility = yearData.columns.map(() => true);
 
                     this.isBars = true;
-                    this.cr = jsonData => toScalesItemOver(jsonData, plg);
+                    this.cr = jsonData => toScalesItemOver(jsonData, plg, toScales(this.visibility));
 
                     this.changeFactoryWatchers.forEach(act => act(false));
                 }

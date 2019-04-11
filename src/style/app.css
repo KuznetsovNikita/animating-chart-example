@@ -162,4 +162,7 @@ body {
     .lens {
         border-color: #56626D;
     }
+    .range {
+        color: white;
+    }
 }

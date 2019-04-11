@@ -29,6 +29,7 @@ export function toChart(
     const canvas = drawConvas(element, viewport.width, viewport.height + 2);
     const context = canvas.getContext('2d');
 
+    let disabled = false;
     context.textAlign = "center";
     context.lineJoin = 'bevel';
     context.lineCap = 'butt';
@@ -45,6 +46,7 @@ export function toChart(
     settings.onChangeStyle(() => {
         lineContext.fillStyle = settings.style.text;
         lineContext.strokeStyle = settings.style.line;
+        if (disabled) return;
         redrawLinesForse();
     });
 
@@ -224,11 +226,13 @@ export function toChart(
 
 
     settings.onDrawPie((persets, endIndexRange) => {
+        disabled = true;
         lineContext.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
         drawPie(persets, endIndexRange);
     });
 
     settings.onDrawPersent(persets => {
+        disabled = false;
         drawPersents(persets);
     });
 

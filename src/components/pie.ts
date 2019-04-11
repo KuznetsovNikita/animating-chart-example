@@ -13,7 +13,7 @@ export function toPiesItemOver(jsonData: JsonData, vision: boolean[]): ChartsIte
     let deltas: number[] = [];
 
     for (let i = 1; i < jsonData.columns.length; i++) {
-        scales.push(vision[i - 1] ? 1 : 0);
+        scales.push(vision[i] ? 1 : 0);
         actions.push('none');
         deltas.push(0);
     }
