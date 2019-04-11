@@ -502,12 +502,12 @@ export class DataService {
         const dMSr = (miniMapTimeRange.start - this.miniMap.timeRange.start) / frames;
         const dMEr = (miniMapTimeRange.end - this.miniMap.timeRange.end) / frames;
 
-        const increment = () => {
-            this.timeRange.start += dSr;
-            this.timeRange.end += dEr;
+        const increment = (freezer: number) => {
+            this.timeRange.start += dSr / freezer;
+            this.timeRange.end += dEr / freezer;
 
-            this.miniMap.timeRange.start += dMSr;
-            this.miniMap.timeRange.end += dMEr;
+            this.miniMap.timeRange.start += dMSr / freezer;
+            this.miniMap.timeRange.end += dMEr / freezer;
         }
 
         if (this.isSingleton) {
@@ -517,7 +517,7 @@ export class DataService {
         }
         else {
             this.zoomStart(yearData, indexRange, timeRange, this.visibility);
-            this.simpleUnzooming(frames, yearData, this.jsonData, increment);
+            this.simpleUnzooming(yearData, this.jsonData, increment);
         }
 
     }
@@ -525,12 +525,12 @@ export class DataService {
     singletonUnzooming(
         frames: number,
         yearData: JsonData,
-        increment: () => void,
+        increment: Increment,
     ) {
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
 
-                increment();
+                increment(1);
 
                 if (index === 16) {
                     this.jsonData = yearData;
@@ -559,34 +559,30 @@ export class DataService {
         zooming(frames);
     }
     simpleUnzooming(
-        frames: number,
         yearData: JsonData,
         weekData: JsonData,
-        increment: () => void,
+        increment: Increment,
     ) {
         const initTimeRange = copyRange(this.miniMap.timeRange);
+        const mergeJsonForSimpleZoom = mergeJsonForSimpleZoomOver(
+            yearData, weekData, this.miniMap.timeRange, initTimeRange,
+        );
 
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
 
-                increment();
+                increment(index > 14 ? 3 : 1);
 
-                if (index === 15) {
-                    this.jsonData = mergeJsonForSimpleZoom(
-                        3, yearData, weekData, this.miniMap.timeRange, initTimeRange
-                    );
+                if (index === 19) {
+                    this.jsonData = mergeJsonForSimpleZoom(3);
                 }
 
-                if (index === 13) {
-                    this.jsonData = mergeJsonForSimpleZoom(
-                        6, yearData, weekData, this.miniMap.timeRange, initTimeRange
-                    );
+                if (index === 16) {
+                    this.jsonData = mergeJsonForSimpleZoom(6);
                 }
 
-                if (index === 11) {
-                    this.jsonData = mergeJsonForSimpleZoom(
-                        12, yearData, weekData, this.miniMap.timeRange, initTimeRange
-                    );
+                if (index === 14) {
+                    this.jsonData = mergeJsonForSimpleZoom(12);
                 }
 
                 if (index === 10) {
@@ -603,7 +599,7 @@ export class DataService {
             });
         }
 
-        zooming(frames);
+        zooming(20);
     }
     zoom() {
         this.yearDatas = {
@@ -632,12 +628,12 @@ export class DataService {
             const dMSr = (firstTime - this.miniMap.timeRange.start) / frames;
             const dMEr = (lastTime - this.miniMap.timeRange.end) / frames;
 
-            const increment = () => {
-                this.timeRange.start += dSr;
-                this.timeRange.end += dEr;
+            const increment = (freezer: number) => {
+                this.timeRange.start += dSr / freezer;
+                this.timeRange.end += dEr / freezer;
 
-                this.miniMap.timeRange.start += dMSr;
-                this.miniMap.timeRange.end += dMEr;
+                this.miniMap.timeRange.start += dMSr / freezer;
+                this.miniMap.timeRange.end += dMEr / freezer;
             }
 
             if (this.isSingleton) {
@@ -646,19 +642,19 @@ export class DataService {
             }
             else {
                 this.zoomStart(weekData, endIndexRange, endTimeRange, this.visibility);
-                this.simpleZooming(endTimeRange, frames, this.jsonData, weekData, increment);
+                this.simpleZooming(endTimeRange, this.jsonData, weekData, increment);
             }
         })
     }
 
     singletonZoomin(
         weekData: JsonData,
-        increment: () => void,
+        increment: Increment,
     ) {
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
 
-                increment();
+                increment(1);
 
                 this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                 this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
@@ -686,36 +682,31 @@ export class DataService {
 
     simpleZooming(
         endTimeRange: Range,
-        frames: number,
         yearData: JsonData,
         weekData: JsonData,
-        increment: () => void,
+        increment: Increment,
     ) {
-
+        const mergeJsonForSimpleZoom = mergeJsonForSimpleZoomOver(
+            yearData, weekData, this.miniMap.timeRange, endTimeRange,
+        )
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
 
-                increment();
+                increment(index > 14 ? 3 : 1);
 
                 if (index === 11) {
-                    this.jsonData = mergeJsonForSimpleZoom(
-                        12, yearData, weekData, this.miniMap.timeRange, endTimeRange
-                    );
+                    this.jsonData = mergeJsonForSimpleZoom(12);
                 }
 
-                if (index === 13) {
-                    this.jsonData = mergeJsonForSimpleZoom(
-                        6, yearData, weekData, this.miniMap.timeRange, endTimeRange
-                    );
+                if (index === 14) {
+                    this.jsonData = mergeJsonForSimpleZoom(6);
                 }
 
-                if (index === 15) {
-                    this.jsonData = mergeJsonForSimpleZoom(
-                        3, yearData, weekData, this.miniMap.timeRange, endTimeRange
-                    );
+                if (index === 17) {
+                    this.jsonData = mergeJsonForSimpleZoom(3);
                 }
 
-                if (index === 16) {
+                if (index === 20) {
                     this.jsonData = weekData;
                 }
 
@@ -724,7 +715,7 @@ export class DataService {
 
                 this.zoomWatchers.forEach(act => act(this.timeRange));
 
-                if (index === frames) return;
+                if (index === 20) return;
                 zooming(index + 1);
             });
         }
@@ -750,6 +741,8 @@ export class DataService {
     }
 }
 
+type Increment = (freezer: number) => void;
+
 interface YearsData {
     yearData: JsonData;
     timeRange: Range;
@@ -768,62 +761,69 @@ function toScals(splitter: 3 | 6 | 12) {
     return splitter === 12 ? 2 : splitter === 6 ? 4 : 8;
 }
 
-function mergeJsonForSimpleZoom(
-    splitter: 3 | 6 | 12,
+function mergeJsonForSimpleZoomOver(
     yearData: JsonData,
     weekData: JsonData,
     currnetTimeRange: Range,
     weekTimeRange: Range
-): JsonData {
-    const { start, end } = toIndexRange(yearData, currnetTimeRange);
-    const columns = yearData.columns.map(column => column.slice(start, end) as number[]);
+) {
 
-    const range = toIndexRangeZoom(columns[0], weekTimeRange);
+    return function (splitter: 3 | 6 | 12): JsonData {
+        const { start, end } = toIndexRange(yearData, currnetTimeRange);
+        const columns = yearData.columns.map(column => column.slice(start, end) as number[]);
 
-    return {
-        ...weekData,
-        columns: columns.map((items, index) => {
+        const range = toIndexRangeZoom(columns[0], weekTimeRange);
 
-            const [name, ...values] = weekData.columns[index];
+        return {
+            ...weekData,
+            columns: columns.map((items, index) => {
 
-            if (name === 'x') {
+                const [name, ...values] = weekData.columns[index];
 
-                const values2 = values.reduce((acc, item, i) => {
-                    if (i % splitter == 0) acc.push(item);
-                    return acc;
-                }, []);
+                if (name === 'x') {
 
-                return [
-                    name,
-                    ...items.slice(0, range.start),
-                    ...values2,
-                    ...items.slice(range.end, items.length - 1),
-                ];
-            }
-            else {
-                const scale = toScals(splitter);
+                    const values2 = values.reduce((acc, item, i) => {
+                        if (i % splitter == 0) acc.push(item);
+                        return acc;
+                    }, []);
 
-                const values2 = values.reduce((acc, item, i) => {
-                    if (i % splitter == 0) {
-                        acc.push(item);
+                    return [
+                        name,
+                        ...items.slice(0, range.start),
+                        ...values2,
+                        ...items.slice(range.end, items.length - 1),
+                    ];
+                }
+                else {
+                    const scale = toScals(splitter);
+
+                    let values2 = values.reduce((acc, item, i) => {
+                        if (i % splitter == 0) {
+                            acc.push(item);
+                        }
+                        else {
+                            acc[acc.length - 1] += item;
+                        }
+                        return acc;
+                    }, [] as number[]);
+
+                    if (splitter === 12) {
+                        const prev = items[range.start] / scale;
+                        values2 = values2.map(item => item > prev ? item / 1.5 : item * 1.5);
                     }
-                    else {
-                        acc[acc.length - 1] += item;
-                    }
-                    return acc;
-                }, []);
-
-                return [
-                    name,
-                    ...items.slice(0, range.start).map(item => item / scale),
-                    ...values2,
-                    ...items.slice(range.end, items.length - 1).map(item => item / scale),
-                ]
-            }
+                    return [
+                        name,
+                        ...items.slice(0, range.start).map(item => item / scale),
+                        ...values2,
+                        ...items.slice(range.end, items.length - 1).map(item => item / scale),
+                    ]
+                }
 
 
-        }) as any,
+            }) as any,
+        }
     }
+
 }
 
 function toIndexRangeZoom(time: number[], timeRange: Range): Range {
@@ -831,13 +831,13 @@ function toIndexRangeZoom(time: number[], timeRange: Range): Range {
     while (time[start] < timeRange.start) {
         start++;
     }
-    start = Math.max(start - 1, 1);
+    start = Math.max(start - 2, 1);
 
     let end = time.length - 1;
     while (time[end] > timeRange.end) {
         end--;
     }
-    end = Math.min(end + 1, time.length - 1);
+    end = Math.min(end + 3, time.length - 1);
 
     return {
         start,
