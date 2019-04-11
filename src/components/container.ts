@@ -47,6 +47,7 @@ function drawChart(settings: DataService, container: HTMLDivElement) {
 
     settings.onTimeRangeChange(update);
     settings.onZoom(update);
+    settings.onPieZoom(update);
 
     function toggleZoom() {
         header.classList.toggle('in-zoom');

@@ -93,6 +93,7 @@ export function toChart(
     });
 
     settings.onTimeRangeChange(kind => {
+        chartItems.setRange(settings.indexRange);
         drawCharts(kind);
     });
 
@@ -136,7 +137,6 @@ export function toChart(
             (target, current) => Math.round((target - current) / 10)
         );
 
-        chartItems.setRange(settings.indexRange);
 
         scaleChart(0, 10);
         redrawLines(deltaMax, 10);
@@ -317,7 +317,8 @@ export function toChart(
                 round += dRound;
 
                 if (index === 0) {
-                    rerenderAfterChangeFactory();
+                    chartItems = settings.cr(settings.jsonData, 2, 1);
+                    chartItems.drw(settings.use, context, settings.indexRange, toCurrentMax, viewport);
                     lines.forEach(line => line.drw(lineContext));
                     return;
                 }

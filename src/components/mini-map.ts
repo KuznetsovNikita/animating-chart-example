@@ -42,7 +42,7 @@ function toMiniMapCanvas(
     const chartItems = settings.cr(settings.jsonData, 1, 1);
     chartItems.drw(settings.useMin, context, settings.indexRange, toCurrentMax, miniMap.viewport);
 
-    settings.onZoom(() => {
+    function zooimng() {
         const zoomingMax = settings.toMaxVisibleValue(settings.miniMap.indexRange);
         context.clearRect(0, 0, canvas.width, canvas.height);
         chartItems.drw(
@@ -50,7 +50,10 @@ function toMiniMapCanvas(
             i => zoomingMax.length > 1 ? zoomingMax[i - 1] : zoomingMax[0],
             miniMap.viewport,
         );
-    });
+    }
+
+    settings.onZoom(zooimng);
+    settings.onPieZoom(zooimng);
 
     settings.onVisibilityChange(visible => {
         chartItems.set(visible);

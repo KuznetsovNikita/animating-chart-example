@@ -26,11 +26,13 @@ export function drawLens(
 
     let dX = width / (miniMap.timeRange.end - miniMap.timeRange.start);
 
-    settings.onZoom(range => {
+    function zoomin(range: Range) {
         dX = width / (miniMap.timeRange.end - miniMap.timeRange.start);
 
         setStyle(range);
-    });
+    }
+    settings.onZoom(zoomin);
+    settings.onPieZoom(zoomin);
 
     const setStyle = (range: Range) => {
         const width = Math.floor((range.end - range.start) * dX);

@@ -60,12 +60,12 @@ export function toScalesItemOver(jsonData: JsonData, toItem: (color: string) => 
         actions.forEach((action, index) => {
             if (action === 'in') {
                 scales[index] = Math.min(1, scales[index] + 0.1);
-                if (scales[index] === 1) action = 'none';
+                if (scales[index] === 1) actions[index] = 'none';
             }
 
             if (action === 'out') {
                 scales[index] = Math.max(0, scales[index] - 0.1);
-                if (scales[index] === 0) action = 'none';
+                if (scales[index] === 0) actions[index] = 'none';
             }
         });
         items.forEach((item, index) => {
@@ -304,23 +304,6 @@ export function recountPercent(
     const total = result.reduce((t, i) => t + i, 0);
     return result.map(item => item / total * 100);
 }
-
-// function recountAndUsePercent(
-//     jsonData: JsonData,
-//     index: number, _visibility: boolean[], indexRange: Range, _timeRange: Range,
-//     vp: Viewport, _min: number, _max: number,
-
-//     use: (topX: number, topY: number, botX: number, botY: number) => void,
-//     scales?: number[],
-// ) {
-//     index = jsonData.columns.length - index;
-//     let last = 0;
-//     const persent = recountPercent(jsonData, indexRange.start, scales).reverse();
-//     for (let i = 1; i < index; i++) {
-//         last += persent[i - 1];
-//     }
-//     use(last, last + persent[index - 1], vp.width / 2, vp.height / 2);
-// }
 
 const dayStyle = {
     text: 'rgba(37, 37, 41, 0.5)',
@@ -788,13 +771,57 @@ export class DataService {
             miniMapTimeRange: copyRange(this.miniMap.timeRange),
         }
 
+        this.isZoom = true;
+
         const endTimeRange = { start: this.zoomedTime, end: this.zoomedTime + day };
         const endIndexRange = toIndexRange(this.jsonData, endTimeRange);
 
+        const { columns: [time] } = this.jsonData;
+
+        const endTimeMiniMapRange = {
+            start: Math.max(this.zoomedTime - 3 * day, time[1]),
+            end: Math.min(this.zoomedTime + 4 * day, time[time.length - 1] as number),
+        }
+
         const percents = recountPercent(this.jsonData, endIndexRange.start, toScales(this.visibility));
         this.drawPieWatchers.forEach(act => act(percents, endIndexRange));
+
+        this.pieZoomingMiniMap(endTimeRange, endTimeMiniMapRange);
     }
 
+    pieZoomingMiniMap(endTimeRange: Range, endTimeMiniMapRange: Range) {
+        const frames = 16;
+        const dSr = (endTimeRange.start - this.timeRange.start) / frames;
+        const dEr = (endTimeRange.end - this.timeRange.end) / frames;
+
+        const dMSr = (endTimeMiniMapRange.start - this.miniMap.timeRange.start) / frames;
+        const dMEr = (endTimeMiniMapRange.end - this.miniMap.timeRange.end) / frames;
+
+        const increment = () => {
+            this.timeRange.start += dSr;
+            this.timeRange.end += dEr;
+
+            this.miniMap.timeRange.start += dMSr;
+            this.miniMap.timeRange.end += dMEr;
+        }
+
+        const zooming = (index: number) => {
+            requestAnimationFrame(() => {
+
+                increment();
+
+                this.indexRange = toIndexRange(this.jsonData, this.timeRange);
+                this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
+                this.pieZoomWatchers.forEach(act => act(this.timeRange));
+
+                if (index === 16) return;
+
+                zooming(index + 1);
+            });
+        }
+
+        zooming(1);
+    }
     private drawPieWatchers: ((percents: number[], endIndexRange: Range) => void)[] = [];
     onDrawPie(act: (percents: number[], endIndexRange: Range) => void) {
         this.drawPieWatchers.push(act);
@@ -806,8 +833,16 @@ export class DataService {
     }
 
     percentageUnZoom() {
+        this.isZoom = false;
         const percents = recountPercent(this.jsonData, this.indexRange.start, toScales(this.visibility));
         this.drawPersentsWatchers.forEach(act => act(percents));
+
+        this.pieZoomingMiniMap(this.yearDatas.timeRange, this.yearDatas.miniMapTimeRange);
+    }
+
+    private pieZoomWatchers: ((timeRange: Range) => void)[] = [];
+    onPieZoom(act: (timeRange: Range) => void) {
+        this.pieZoomWatchers.push(act);
     }
 }
 
