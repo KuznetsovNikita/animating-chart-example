@@ -46,12 +46,13 @@ export interface ScalesChartItem {
 }
 
 export type ChartsItemFunction = (
-    use: UseDataFunction, context: CanvasRenderingContext2D,
+    use: UseDataFunction, context: CanvasRenderingContext2D, index: Range,
     toMax: (index: number) => MaxMin, viewport: Viewport, opacity?: number,
 ) => void;
 
 export interface ChartsItem {
     drw: ChartsItemFunction;
     set: (visible: boolean[]) => void;
+    setRange: (indexRange: Range) => void;
     sc: ChartsItemFunction;
 }

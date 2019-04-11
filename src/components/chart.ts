@@ -1,7 +1,8 @@
-import { MaxMin } from 'src/data/models';
+import { MaxMin, Range } from 'src/data/models';
 import { devicePixelRatio, drawConvas, map2MaxMin, mapMaxMin, scaleAngle, toAngle, toRadian } from '../data/const';
 import { ChangeKind, DataService } from '../data/service';
 import { Line, LineValue, ln } from './line';
+import { toPiesItemOver } from './pie';
 import { toPopUp } from './pop-up';
 import { toTimes } from './times';
 
@@ -60,7 +61,7 @@ export function toChart(
     }
 
     let chartItems = settings.cr(settings.jsonData, 2, 1);
-    chartItems.drw(settings.use, context, toCurrentMax, viewport);
+    chartItems.drw(settings.use, context, settings.indexRange, toCurrentMax, viewport);
 
     toPopUp(element, settings, toCurrentMax);
 
@@ -77,7 +78,7 @@ export function toChart(
 
     function rerenderAfterChangeFactory() {
         chartItems = settings.cr(settings.jsonData, 2, 1);
-        chartItems.drw(settings.use, context, () => targetMax[0], viewport);
+        chartItems.drw(settings.use, context, settings.indexRange, () => targetMax[0], viewport);
     }
     settings.onChangeFactory(rerenderAfterChangeFactory);
 
@@ -85,7 +86,7 @@ export function toChart(
         const zoomingMax = settings.toMaxVisibleValue(settings.indexRange);
         context.clearRect(0, 0, canvas.width, canvas.height);
         chartItems.sc(
-            settings.use, context,
+            settings.use, context, settings.indexRange,
             i => zoomingMax.length > 1 ? zoomingMax[i - 1] : zoomingMax[0],
             viewport, opacity,
         );
@@ -135,6 +136,8 @@ export function toChart(
             (target, current) => Math.round((target - current) / 10)
         );
 
+        chartItems.setRange(settings.indexRange);
+
         scaleChart(0, 10);
         redrawLines(deltaMax, 10);
         countMaxValue(10);
@@ -144,7 +147,7 @@ export function toChart(
         lastUpdateChart = requestAnimationFrame(() => {
             context.clearRect(0, 0, canvas.width, canvas.height);
 
-            chartItems.sc(settings.use, context, toCurrentMax, viewport);
+            chartItems.sc(settings.use, context, settings.indexRange, toCurrentMax, viewport);
 
             if (index === frames) return;
             return scaleChart(index + 1, frames);
@@ -220,9 +223,9 @@ export function toChart(
 
 
 
-    settings.onDrawPie(persets => {
+    settings.onDrawPie((persets, endIndexRange) => {
         lineContext.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
-        drawPie(persets);
+        drawPie(persets, endIndexRange);
     });
 
     settings.onDrawPersent(persets => {
@@ -235,7 +238,7 @@ export function toChart(
     const halfPi = Math.PI / 2;
     const dxPie = height / 100;
 
-    function drawPie(persets: number[]) {
+    function drawPie(persets: number[], endIndexRange: Range) {
 
         let round = 0;
         const dRound = halfWidth / 18
@@ -250,9 +253,8 @@ export function toChart(
             requestAnimationFrame(() => {
 
                 if (index === 19) {
-                    settings.setPieFactory();
-                    chartItems = settings.cr(settings.jsonData, 2, 1);
-                    chartItems.drw(settings.use, context, toCurrentMax, viewport);
+                    chartItems = toPiesItemOver(settings.jsonData, settings.visibility);
+                    chartItems.drw(settings.use, context, endIndexRange, toCurrentMax, viewport);
                     return;
                 }
 
@@ -315,9 +317,7 @@ export function toChart(
                 round += dRound;
 
                 if (index === 0) {
-                    settings.setPersentFactory();
-                    chartItems = settings.cr(settings.jsonData, 2, 1);
-                    chartItems.drw(settings.use, context, toCurrentMax, viewport);
+                    rerenderAfterChangeFactory();
                     lines.forEach(line => line.drw(lineContext));
                     return;
                 }
