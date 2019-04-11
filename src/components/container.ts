@@ -34,7 +34,7 @@ function formatTime(settings: DataService): string {
 }
 function drawChart(settings: DataService, container: HTMLDivElement) {
     const header = toDiv(container, 'header');
-    header.innerHTML = `<h1>Chart #${settings.url}</h1>`;
+    header.innerHTML = `<h1>Chart ${settings.url}</h1>`;
 
     const zoomOut = toDiv(header, 'zoom');
     zoomOut.innerHTML = '&#128269; Zoom Out';

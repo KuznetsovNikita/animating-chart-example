@@ -44,11 +44,13 @@ export function toTimes(
         countIndexes(endIndexRanage, endTimeRange);
     });
 
-    settings.onZoom((range) => {
+    function zooming(range: Range) {
         dy = width / (range.end - range.start);
         globalAlpha = Math.min(globalAlpha + 0.1, 1);
         redraw();
-    });
+    }
+    settings.onZoom(zooming);
+    settings.onPieZoom(zooming);
 
     settings.onDrawPie(() => {
         context.clearRect(0, 0, canvas.width, canvas.height);
@@ -57,7 +59,6 @@ export function toTimes(
 
     settings.onDrawPersent(() => {
         disabled = false;
-        redraw();
     });
 
     countIndexes(settings.indexRange, settings.timeRange);
@@ -82,7 +83,7 @@ export function toTimes(
     function formatValue(date: Date): string {
         return settings.isZoom
             ? `${("0" + (date.getUTCHours())).slice(-2)}:00`
-            : `${date.getDate()} ${month[date.getMonth()].slice(0, 3)}`
+            : `${date.getUTCDate()} ${month[date.getUTCMonth()].slice(0, 3)}`
     }
 
     function drawTime(index: number) {
@@ -101,8 +102,10 @@ export function toTimes(
             drawTime(i);
         }
     }
+
     let lastUpdate = null;
     function rdt(kind: ChangeKind) {
+        if (disabled) return;
         if (lastUpdate !== null) cancelAnimationFrame(lastUpdate);
         lastUpdate = requestAnimationFrame(() => {
             switch (kind) {

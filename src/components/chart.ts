@@ -409,7 +409,7 @@ export function toChart(
 
             context.beginPath();
             context.moveTo(x, y); // point
-            context.arc(x, y, width * devicePixelRatio, toAngle(alfa, last), toAngle(alfa, current));
+            context.arc(x, y, width * 2 * devicePixelRatio, toAngle(alfa, last), toAngle(alfa, current));
             context.closePath();
             context.fill();
 
