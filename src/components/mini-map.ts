@@ -43,12 +43,11 @@ function toMiniMapCanvas(
     chartItems.draw(settings.useMin, context, settings.indexRange, toCurrentMax, miniMap.viewport);
 
     function zooimng() {
-        const zoomingMax = settings.toMaxVisibleValue(settings.miniMap.indexRange);
+        currentMax = settings.toMaxVisibleValue(settings.miniMap.indexRange);
         context.clearRect(0, 0, canvas.width, canvas.height);
         chartItems.draw(
             settings.useMin, context, settings.indexRange,
-            i => zoomingMax.length > 1 ? zoomingMax[i - 1] : zoomingMax[0],
-            miniMap.viewport,
+            toCurrentMax, miniMap.viewport,
         );
     }
 
