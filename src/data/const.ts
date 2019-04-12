@@ -83,3 +83,25 @@ export function toAngle(alfa: number, persent: number) {
 export function toPieAngle(persent: number) {
     return toAngle(1, persent);
 }
+
+export function speedTest(prefix: string, count: number) {
+    let t0: number;
+
+    let result = [];
+
+    return {
+        start: () => {
+            t0 = performance.now();
+        },
+        end: () => {
+            let t1 = performance.now();
+            result.push(t1 - t0);
+
+            if (result.length >= count) {
+                const sum = result.reduce((s, i) => s + i, 0);
+                console.log(prefix, sum / result.length);
+                result = []
+            }
+        }
+    }
+}

@@ -28,11 +28,11 @@ export function pl(
         }
 
         if (opacity !== 0) {
-            drw(
-                use, context, index, min, max, viewport,
-            );
+            drw(use, context, index, min, max, viewport);
         }
+
     }
+
 
     function drw(
         use: UseDataFunction, context: CanvasRenderingContext2D,

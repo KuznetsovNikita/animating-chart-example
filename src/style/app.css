@@ -32,7 +32,7 @@ body {
 
     h1 {
         transform: scale(1, 1);
-        transform-origin: 50px 0;
+        transform-origin: 0 0;
         transition: all ease .4s;
         position: absolute;
         top: 30px;
@@ -45,8 +45,8 @@ body {
 
     .zoom {
         transform: scale(0.6, 0);
-        transform-origin: 50px 30px;
-        transition: all ease .4s;
+        transform-origin: 0 30px;
+        transition: all ease .3s;
         position: absolute;
         top: 30px;
         left: 5px;
@@ -73,12 +73,41 @@ body {
 
 .range {
     position: absolute;
-    top: 35px;
+    top: 30px;
     right: 5px;
-    text-align: right;
     font: 600 16px sans-serif;
+    line-height: 30px;
 }
 
+.changer {
+    white-space: nowrap;
+    position: absolute;
+    right: 0;
+    top: 0;
+    
+    transform: scale(1, 1);
+    transform-origin: 90% 30px;
+
+    &.animation {
+        transition: all ease .3s;
+    }
+
+    &.hide {
+        transform: scale(0.9, 0);
+    }
+
+    &.hiding {
+        transform-origin: 90% 0;
+        transform: scale(0.9, 0);
+    }
+
+    &.reverse {
+        transform-origin: 90% 0;
+        &.hiding {
+            transform-origin: 90% 30px;
+        }
+    }
+}
 .mini-map {
     margin: 20px 5px 0;
     position: relative;

@@ -20,6 +20,7 @@ interface MiniMap {
     timeRange: Range;
 }
 
+
 export type ChangeKind = 'left' | 'right' | 'move' | 'visible';
 
 export function toScalesItemOver(jsonData: JsonData, toItem: (color: string) => ScalesChartItem, scales: number[]): ChartsItem {
@@ -99,6 +100,8 @@ function toItemsOver(
         items.push(toItem(jsonData.colors[key], lineWidth, opacity));
     }
 
+
+
     function drw(
         use: UseDataFunction, context: CanvasRenderingContext2D, _indexRange: Range,
         toMax: (index: number) => MaxMin, viewport: Viewport,
@@ -113,6 +116,8 @@ function toItemsOver(
             items[i - 1].set(visible[i]);
         }
     }
+
+
 
     function sc(
         use: UseDataFunction, context: CanvasRenderingContext2D, _indexRange: Range,
@@ -441,8 +446,9 @@ export class DataService {
 
     setTimeRange(kind: ChangeKind, timeRange: Range) {
 
+        this.indexRange = toIndexRange(this.jsonData, timeRange, kind, this.timeRange, this.indexRange);
         this.timeRange = timeRange;
-        this.indexRange = toIndexRange(this.jsonData, timeRange);
+
 
         this.timeChangeWatchers.forEach(act => act(kind, timeRange));
     }
@@ -962,8 +968,16 @@ function toUrl(url: string, time: number): string {
     return `./json/${url}/${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}/${("0" + d.getDate()).slice(-2)}.json`;
 }
 
-function toIndexRange(jsonData: JsonData, timeRange: Range): Range {
+
+function toIndexRange(
+    jsonData: JsonData, timeRange: Range,
+    kind: ChangeKind = 'visible',
+    oldTime?: Range, oldIndex?: Range,
+): Range {
+
     const time = jsonData.columns[0];
+
+    // test.start();
 
     let start = 1;
     while (time[start] < timeRange.start) {
@@ -981,6 +995,86 @@ function toIndexRange(jsonData: JsonData, timeRange: Range): Range {
         start,
         end,
     };
+
+    // test.end();
+
+    // test2.start();
+
+    // switch (kind) {
+    //     case 'visible': {
+    //         let start = 1;
+    //         while (time[start] < timeRange.start) {
+    //             start++;
+    //         }
+    //         start = Math.max(start - 1, 1);
+
+    //         let end = time.length - 1;
+    //         while (time[end] > timeRange.end) {
+    //             end--;
+    //         }
+    //         end = Math.min(end + 1, time.length - 1);
+    //         // break;
+    //         return { start, end };
+    //     }
+    //     case 'right': {
+    //         let start = oldIndex.start;
+    //         let end = oldIndex.end;
+
+    //         if (timeRange.end > oldTime.end) {
+    //             const max = time.length - 1;
+    //             while (end < max && time[end] < timeRange.end) {
+    //                 start += 1;
+    //             }
+    //         }
+    //         else {
+    //             while (time[end] > timeRange.end) {
+    //                 start -= 1;
+    //             }
+    //         }
+    //         //break;
+    //         return { start, end };
+    //     }
+    //     case 'left': {
+    //         let start = oldIndex.start;
+    //         if (timeRange.start > oldTime.start) {
+    //             while (time[start] < timeRange.start) {
+    //                 start += 1;
+    //             }
+    //         }
+    //         else {
+    //             while (start > 1 && time[start] > timeRange.start) {
+    //                 start -= 1;
+    //             }
+    //         }
+    //         let end = oldIndex.end;
+    //         // break;
+    //         return { start, end };
+    //     }
+    //     case 'move': {
+    //         let start = oldIndex.start;
+    //         const length = oldIndex.end - oldIndex.start;
+    //         if (timeRange.start > oldTime.start) {
+    //             const max = time.length - length - 1;
+    //             while (start < max && time[start] < timeRange.start) {
+    //                 start += 1;
+    //             }
+    //         }
+    //         else {
+    //             while (start > 1 && time[start] > timeRange.start) {
+    //                 start -= 1;
+    //             }
+    //         }
+
+    //         let end = start + length;
+    //         //break;
+    //         return { start, end };
+    //     }
+    // }
+    // test2.end();
+    // return {
+    //     start,
+    //     end,
+    // };
 }
 
 

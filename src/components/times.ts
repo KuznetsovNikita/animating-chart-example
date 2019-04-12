@@ -69,7 +69,7 @@ export function toTimes(
     }
 
     function toValue(index: number) {
-        return jsonData.columns[0][index] as number;
+        return hasValue(index) ? jsonData.columns[0][index] as number : null;
     }
 
     function toLeftByIndex(index: number) {

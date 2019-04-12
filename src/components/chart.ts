@@ -145,6 +145,7 @@ export function toChart(
         countMaxValue(10);
     }
 
+
     function scaleChart(index: number, frames: number) {
         lastUpdateChart = requestAnimationFrame(() => {
             context.clearRect(0, 0, canvas.width, canvas.height);
