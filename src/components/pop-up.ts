@@ -1,6 +1,6 @@
 import { MaxMin } from 'src/data/models';
-import { toDiv, toggleClass } from '../data/const';
-import { DataService, day } from '../data/service';
+import { toDiv, toggleClass, toScales } from '../data/const';
+import { DataService, day, recountPercent } from '../data/service';
 import { PopUpBlock, toPopUpBlock } from './pop-up-block';
 
 interface Elements {
@@ -41,21 +41,69 @@ export function toPopUp(
 
     setting.onDrawPie(() => {
         cleanUp();
+        destroyElements();
+        createPopUp();
         disabled = true;
     });
 
     setting.onDrawPersent(() => {
+        cleanUp();
+        destroyElements();
+        createPopUp();
         disabled = false;
     });
 
     createPopUp();
 
+    function toAlfa(offsetX: number, offsetY: number) {
+        let alfa = Math.atan((setting.viewport.height / 2 - offsetY) / (offsetX - setting.viewport.width / 2)) / Math.PI * 180;
+        if (offsetX > setting.viewport.width / 2) {
+            return 30 + 180 - alfa;
+        }
+        else {
+            if (offsetY < setting.viewport.height / 2 || alfa <= 30) {
+                return 30 - alfa;
+            }
+            else {
+                return 30 + 360 - alfa;
+            }
+        }
+    }
+
+    function toAngle(persent) {
+        return persent * 360 / 100;
+    }
+
+    function drawPiePopUp(offsetX: number, offsetY: number) {
+        const { jsonData, visibility, indexRange } = setting;
+
+        const alfa = toAlfa(offsetX, offsetY);
+        const persents = recountPercent(jsonData, indexRange.start, toScales(visibility));
+
+        const hovers: number[] = [];
+        persents.reduceRight((last, item) => {
+            const current = last + item;
+
+            hovers.push((toAngle(last) < alfa) && (alfa <= toAngle(current)) && 1 || 0);
+
+            return last + item;
+        }, 0);
+        setting.hover(persents, hovers, offsetX, offsetY);
+    }
+
+    setting.onHover((persents, hovers, offsetX, offsetY) => {
+        elements.block.setPersent(persents, hovers, offsetX, offsetY);
+        container.classList.remove('invisible');
+    });
+
+
     let oldTime: number | null = null;
     let lastUpdate: number;
-    const onDrawPopUp = (offsetX: number, _offsetY: number, shouldLoad: boolean) => {
-        if (disabled) return;
+    const onDrawPopUp = (offsetX: number, offsetY: number, shouldLoad: boolean) => {
         if (lastUpdate != null) cancelAnimationFrame(lastUpdate);
         lastUpdate = requestAnimationFrame(() => {
+
+            if (disabled) return drawPiePopUp(offsetX, offsetY);
 
             const dx = width / (setting.timeRange.end - setting.timeRange.start);
 
@@ -189,7 +237,10 @@ export function toPopUp(
             };
         }
         else {
-            const line = toDiv(container, 'line');
+            const line = [];
+            if (!setting.isPercentage || !setting.isZoom) {
+                line.push(toDiv(container, 'line'));
+            }
             const dots = setting.isPercentage ? [] : lines.map(([key]) => {
                 const dot = toDiv(container, 'dot');
                 dot.style.borderColor = colors[key];
@@ -197,7 +248,7 @@ export function toPopUp(
             });
 
             elements = {
-                line: [line],
+                line,
                 dots,
                 block: toPopUpBlock(setting, container),
             };

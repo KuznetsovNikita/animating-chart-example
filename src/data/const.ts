@@ -105,3 +105,10 @@ export function speedTest(prefix: string, count: number) {
         }
     }
 }
+
+export function toScales(vision: boolean[]) {
+    return vision.reduce((acc, item, index) => {
+        if (index !== 0) acc.push(item ? 1 : 0);
+        return acc;
+    }, [])
+}

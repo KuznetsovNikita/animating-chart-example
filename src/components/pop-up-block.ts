@@ -2,6 +2,7 @@ import { days, month, toDiv, toggleClass } from '../data/const';
 import { DataService } from '../data/service';
 
 export interface PopUpBlock {
+    setPersent: (persents: number[], hovers: number[], offsetX: number, offsetY: number) => void;
     setData: (time: number, index: number, positionX: number) => void;
     setVisibility: (vision: boolean[]) => void;
     destroy: () => void;
@@ -32,14 +33,20 @@ export function toPopUpBlock(
         event.stopPropagation();
     };
 
+
     function destroy() {
         panel.onclick = null;
     }
 
-    const date = toDiv(panel, 'date');
+    let date: HTMLDivElement;
+    if (!setting.isZoom || !setting.isPercentage) {
 
-    const icon = toDiv(panel, 'icon');
-    icon.innerHTML = '&#10095;';
+        date = toDiv(panel, 'date');
+
+        const icon = toDiv(panel, 'icon');
+        icon.innerHTML = '&#10095;';
+    }
+
 
     const { columns: [_, ...lines], names, colors } = setting.jsonData;
 
@@ -144,9 +151,21 @@ export function toPopUpBlock(
         panel.style.transform = `translate(${positionX + (positionX > width / 2 ? -170 : 10)}px, 10px)`;
     }
 
+    function setPersent(persents: number[], hovers: number[], offsetX: number, offsetY: number) {
+
+        values.forEach((item, i) => {
+            setShow(item, !!hovers[values.length - i - 1]);
+            item.num = persents[i];
+            item.value.innerHTML = `${Math.round(item.num * 10) / 10}%`;
+        });
+
+        panel.style.transform = `translate(${offsetX + 10}px, ${offsetY - 50}px)`;
+    }
+
 
     return {
         setData,
+        setPersent,
         setVisibility,
         destroy,
         panel,

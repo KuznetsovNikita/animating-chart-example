@@ -1,7 +1,7 @@
 import { ar } from '../components/area';
 import { plg } from '../components/poligon';
 import { pl } from '../components/polyline';
-import { devicePixelRatio } from '../data/const';
+import { devicePixelRatio, toScales } from '../data/const';
 import { ChartItem, ChartsItem, Column, Dict, MaxMin, Range, ScalesChartItem, TimeColumn, UseDataFunction, Viewport } from './models';
 
 export interface JsonData {
@@ -850,13 +850,16 @@ export class DataService {
     onPieZoom(act: (timeRange: Range) => void) {
         this.pieZoomWatchers.push(act);
     }
-}
 
-function toScales(vision: boolean[]) {
-    return vision.reduce((acc, item, index) => {
-        if (index !== 0) acc.push(item ? 1 : 0);
-        return acc;
-    }, [])
+
+    hover(persents: number[], hovers: number[], offsetX: number, offsetY: number) {
+        this.hoverWatchers.forEach(act => act(persents, hovers, offsetX, offsetY));
+    }
+
+    private hoverWatchers: ((persents: number[], hovers: number[], offsetX: number, offsetY: number) => void)[] = [];
+    onHover(act: (persents: number[], hovers: number[], offsetX: number, offsetY: number) => void) {
+        this.hoverWatchers.push(act);
+    }
 }
 
 type Increment = (freezer: number) => void;
