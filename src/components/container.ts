@@ -17,7 +17,7 @@ export function drawContainer(
 
     Promise
         .all(servicies.map(item => item.asSoonAsReady))
-        .then(charts => charts.forEach(item => drawChart(item, container)));
+        .then(charts => charts.forEach(item => drawChart(item, container, width)));
 }
 
 
@@ -32,9 +32,9 @@ function formatTime(settings: DataService): string {
         return `${s.getUTCDate()} ${month[s.getMonth()]} ${s.getFullYear()} - ${e.getUTCDate()} ${month[e.getMonth()]} ${e.getFullYear()}`;
     }
 }
-function drawChart(settings: DataService, container: HTMLDivElement) {
+function drawChart(settings: DataService, container: HTMLDivElement, width: number) {
 
-    toHeader(container, settings);
+    toHeader(container, settings, width);
 
     const chart = toDiv(container, 'chart');
     if (settings.isSingleton) chart.classList.add('as-sg');
@@ -47,9 +47,12 @@ function drawChart(settings: DataService, container: HTMLDivElement) {
 function toHeader(
     container: HTMLDivElement,
     settings: DataService,
+    width: number,
 ) {
     const header = toDiv(container, 'header');
     header.innerHTML = `<h1>Chart ${settings.url}</h1>`;
+
+    if (width < 400) header.classList.add('double');
 
     const zoomOut = toDiv(header, 'zoom');
     zoomOut.innerHTML = '<svg class="loupe" height="27" width="27"><circle cx="12" cy="12" r="9"></circle><line x1="7" x2="17" y1="12" y2="12"></line><line x1="19" x2="27" y1="19" y2="27"></line></svg><span>Zoom Out</span>';

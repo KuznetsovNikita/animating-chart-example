@@ -1,7 +1,7 @@
 import { ar } from '../components/area';
 import { plg } from '../components/poligon';
 import { pl } from '../components/polyline';
-import { devicePixelRatio, toScales } from '../data/const';
+import { devicePixelRatio, roundPercentageTotals, toScales } from '../data/const';
 import { ChartItem, ChartsItem, Column, Dict, MaxMin, Range, ScalesChartItem, TimeColumn, UseDataFunction, Viewport } from './models';
 
 export interface JsonData {
@@ -48,7 +48,7 @@ export function toScalesItemOver(jsonData: JsonData, toItem: (color: string) => 
         });
     }
 
-    function set(visible: boolean[]) {
+    function setVisible(visible: boolean[]) {
         for (let i = 1; i < visible.length; i++) {
             actions[i - 1] = visible[i] ? 'in' : 'out';
         }
@@ -80,10 +80,11 @@ export function toScalesItemOver(jsonData: JsonData, toItem: (color: string) => 
     }
 
     return {
-        drw,
-        set,
-        sc,
+        draw: drw,
+        setVisible: setVisible,
+        scale: sc,
         setRange: () => { },
+        setHover: () => { },
     };
 }
 
@@ -111,7 +112,7 @@ function toItemsOver(
         });
     }
 
-    function set(visible: boolean[]) {
+    function setVisible(visible: boolean[]) {
         for (let i = 1; i < visible.length; i++) {
             items[i - 1].set(visible[i]);
         }
@@ -129,10 +130,11 @@ function toItemsOver(
     }
 
     return {
-        drw,
-        set,
-        sc,
+        draw: drw,
+        setVisible: setVisible,
+        scale: sc,
         setRange: () => { },
+        setHover: () => { },
     };
 }
 
@@ -307,7 +309,7 @@ export function recountPercent(
     }
 
     const total = result.reduce((t, i) => t + i, 0);
-    return result.map(item => item / total * 100);
+    return roundPercentageTotals(result.map(item => item / total * 100));
 }
 
 const dayStyle = {
@@ -852,12 +854,12 @@ export class DataService {
     }
 
 
-    hover(persents: number[], hovers: number[], offsetX: number, offsetY: number) {
-        this.hoverWatchers.forEach(act => act(persents, hovers, offsetX, offsetY));
+    hover(persents: number[], hovers: number[], offsetX: number, offsetY: number, shouldClose: boolean) {
+        this.hoverWatchers.forEach(act => act(persents, hovers, offsetX, offsetY, shouldClose));
     }
 
-    private hoverWatchers: ((persents: number[], hovers: number[], offsetX: number, offsetY: number) => void)[] = [];
-    onHover(act: (persents: number[], hovers: number[], offsetX: number, offsetY: number) => void) {
+    private hoverWatchers: ((persents: number[], hovers: number[], offsetX: number, offsetY: number, shouldClose: boolean) => void)[] = [];
+    onHover(act: (persents: number[], hovers: number[], offsetX: number, offsetY: number, shouldClose: boolean) => void) {
         this.hoverWatchers.push(act);
     }
 }
@@ -968,7 +970,7 @@ function toIndexRangeZoom(time: number[], timeRange: Range): Range {
 
 function toUrl(url: string, time: number): string {
     const d = new Date(time);
-    return `./json/${url}/${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}/${("0" + d.getDate()).slice(-2)}.json`;
+    return `./json/${url}/${d.getUTCFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}/${("0" + d.getDate()).slice(-2)}.json`;
 }
 
 

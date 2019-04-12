@@ -51,8 +51,9 @@ export type ChartsItemFunction = (
 ) => void;
 
 export interface ChartsItem {
-    drw: ChartsItemFunction;
-    set: (visible: boolean[]) => void;
+    draw: ChartsItemFunction;
+    setVisible: (visible: boolean[]) => void;
     setRange: (indexRange: Range) => void;
-    sc: ChartsItemFunction;
+    setHover: (hovers: number[]) => void;
+    scale: ChartsItemFunction;
 }

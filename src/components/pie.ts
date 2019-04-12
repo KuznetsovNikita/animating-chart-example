@@ -12,28 +12,35 @@ export function toPiesItemOver(jsonData: JsonData, vision: boolean[]): ChartsIte
     let targetPersents: number[];
     let deltas: number[] = [];
 
+    let currentHovers: number[] = [];
+    let hoversDeltas: number[] = [];
+
     for (let i = 1; i < jsonData.columns.length; i++) {
         scales.push(vision[i] ? 1 : 0);
         actions.push('none');
         deltas.push(0);
+        currentHovers.push(0);
+        hoversDeltas.push(0);
     }
 
-    function drw(
+    function draw(
         _use: UseDataFunction, context: CanvasRenderingContext2D, indexRange: Range,
         _toMax: (index: number) => MaxMin, viewport: Viewport,
         _opacity?: number,
     ) {
         currentPersents = recountPercent(jsonData, indexRange.start, scales);
-        draw(context, viewport);
+        drawItems(context, viewport);
     }
 
-    function set(visible: boolean[]) {
+    function setVisible(visible: boolean[]) {
+        cleanUpHover();
         for (let i = 1; i < visible.length; i++) {
             actions[i - 1] = visible[i] ? 'in' : 'out';
         }
     }
 
     function setRange(indexRange: Range) {
+        cleanUpHover();
         targetPersents = recountPercent(jsonData, indexRange.start, scales);
 
         deltas = map2(
@@ -42,7 +49,7 @@ export function toPiesItemOver(jsonData: JsonData, vision: boolean[]): ChartsIte
         );
     }
 
-    function sc(
+    function scale(
         _use: UseDataFunction, context: CanvasRenderingContext2D, indexRange: Range,
         _toMax: Function, viewport: Viewport, _opacity?: number,
     ) {
@@ -62,19 +69,33 @@ export function toPiesItemOver(jsonData: JsonData, vision: boolean[]): ChartsIte
 
             currentPersents = recountPercent(jsonData, indexRange.start, scales);
         }
-        else {
+        else if (deltas.some(delta => delta !== 0)) {
             currentPersents = map2(
                 currentPersents, deltas,
                 (current, delta) => current + delta,
             );
         }
+        else {
+            currentHovers = map2(
+                currentHovers, hoversDeltas,
+                (current, delta, index) => {
+                    const result = Math.min(Math.max(current + delta, 0), 1);
+                    if (result === 0 || result === 1) {
+                        hoversDeltas[index] = 0;
+                    }
+                    return result;
+                },
+            );
+        }
 
-        draw(context, viewport);
+        drawItems(context, viewport);
     }
 
 
-    function draw(context: CanvasRenderingContext2D, viewport: Viewport) {
 
+    function drawItems(context: CanvasRenderingContext2D, viewport: Viewport) {
+
+        const hoverShift = viewport.height * 0.02 * devicePixelRatio;
         const x = viewport.width / 2 * devicePixelRatio;
         const y = viewport.height / 2 * devicePixelRatio;
 
@@ -85,9 +106,13 @@ export function toPiesItemOver(jsonData: JsonData, vision: boolean[]): ChartsIte
                 context.fillStyle = jsonData.colors[jsonData.columns[i + 1][0]];
                 const current = last + item;
 
+                const middle = toPieAngle(last + item / 2);
+                const pointX = x + Math.cos(middle) * hoverShift * currentHovers[i];
+                const pointY = y + Math.sin(middle) * hoverShift * currentHovers[i];
+
                 context.beginPath();
-                context.moveTo(x, y);
-                context.arc(x, y, y, toPieAngle(last), toPieAngle(current));
+                context.moveTo(pointX, pointY);
+                context.arc(pointX, pointY, y - hoverShift, toPieAngle(last), toPieAngle(current));
                 context.closePath();
                 context.fill();
 
@@ -102,18 +127,32 @@ export function toPiesItemOver(jsonData: JsonData, vision: boolean[]): ChartsIte
                     const middle = toPieAngle(last + item / 2);
                     context.fillText(
                         `${value}%`,
-                        x + Math.cos(middle) * y / 4 * 3,
-                        y + Math.sin(middle) * y / 4 * 3 + 12,
+                        x + Math.cos(middle) * y / 3 * 2,
+                        y + Math.sin(middle) * y / 3 * 2 + 12,
                     );
                 }
                 return last + item;
             }, 0);
     }
 
+    function cleanUpHover() {
+        currentHovers = currentHovers.map(() => 0);
+        hoversDeltas = hoversDeltas.map(() => 0);
+    }
+    function setHover(hovers: number[]) {
+        deltas = deltas.map(() => 0);
+        hovers.forEach((hover, i) => {
+            if (hover !== currentHovers[i]) {
+                hoversDeltas[i] = hover > 0 ? 0.05 : -0.05;
+            }
+        });
+    }
+
     return {
-        drw,
-        set,
-        sc,
+        draw,
+        setVisible,
+        scale,
         setRange,
+        setHover,
     };
 }

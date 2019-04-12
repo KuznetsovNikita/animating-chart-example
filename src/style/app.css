@@ -69,11 +69,15 @@ body {
             transform: scale(1, 1);
         }
     }
+
+    &.double {
+        height: 60px;
+    }
 }
 
 .range {
     position: absolute;
-    top: 30px;
+    bottom: 60px;
     right: 5px;
     font: 600 16px sans-serif;
     line-height: 30px;

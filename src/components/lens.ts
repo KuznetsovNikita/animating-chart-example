@@ -34,6 +34,14 @@ export function drawLens(
     settings.onZoom(zoomin);
     settings.onPieZoom(zoomin);
 
+    let disabled = false;
+    function toggleDisable() {
+        disabled = !disabled;
+    }
+    settings.onZoomStart(toggleDisable);
+    settings.onDrawPersent(toggleDisable);
+    settings.onDrawPie(toggleDisable);
+
     const setStyle = (range: Range) => {
         const width = Math.floor((range.end - range.start) * dX);
         const left = Math.floor((range.start - miniMap.timeRange.start) * dX);
@@ -57,6 +65,7 @@ export function drawLens(
         function moveAt(clientX: number) {
             switch (target) {
                 case left: {
+                    if (disabled) return;
                     const newLeft = Math.min(Math.max(startLeft + clientX - startX, 0), startLeft + startWidth - 20);
                     if (newLeft === startLeft) return;
 
@@ -67,6 +76,7 @@ export function drawLens(
                     break;
                 }
                 case right: {
+                    if (disabled) return;
                     const newWidth = Math.min(width - startLeft, Math.max(20, startWidth + clientX - startX));
                     if (newWidth === startWidth) return;
 

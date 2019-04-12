@@ -32,9 +32,9 @@ export function toDiv(parent: HTMLElement, className?: string): HTMLDivElement {
     return div;
 }
 
-export function map2<A>(arr1: A[], arr2: A[], map: (a: A, b: A) => A): A[] {
+export function map2<A>(arr1: A[], arr2: A[], map: (a: A, b: A, i: number) => A): A[] {
     return arr1.reduce((result, item, index) => {
-        result.push(map(item, arr2[index]));
+        result.push(map(item, arr2[index], index));
         return result;
     }, []);
 }
@@ -111,4 +111,16 @@ export function toScales(vision: boolean[]) {
         if (index !== 0) acc.push(item ? 1 : 0);
         return acc;
     }, [])
+}
+
+export function roundPercentageTotals(persent: number[]) {
+
+    persent = persent.map(p => Math.round(p));
+    const totalPercentage = persent.reduce((s, i) => s + i, 0);
+
+    if (totalPercentage != 100) {
+        const index = persent.indexOf(Math.max.apply(Math, persent));
+        persent[index] = persent[index] - (totalPercentage - 100);
+    }
+    return persent;
 }

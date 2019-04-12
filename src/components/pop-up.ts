@@ -28,9 +28,11 @@ export function toPopUp(
 
     const container = toDiv(element, 'pop-up');
 
-    let disabled = false;
+    let isPiePopUp = false;
+    let isTouchEvents = false;
 
     setting.onVisibilityChange(visible => {
+        if (isPiePopUp) return;
         elements.block.setVisibility(visible);
     });
 
@@ -43,14 +45,14 @@ export function toPopUp(
         cleanUp();
         destroyElements();
         createPopUp();
-        disabled = true;
+        isPiePopUp = true;
     });
 
     setting.onDrawPersent(() => {
         cleanUp();
         destroyElements();
         createPopUp();
-        disabled = false;
+        isPiePopUp = false;
     });
 
     createPopUp();
@@ -74,11 +76,21 @@ export function toPopUp(
         return persent * 360 / 100;
     }
 
+    function seeIfOutOfPie(offsetX: number, offsetY: number) {
+        const y = setting.viewport.height / 2 - offsetY;
+        const x = offsetX - setting.viewport.width / 2;
+        return Math.sqrt(x * x + y * y) > setting.viewport.height / 2 - 20;
+    }
     function drawPiePopUp(offsetX: number, offsetY: number) {
         const { jsonData, visibility, indexRange } = setting;
 
+
         const alfa = toAlfa(offsetX, offsetY);
         const persents = recountPercent(jsonData, indexRange.start, toScales(visibility));
+
+        if (seeIfOutOfPie(offsetX, offsetY)) {
+            return setting.hover(persents, persents.map(() => 0), offsetX, offsetY, true);
+        }
 
         const hovers: number[] = [];
         persents.reduceRight((last, item) => {
@@ -88,12 +100,12 @@ export function toPopUp(
 
             return last + item;
         }, 0);
-        setting.hover(persents, hovers, offsetX, offsetY);
+        setting.hover(persents, hovers.reverse(), offsetX, offsetY, false);
     }
 
-    setting.onHover((persents, hovers, offsetX, offsetY) => {
+    setting.onHover((persents, hovers, offsetX, offsetY, shouldClose) => {
         elements.block.setPersent(persents, hovers, offsetX, offsetY);
-        container.classList.remove('invisible');
+        toggleClass(container, shouldClose, 'invisible');
     });
 
 
@@ -103,7 +115,7 @@ export function toPopUp(
         if (lastUpdate != null) cancelAnimationFrame(lastUpdate);
         lastUpdate = requestAnimationFrame(() => {
 
-            if (disabled) return drawPiePopUp(offsetX, offsetY);
+            if (isPiePopUp) return drawPiePopUp(offsetX, offsetY);
 
             const dx = width / (setting.timeRange.end - setting.timeRange.start);
 
@@ -134,35 +146,45 @@ export function toPopUp(
 
     function cleanUp() {
         container.classList.add('invisible');
-        element.addEventListener('mousemove', onMouseMove);
+        if (!isTouchEvents) {
+            element.addEventListener('mousemove', onMouseMove);
+        }
     }
 
 
-    function touchEnd() {
-        element.removeEventListener('touchmove', onTouchMove);
-        cleanUp();
+    function touchEnd(event: TouchEvent) {
+        if (event.target === element) {
+            element.removeEventListener('touchmove', onTouchMove);
+            drawPopUpByTouch(lastTouchEvent, true);
+        }
     }
 
-    function drawPopUpByTouch(event: TouchEvent) {
-        event.preventDefault();
+    function drawPopUpByTouch(event: TouchEvent, shouldLoad: boolean) {
+        //   event.preventDefault();
         event.stopPropagation();
         const { clientX, clientY, target } = event.targetTouches[0];
         var rect = (target as SVGSVGElement).getBoundingClientRect();
         var x = clientX - rect.left;
         var y = clientY - rect.top;
-        onDrawPopUp(x, y, false);
+        onDrawPopUp(x, y, shouldLoad);
     }
 
+    let lastTouchEvent: TouchEvent;
     function onTouchMove(event: TouchEvent) {
         if (event.targetTouches.length === 1) {
-            drawPopUpByTouch(event);
+            drawPopUpByTouch(event, false);
+            lastTouchEvent = event;
         }
     }
 
+
     function onTouchStart(event: TouchEvent) {
-        if (event.targetTouches.length === 1) {
-            drawPopUpByTouch(event);
+        isTouchEvents = true;
+        element.removeEventListener('mousemove', onMouseMove);
+        if (event.targetTouches.length === 1 && event.target === element) {
+            drawPopUpByTouch(event, false);
             element.addEventListener('touchmove', onTouchMove, { passive: false });
+            lastTouchEvent = event;
         }
     }
 
@@ -184,7 +206,9 @@ export function toPopUp(
     }
 
     function onClick(event: MouseEvent) {
-        element.removeEventListener('mousemove', onMouseMove);
+        if (!isPiePopUp) {
+            element.removeEventListener('mousemove', onMouseMove);
+        }
 
         const { clientX, clientY, currentTarget } = event;
         var rect = (currentTarget as HTMLDivElement).getBoundingClientRect();

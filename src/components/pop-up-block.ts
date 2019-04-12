@@ -111,14 +111,17 @@ export function toPopUpBlock(
     function setData(time: number, index: number, positionX: number) {
 
         const d = new Date(time);
-        date.innerHTML = `${days[d.getUTCDay()].slice(0, 3)}, ${d.getUTCDate()} ${month[d.getMonth()].slice(0, 3)}`;
+        date.innerHTML = `${days[d.getUTCDay()].slice(0, 3)}, ${d.getUTCDate()} ${month[d.getUTCMonth()].slice(0, 3)}`;
         if (setting.isZoom) {
             if (setting.isSingleton) {
-                date.innerHTML = `${('0' + (d.getUTCHours())).slice(-2)}:${('0' + d.getMinutes()).slice(-2)}`;
+                date.innerHTML = `${('0' + (d.getUTCHours())).slice(-2)}:${('0' + d.getUTCMinutes()).slice(-2)}`;
             }
             else {
                 date.innerHTML += ` ${('0' + (d.getUTCHours())).slice(-2)}:00`;
             }
+        }
+        else {
+            date.innerHTML += ` ${d.getUTCFullYear()}`;
         }
 
         const [_, ...lines] = setting.jsonData.columns;
@@ -154,9 +157,9 @@ export function toPopUpBlock(
     function setPersent(persents: number[], hovers: number[], offsetX: number, offsetY: number) {
 
         values.forEach((item, i) => {
-            setShow(item, !!hovers[values.length - i - 1]);
+            setShow(item, !!hovers[i]);
             item.num = persents[i];
-            item.value.innerHTML = `${Math.round(item.num * 10) / 10}%`;
+            item.value.innerHTML = `${item.num}%`;
         });
 
         panel.style.transform = `translate(${offsetX + 10}px, ${offsetY - 50}px)`;
