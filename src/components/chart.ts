@@ -1,5 +1,5 @@
 import { MaxMin, Range } from 'src/data/models';
-import { devicePixelRatio, drawConvas, map2MaxMin, mapMaxMin, scaleAngle, toAngle, toRadian } from '../data/const';
+import { devicePixelRatio, drawConvas, map2MaxMin, mapMaxMin, scaleAngle, toAngle, toRadian } from '../data/common';
 import { ChangeKind, DataService } from '../data/service';
 import { Line, LineValue, ln } from './line';
 import { toPiesItemOver } from './pie';
@@ -62,7 +62,7 @@ export function toChart(
         return currentMax.length > 1 ? currentMax[index - 1] : currentMax[0];
     }
 
-    let chartItems = settings.cr(settings.jsonData, 2, 1);
+    let chartItems = settings.itemsFactory(settings.jsonData, 2, 1);
     chartItems.draw(settings.use, context, settings.indexRange, toCurrentMax, viewport);
 
     toPopUp(element, settings, toCurrentMax);
@@ -79,7 +79,7 @@ export function toChart(
     });
 
     function rerenderAfterChangeFactory() {
-        chartItems = settings.cr(settings.jsonData, 2, 1);
+        chartItems = settings.itemsFactory(settings.jsonData, 2, 1);
         chartItems.draw(settings.use, context, settings.indexRange, () => targetMax[0], viewport);
     }
     settings.onChangeFactory(rerenderAfterChangeFactory);
@@ -323,7 +323,7 @@ export function toChart(
                 round += dRound;
 
                 if (index === 0) {
-                    chartItems = settings.cr(settings.jsonData, 2, 1);
+                    chartItems = settings.itemsFactory(settings.jsonData, 2, 1);
                     chartItems.draw(settings.use, context, settings.indexRange, toCurrentMax, viewport);
                     lines.forEach(line => line.drw(lineContext));
                     return;

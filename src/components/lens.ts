@@ -1,6 +1,6 @@
 import { Range } from 'src/data/models';
 import { DataService } from 'src/data/service';
-import { toDiv } from '../data/const';
+import { toDiv } from '../data/common';
 
 export function drawLens(
     element: HTMLDivElement,

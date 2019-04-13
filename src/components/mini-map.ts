@@ -1,5 +1,5 @@
 import { MaxMin } from 'src/data/models';
-import { drawConvas, map2MaxMin, mapMaxMin, toDiv, toggleClass } from '../data/const';
+import { drawConvas, map2MaxMin, mapMaxMin, toDiv, toggleClass } from '../data/common';
 import { DataService } from '../data/service';
 import { drawLens } from './lens';
 
@@ -39,7 +39,7 @@ function toMiniMapCanvas(
         return currentMax.length > 1 ? currentMax[index - 1] : currentMax[0];
     }
 
-    const chartItems = settings.cr(settings.jsonData, 1, 1);
+    const chartItems = settings.itemsFactory(settings.jsonData, 1, 1);
     chartItems.draw(settings.useMin, context, settings.indexRange, toCurrentMax, miniMap.viewport);
 
     function zooimng() {

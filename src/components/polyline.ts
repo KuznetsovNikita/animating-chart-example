@@ -1,4 +1,4 @@
-import { devicePixelRatio } from '../data/const';
+import { devicePixelRatio } from '../data/common';
 import { ChartItem, UseDataFunction, Viewport } from '../data/models';
 
 export function pl(

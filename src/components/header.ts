@@ -1,4 +1,4 @@
-import { days, month, toDiv } from '../data/const';
+import { days, month, toDiv } from '../data/common';
 import { DataService, day } from '../data/service';
 
 function formatTime(settings: DataService): string {

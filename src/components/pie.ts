@@ -1,7 +1,8 @@
 
-import { devicePixelRatio, map2, toPieAngle } from '../data/const';
+import { recountPercent } from '../data/adapters';
+import { devicePixelRatio, map2, toPieAngle } from '../data/common';
 import { ChartsItem, MaxMin, Range, UseDataFunction, Viewport } from '../data/models';
-import { JsonData, recountPercent } from '../data/service';
+import { JsonData } from '../data/service';
 
 
 export function toPiesItemOver(jsonData: JsonData, vision: boolean[]): ChartsItem {

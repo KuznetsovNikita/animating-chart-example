@@ -1,4 +1,4 @@
-import { days, month, toDiv, toggleClass } from '../data/const';
+import { days, month, toDiv, toggleClass } from '../data/common';
 import { DataService } from '../data/service';
 
 export interface PopUpBlock {

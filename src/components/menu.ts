@@ -1,5 +1,5 @@
 import { DataService } from 'src/data/service';
-import { toDiv, toggleClass } from '../data/const';
+import { toDiv, toggleClass } from '../data/common';
 
 export function toMenu(
     container: HTMLDivElement,

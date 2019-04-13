@@ -1,4 +1,4 @@
-import { toDiv } from '../data/const';
+import { toDiv } from '../data/common';
 import { DataService } from '../data/service';
 import { toChart } from './chart';
 import { toHeader } from './header';

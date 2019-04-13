@@ -1,5 +1,5 @@
 import { ChangeKind, DataService } from 'src/data/service';
-import { devicePixelRatio, drawConvas, month } from '../data/const';
+import { devicePixelRatio, drawConvas, month } from '../data/common';
 import { Range } from '../data/models';
 
 export interface Times {
