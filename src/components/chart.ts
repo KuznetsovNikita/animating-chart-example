@@ -64,7 +64,7 @@ export function toChart(
     }
 
     const initStandartFactory = (toMax = toCurrentMax) => {
-        const factory = settings.itemsFactory(settings.jsonData, 2, 1);
+        const factory = settings.toFactory(settings.jsonData, 2, 1);
         factory.draw(settings.use, context, settings.indexRange, toMax, viewport);
         return factory;
     }
@@ -84,7 +84,7 @@ export function toChart(
         countMaxValue(frames);
     });
 
-    settings.onChangeFactory(() => {
+    settings.onSingletonZoom(() => {
         chartFactory = initStandartFactory(() => targetMax[0]);
     });
 

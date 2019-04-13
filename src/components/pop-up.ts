@@ -37,7 +37,7 @@ export function toPopUp(
         elements.block.setVisibility(visible);
     });
 
-    setting.onChangeFactory(() => {
+    setting.onSingletonZoom(() => {
         destroyElements();
         createPopUp();
     });

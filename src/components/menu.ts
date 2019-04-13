@@ -32,7 +32,7 @@ export function toMenu(
         drawCheckboxes();
     }
 
-    settings.onChangeFactory(shouldRender => {
+    settings.onSingletonZoom(shouldRender => {
         if (shouldRender) {
             drawCheckboxes();
         }

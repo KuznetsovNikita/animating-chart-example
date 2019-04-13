@@ -54,7 +54,7 @@ export class DataService {
     public isSingleton = false;
 
     public zIndex: string;
-    public itemsFactory: (jsonData: JsonData, lineWidth: number, opacity: number) => ChartItemsFactory;
+    public toFactory: (jsonData: JsonData, lineWidth: number, opacity: number) => ChartItemsFactory;
     public adapter: Adapter;
 
     public jsonData: JsonData;
@@ -118,7 +118,7 @@ export class DataService {
 
         if (jsonData.y_scaled) {
             this.zIndex = '-1';
-            this.itemsFactory = (jsonData, lineWidth, opacity) => toChartItemsFactory(jsonData, toPolylineItemOver, lineWidth, opacity);
+            this.toFactory = (jsonData, lineWidth, opacity) => toChartItemsFactory(jsonData, toPolylineItemOver, lineWidth, opacity);
             this.adapter = {
                 use: recountAndUseSimplePintsChart,
                 toMax: recountDoubleMax,
@@ -126,7 +126,7 @@ export class DataService {
         }
         else if (jsonData.percentage) {
             this.zIndex = '1';
-            this.itemsFactory = jsonData => toScalableFactory(jsonData, toAreaItemOver, toScales(this.visibility));
+            this.toFactory = jsonData => toScalableFactory(jsonData, toAreaItemOver, toScales(this.visibility));
             this.adapter = {
                 use: recountAndUsePercentChartOver(true),
                 toMax: () => [[100, 0]],
@@ -134,7 +134,7 @@ export class DataService {
         }
         else if (jsonData.stacked) {
             this.zIndex = '1';
-            this.itemsFactory = jsonData => toScalableFactory(jsonData, toPoligonItemOver, toScales(this.visibility));
+            this.toFactory = jsonData => toScalableFactory(jsonData, toPoligonItemOver, toScales(this.visibility));
             this.adapter = {
                 use: recountAndUseChartBySumm,
                 toMax: recountMaxBySumm,
@@ -142,7 +142,7 @@ export class DataService {
         }
         else if (this.isSingleton) {
             this.zIndex = '1';
-            this.itemsFactory = jsonData => toScalableFactory(jsonData, toPoligonItemOver, toScales(this.visibility));
+            this.toFactory = jsonData => toScalableFactory(jsonData, toPoligonItemOver, toScales(this.visibility));
             this.adapter = {
                 use: recountAndUseSimplePintsChart,
                 toMax: recountSimpleMax,
@@ -150,7 +150,7 @@ export class DataService {
         }
         else {
             this.zIndex = '-1';
-            this.itemsFactory = (jsonData, lineWidth, opacity) => toChartItemsFactory(jsonData, toPolylineItemOver, lineWidth, opacity);
+            this.toFactory = (jsonData, lineWidth, opacity) => toChartItemsFactory(jsonData, toPolylineItemOver, lineWidth, opacity);
             this.adapter = {
                 use: recountAndUseSimplePintsChart,
                 toMax: recountSimpleMaxAndMin,
@@ -265,7 +265,7 @@ export class DataService {
     singletonUnzooming(
         frames: number,
         yearData: JsonData,
-        increment: Increment,
+        increment: ZoomingTime,
     ) {
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
@@ -279,9 +279,9 @@ export class DataService {
                     this.visibility = yearData.columns.map(() => true);
 
                     this.isBars = true;
-                    this.itemsFactory = jsonData => toScalableFactory(jsonData, toPoligonItemOver, toScales(this.visibility));
+                    this.toFactory = jsonData => toScalableFactory(jsonData, toPoligonItemOver, toScales(this.visibility));
 
-                    this.changeFactoryWatchers.forEach(act => act(false));
+                    this.singletonZoomWatchers.forEach(act => act(false));
                 }
                 else {
 
@@ -301,7 +301,7 @@ export class DataService {
     simpleUnzooming(
         yearData: JsonData,
         weekData: JsonData,
-        increment: Increment,
+        increment: ZoomingTime,
     ) {
         const initTimeRange = copyRange(this.miniMap.timeRange);
         const mergeJsonForSimpleZoom = mergeJsonForSimpleZoomOver(
@@ -346,7 +346,7 @@ export class DataService {
         endTimeRange: Range,
         endTimeMiniMapRange: Range,
         frames: number,
-    ): Increment {
+    ): ZoomingTime {
         const dSr = (endTimeRange.start - this.timeRange.start) / frames;
         const dEr = (endTimeRange.end - this.timeRange.end) / frames;
 
@@ -391,7 +391,7 @@ export class DataService {
 
     singletonZoomin(
         weekData: JsonData,
-        zoomingTime: Increment,
+        zoomingTime: ZoomingTime,
     ) {
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
@@ -410,8 +410,8 @@ export class DataService {
                     this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
 
                     this.isBars = false;
-                    this.itemsFactory = (jsonData, lineWidth, opacity) => toChartItemsFactory(jsonData, toPolylineItemOver, lineWidth, opacity);
-                    this.changeFactoryWatchers.forEach(act => act(true));
+                    this.toFactory = (jsonData, lineWidth, opacity) => toChartItemsFactory(jsonData, toPolylineItemOver, lineWidth, opacity);
+                    this.singletonZoomWatchers.forEach(act => act(true));
                     return;
                 }
 
@@ -426,7 +426,7 @@ export class DataService {
         endTimeRange: Range,
         yearData: JsonData,
         weekData: JsonData,
-        zoomingTime: Increment,
+        zoomingTime: ZoomingTime,
     ) {
         const mergeJsonForSimpleZoom = mergeJsonForSimpleZoomOver(
             yearData, weekData, this.miniMap.timeRange, endTimeRange,
@@ -473,9 +473,9 @@ export class DataService {
     onZoomStart(act: ZoomFunc) {
         this.zoomStartWatchers.push(act);
     }
-    private changeFactoryWatchers: ((shouldRender: boolean) => void)[] = [];
-    onChangeFactory(act: (shouldRender: boolean) => void) {
-        this.changeFactoryWatchers.push(act);
+    private singletonZoomWatchers: ((shouldRender: boolean) => void)[] = [];
+    onSingletonZoom(act: (shouldRender: boolean) => void) {
+        this.singletonZoomWatchers.push(act);
     }
 
     zoomStart(data: JsonData, indexRange: Range, timeRange: Range, vision: boolean[]) {
@@ -555,7 +555,7 @@ export class DataService {
     }
 }
 
-type Increment = (freezer?: number) => void;
+type ZoomingTime = (freezer?: number) => void;
 
 type ZoomFunc = (data: JsonData, indexRange: Range, timeRange: Range, vision: boolean[]) => void;
 

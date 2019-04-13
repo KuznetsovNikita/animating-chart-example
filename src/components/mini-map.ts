@@ -15,7 +15,7 @@ export function toMiniMap(
     toMiniMapCanvas(element, settings);
     drawLens(element, settings);
 
-    settings.onChangeFactory(shouldRender => {
+    settings.onSingletonZoom(shouldRender => {
         toggleClass(element, shouldRender, 'fade');
     });
 }
@@ -43,7 +43,7 @@ function toMiniMapCanvas(
     }
 
     function initChartFactory() {
-        const factory = settings.itemsFactory(settings.jsonData, 1, 1);
+        const factory = settings.toFactory(settings.jsonData, 1, 1);
         factory.draw(settings.useMin, context, settings.indexRange, toCurrentMax, miniMap.viewport);
         return factory;
     }
