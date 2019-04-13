@@ -1,6 +1,6 @@
 import { MaxMin } from 'src/data/models';
 import { recountPercent } from '../data/adapters';
-import { day, toDiv, toggleClass, toScales } from '../data/common';
+import { day, findIndex, toDiv, toggleClass, toScales } from '../data/common';
 import { DataService } from '../models/service';
 import { PopUpBlock, toPopUpBlock } from './pop-up-block';
 
@@ -127,7 +127,7 @@ export function toPopUp(
                 : d.setUTCHours(0, 0, 0, 0);
 
             const [times] = setting.jsonData.columns;
-            const index = times.findIndex(item => item === time);
+            const index = findIndex(times, item => item === time);
             if (index === -1) {
                 return cleanUp();
             }

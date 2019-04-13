@@ -1,3 +1,4 @@
+import 'promise-polyfill/src/polyfill';
 import { drawContainer } from './components/container';
 import { DataService } from './models/service';
 import './style/index.css';

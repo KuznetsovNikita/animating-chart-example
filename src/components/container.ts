@@ -10,7 +10,7 @@ export function drawContainer(
     width: number,
 ) {
     const container = document.createElement('div');
-    document.body.append(container);
+    document.body.appendChild(container);
     container.id = 'app';
     container.style.width = width + 'px';
 

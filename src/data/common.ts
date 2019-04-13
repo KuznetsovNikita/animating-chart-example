@@ -129,3 +129,10 @@ export function roundPercentageTotals(persent: number[]) {
 export function copyRange(range: Range): Range {
     return { start: range.start, end: range.end };
 }
+
+export function findIndex<A>(arr: A[], find: (a: A) => boolean): number {
+    for (let i = 0; i < arr.length; i++) {
+        if (find(arr[i])) return i;
+    }
+    return -1;
+}
