@@ -62,8 +62,7 @@ export class DataService {
         width: number,
         public url: string,
     ) {
-        this.asSoonAsReady = fetch(`./json/${url}/overview.json`)
-            .then(response => response.json())
+        this.asSoonAsReady = request<JsonData>(`./json/${url}/overview.json`)
             .then(jsonData => this.setDate(width, jsonData))
             .then(() => this);
     }
@@ -216,12 +215,10 @@ export class DataService {
     asSoonAsLoading: Promise<JsonData>;
     zoomedTime: number;
 
-    loadingData(time: number): Promise<void> {
+    loadingData(time: number): Promise<any> {
         this.zoomedTime = time;
         if (this.isPercentage) return Promise.resolve();
-
-        return this.asSoonAsLoading = fetch(toUrl(this.url, time))
-            .then(response => response.json());
+        return this.asSoonAsLoading = request<JsonData>(toUrl(this.url, time));
     }
 
     isZoom = false;
@@ -545,4 +542,19 @@ function zooming(index: number, update: (index: number) => number, use: (index: 
         });
     }
     zooming(index);
+}
+
+
+function request<A>(url: string): Promise<A> {
+    return new Promise(resolve => {
+        var xmlhttp = new XMLHttpRequest();
+
+        xmlhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                resolve(JSON.parse(this.responseText));
+            }
+        };
+        xmlhttp.open('GET', url, true);
+        xmlhttp.send();
+    });
 }
