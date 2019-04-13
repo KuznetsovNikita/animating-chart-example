@@ -17,7 +17,7 @@ body {
 #app {
     height: 100%;
     width: 100%;
-    max-width: 500px;
+    max-width: 600px;
     margin: 0 auto;
     padding: 0 0 100px;
     box-sizing: border-box;
@@ -57,7 +57,7 @@ body {
 
         span {
             line-height: 30px;
-            margin-left: 5px;
+            margin-left: 8px;
         }
     }
 

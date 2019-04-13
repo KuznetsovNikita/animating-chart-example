@@ -379,7 +379,7 @@ export class DataService {
 
         this.viewport = {
             width,
-            height: Math.round(width * 0.6),
+            height: Math.round(width * (jsonData.percentage ? 0.8 : 0.6)),
         };
 
         this.miniMap = {

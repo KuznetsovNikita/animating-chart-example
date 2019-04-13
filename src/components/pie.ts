@@ -121,14 +121,14 @@ export function toPiesItemOver(jsonData: JsonData, vision: boolean[]): ChartsIte
 
         context.fillStyle = 'white';
         currentPersents
-            .reduceRight((last, item) => {
+            .reduceRight((last, item, i) => {
                 const value = Math.round(item);
                 if (value) {
                     const middle = toPieAngle(last + item / 2);
                     context.fillText(
                         `${value}%`,
-                        x + Math.cos(middle) * y / 3 * 2,
-                        y + Math.sin(middle) * y / 3 * 2 + 12,
+                        x + Math.cos(middle) * (y / 3 * 2 + hoverShift * currentHovers[i]),
+                        y + Math.sin(middle) * (y / 3 * 2 + hoverShift * currentHovers[i]) + 12,
                     );
                 }
                 return last + item;

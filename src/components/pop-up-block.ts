@@ -151,7 +151,7 @@ export function toPopUpBlock(
                 setShow(item, false);
             }
         }
-        panel.style.transform = `translate(${positionX + (positionX > width / 2 ? -170 : 10)}px, 10px)`;
+        panel.style.transform = `translate(${positionX + (positionX > width / 2 ? -190 : 20)}px, 10px)`;
     }
 
     function setPersent(persents: number[], hovers: number[], offsetX: number, offsetY: number) {
@@ -162,7 +162,7 @@ export function toPopUpBlock(
             item.value.innerHTML = `${item.num}%`;
         });
 
-        panel.style.transform = `translate(${offsetX + 10}px, ${offsetY - 50}px)`;
+        panel.style.transform = `translate(${offsetX - 85}px, ${offsetY - 50}px)`;
     }
 
 
