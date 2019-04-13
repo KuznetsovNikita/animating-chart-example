@@ -1,6 +1,6 @@
 import { roundPercentageTotals } from './common';
-import { MaxMin, Range, Viewport } from './models';
-import { JsonData } from './service';
+import { JsonData, MaxMin, Range, Viewport } from './models';
+
 
 
 export function recountAndUseSimplePintsChart(

@@ -1,4 +1,4 @@
-import { MaxMin } from "./models";
+import { MaxMin } from './models';
 
 export const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 export const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -42,23 +42,23 @@ export function map2<A>(arr1: A[], arr2: A[], map: (a: A, b: A, i: number) => A)
 
 export function mapMaxMin(
     one: MaxMin[],
-    map: (maxOrMin1: number) => number
+    map: (maxOrMin1: number) => number,
 ): MaxMin[] {
     return one.map(
-        ([maxOne, minOne]) => [map(maxOne), map(minOne)] as MaxMin
+        ([maxOne, minOne]) => [map(maxOne), map(minOne)] as MaxMin,
     );
 }
 
 export function map2MaxMin(
     one: MaxMin[], two: MaxMin[],
-    map: (maxOrMin1: number, maxOrMin2: number) => number
+    map: (maxOrMin1: number, maxOrMin2: number) => number,
 ): MaxMin[] {
     return map2(
         one, two,
         ([maxOne, minOne], [maxTwo, minTwo]) => [
             map(maxOne, maxTwo),
             map(minOne, minTwo),
-        ] as MaxMin
+        ] as MaxMin,
     );
 }
 
@@ -100,17 +100,17 @@ export function speedTest(prefix: string, count: number) {
             if (result.length >= count) {
                 const sum = result.reduce((s, i) => s + i, 0);
                 console.log(prefix, sum / result.length);
-                result = []
+                result = [];
             }
-        }
-    }
+        },
+    };
 }
 
 export function toScales(vision: boolean[]) {
     return vision.reduce((acc, item, index) => {
         if (index !== 0) acc.push(item ? 1 : 0);
         return acc;
-    }, [])
+    }, []);
 }
 
 export function roundPercentageTotals(persent: number[]) {
@@ -118,7 +118,7 @@ export function roundPercentageTotals(persent: number[]) {
     persent = persent.map(p => Math.round(p));
     const totalPercentage = persent.reduce((s, i) => s + i, 0);
 
-    if (totalPercentage != 100) {
+    if (totalPercentage !== 100) {
         const index = persent.indexOf(Math.max.apply(Math, persent));
         persent[index] = persent[index] - (totalPercentage - 100);
     }

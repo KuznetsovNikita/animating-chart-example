@@ -1,11 +1,10 @@
 
-import { recountPercent } from '../data/adapters';
-import { devicePixelRatio, map2, toPieAngle } from '../data/common';
-import { ChartsItem, MaxMin, Range, UseDataFunction, Viewport } from '../data/models';
-import { JsonData } from '../data/service';
+import { recountPercent } from '../../data/adapters';
+import { devicePixelRatio, map2, toPieAngle } from '../../data/common';
+import { ChartItemsFactory, JsonData, MaxMin, Range, UseDataFunction, Viewport } from '../../data/models';
 
 
-export function toPiesItemOver(jsonData: JsonData, vision: boolean[]): ChartsItem {
+export function toPieItemsFactoryOver(jsonData: JsonData, vision: boolean[]): ChartItemsFactory {
     const scales: number[] = [];
     const actions: ('none' | 'in' | 'out')[] = [];
 
@@ -140,6 +139,7 @@ export function toPiesItemOver(jsonData: JsonData, vision: boolean[]): ChartsIte
         currentHovers = currentHovers.map(() => 0);
         hoversDeltas = hoversDeltas.map(() => 0);
     }
+
     function setHover(hovers: number[]) {
         deltas = deltas.map(() => 0);
         hovers.forEach((hover, i) => {
@@ -151,8 +151,8 @@ export function toPiesItemOver(jsonData: JsonData, vision: boolean[]): ChartsIte
 
     return {
         draw,
-        setVisible,
         scale,
+        setVisible,
         setRange,
         setHover,
     };

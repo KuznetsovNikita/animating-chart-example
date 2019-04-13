@@ -1,8 +1,8 @@
 import { MaxMin, Range } from 'src/data/models';
 import { devicePixelRatio, drawConvas, map2MaxMin, mapMaxMin, scaleAngle, toAngle, toRadian } from '../data/common';
 import { ChangeKind, DataService } from '../data/service';
+import { toPieItemsFactoryOver } from './factories/pie-factory';
 import { Line, LineValue, ln } from './line';
-import { toPiesItemOver } from './pie';
 import { toPopUp } from './pop-up';
 import { toTimes } from './times';
 
@@ -260,7 +260,7 @@ export function toChart(
                 context.clearRect(0, 0, canvas.width, canvas.height);
 
                 if (index === 19) {
-                    chartItems = toPiesItemOver(settings.jsonData, settings.visibility);
+                    chartItems = toPieItemsFactoryOver(settings.jsonData, settings.visibility);
                     chartItems.draw(settings.use, context, endIndexRange, toCurrentMax, viewport);
                     return;
                 }

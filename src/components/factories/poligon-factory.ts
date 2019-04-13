@@ -1,32 +1,29 @@
-import { ScalesChartItem, UseDataFunction, Viewport } from 'src/data/models';
+import { ScalesChartItem, UseDataFunction, Viewport } from '../../data/models';
 
-export function ar(
+export function toPoligonFactoryOver(
     color: string,
 ): ScalesChartItem {
 
     function drw(
         use: UseDataFunction, context: CanvasRenderingContext2D,
         index: number, min: number, max: number, viewport: Viewport,
-        scales: number[],
+        scales: number[], opacity = 1,
     ) {
         context.fillStyle = color;
-        context.beginPath();
-
-        const pair: [number, number][] = [];
+        context.globalAlpha = opacity;
         use(
             index, viewport, min, max,
             (x, y, bx, by) => {
+                context.beginPath();
+                context.moveTo(bx, by);
+                context.lineTo(bx, y);
                 context.lineTo(x, y);
-                pair.push([bx, by]);
+                context.lineTo(x, by);
+                context.closePath();
+                context.fill();
             },
             scales,
         );
-        for (let i = pair.length - 1; i >= 0; i--) {
-            const [x, y] = pair[i];
-            context.lineTo(x, y);
-        }
-        context.closePath();
-        context.fill();
     }
 
     return {

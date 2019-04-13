@@ -50,10 +50,20 @@ export type ChartsItemFunction = (
     toMax: (index: number) => MaxMin, viewport: Viewport, opacity?: number,
 ) => void;
 
-export interface ChartsItem {
+export interface ChartItemsFactory {
     draw: ChartsItemFunction;
     setVisible: (visible: boolean[]) => void;
     setRange: (indexRange: Range) => void;
     setHover: (hovers: number[]) => void;
     scale: ChartsItemFunction;
+}
+
+export interface JsonData {
+    columns: [TimeColumn, ...Array<Column>];
+    types: Dict<string>;
+    names: Dict<string>;
+    colors: Dict<string>;
+    y_scaled?: boolean;
+    stacked?: boolean;
+    percentage?: boolean;
 }
