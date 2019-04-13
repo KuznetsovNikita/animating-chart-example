@@ -1,7 +1,7 @@
 import { devicePixelRatio } from '../../data/common';
 import { ChartItem, UseDataFunction, Viewport } from '../../data/models';
 
-export function toPolylineFactoryOver(
+export function toPolylineItemOver(
     color: string,
     lineWidth: number,
     opacity?: number,

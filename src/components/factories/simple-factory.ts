@@ -1,6 +1,6 @@
 import { ChartItem, ChartItemsFactory, JsonData, MaxMin, Range, UseDataFunction, Viewport } from '../../data/models';
 
-export function toChartItemsOver(
+export function toChartItemsFactoryOver(
     jsonData: JsonData,
     toItem: (color: string, lineWidth?: number, opacity?: number) => ChartItem,
     lineWidth?: number,
@@ -12,7 +12,6 @@ export function toChartItemsOver(
         const key = jsonData.columns[i][0];
         items.push(toItem(jsonData.colors[key], lineWidth, opacity));
     }
-
 
 
     function draw(

@@ -1,4 +1,4 @@
-import { days, month, toDiv, toggleClass } from '../data/common';
+import { days, month, roundPercentageTotals, toDiv, toggleClass } from '../data/common';
 import { DataService } from '../models/service';
 
 export interface PopUpBlock {
@@ -101,9 +101,10 @@ export function toPopUpBlock(
 
     function updatePersent() {
         const total = values.reduce((s, i) => i.isShow ? s + i.num : s, 0);
-        values.forEach(item => {
+        const persents = roundPercentageTotals(values.map(item => item.num / total * 100));
+        values.forEach((item, i) => {
             if (item.isShow) {
-                item.name.innerHTML = `<b>${Math.round(item.num / total * 100)}%</b> ${item.nameVal}`;
+                item.name.innerHTML = `<b>${persents[i]}%</b> ${item.nameVal}`;
             }
         });
     }
@@ -155,10 +156,10 @@ export function toPopUpBlock(
     }
 
     function setPersent(persents: number[], hovers: number[], offsetX: number, offsetY: number) {
-
+        const roundedPersents = roundPercentageTotals(persents);
         values.forEach((item, i) => {
             setShow(item, !!hovers[i]);
-            item.num = persents[i];
+            item.num = roundedPersents[i];
             item.value.innerHTML = `${item.num}%`;
         });
 

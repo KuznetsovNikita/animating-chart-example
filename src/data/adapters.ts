@@ -1,4 +1,3 @@
-import { roundPercentageTotals } from './common';
 import { JsonData, MaxMin, Range, Viewport } from './models';
 
 
@@ -165,5 +164,5 @@ export function recountPercent(
     }
 
     const total = result.reduce((t, i) => t + i, 0);
-    return roundPercentageTotals(result.map(item => item / total * 100));
+    return result.map(item => item / total * 100);
 }

@@ -1,10 +1,10 @@
 
 import { recountPercent } from '../../data/adapters';
-import { devicePixelRatio, map2, toPieAngle } from '../../data/common';
+import { devicePixelRatio, map2, roundPercentageTotals, toPieAngle } from '../../data/common';
 import { ChartItemsFactory, JsonData, MaxMin, Range, UseDataFunction, Viewport } from '../../data/models';
 
 
-export function toPieItemsFactoryOver(jsonData: JsonData, vision: boolean[]): ChartItemsFactory {
+export function toPieFactoryOver(jsonData: JsonData, vision: boolean[]): ChartItemsFactory {
     const scales: number[] = [];
     const actions: ('none' | 'in' | 'out')[] = [];
 
@@ -120,13 +120,14 @@ export function toPieItemsFactoryOver(jsonData: JsonData, vision: boolean[]): Ch
             }, 0);
 
         context.fillStyle = 'white';
+
+        const roundedPersents = roundPercentageTotals(currentPersents);
         currentPersents
             .reduceRight((last, item, i) => {
-                const value = Math.round(item);
-                if (value) {
+                if (item) {
                     const middle = toPieAngle(last + item / 2);
                     context.fillText(
-                        `${value}%`,
+                        `${roundedPersents[i]}%`,
                         x + Math.cos(middle) * (y / 3 * 2 + hoverShift * currentHovers[i]),
                         y + Math.sin(middle) * (y / 3 * 2 + hoverShift * currentHovers[i]) + 12,
                     );
