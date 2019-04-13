@@ -265,81 +265,67 @@ export class DataService {
     singletonUnzooming(
         frames: number,
         yearData: JsonData,
-        increment: ZoomingTime,
+        zoomingTime: ZoomingTime,
     ) {
-        const zooming = (index: number) => {
-            requestAnimationFrame(() => {
+        zooming(frames, decrement, index => {
+            zoomingTime();
 
-                increment(1);
+            if (index === 16) {
+                this.jsonData = yearData;
+                this.indexRange = toIndexRange(this.jsonData, this.timeRange);
+                this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
+                this.visibility = yearData.columns.map(() => true);
 
-                if (index === 16) {
-                    this.jsonData = yearData;
-                    this.indexRange = toIndexRange(this.jsonData, this.timeRange);
-                    this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
-                    this.visibility = yearData.columns.map(() => true);
+                this.isBars = true;
+                this.toFactory = jsonData => toScalableFactory(jsonData, toPoligonItemOver, toScales(this.visibility));
 
-                    this.isBars = true;
-                    this.toFactory = jsonData => toScalableFactory(jsonData, toPoligonItemOver, toScales(this.visibility));
+                this.singletonZoomWatchers.forEach(act => act(false));
+            }
+            else {
 
-                    this.singletonZoomWatchers.forEach(act => act(false));
-                }
-                else {
+                this.indexRange = toIndexRange(this.jsonData, this.timeRange);
+                this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
+                this.zoomWatchers.forEach(act => act(this.timeRange, (frames - index) / 10));
 
-                    this.indexRange = toIndexRange(this.jsonData, this.timeRange);
-                    this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
-                    this.zoomWatchers.forEach(act => act(this.timeRange, (frames - index) / 10));
-
-                    if (index === 1) return;
-                }
-
-                zooming(index - 1);
-            });
-        };
-
-        zooming(frames);
+                if (index === 1) return true;
+            }
+        });
     }
     simpleUnzooming(
         yearData: JsonData,
         weekData: JsonData,
-        increment: ZoomingTime,
+        zoomingTime: ZoomingTime,
     ) {
         const initTimeRange = copyRange(this.miniMap.timeRange);
         const mergeJsonForSimpleZoom = mergeJsonForSimpleZoomOver(
             yearData, weekData, this.miniMap.timeRange, initTimeRange,
         );
+        zooming(20, decrement, index => {
+            zoomingTime(index > 14 ? 3 : 1);
 
-        const zooming = (index: number) => {
-            requestAnimationFrame(() => {
+            if (index === 19) {
+                this.jsonData = mergeJsonForSimpleZoom(3);
+            }
 
-                increment(index > 14 ? 3 : 1);
+            if (index === 16) {
+                this.jsonData = mergeJsonForSimpleZoom(6);
+            }
 
-                if (index === 19) {
-                    this.jsonData = mergeJsonForSimpleZoom(3);
-                }
+            if (index === 14) {
+                this.jsonData = mergeJsonForSimpleZoom(12);
+            }
 
-                if (index === 16) {
-                    this.jsonData = mergeJsonForSimpleZoom(6);
-                }
+            if (index === 10) {
+                this.jsonData = yearData;
+            }
 
-                if (index === 14) {
-                    this.jsonData = mergeJsonForSimpleZoom(12);
-                }
+            this.indexRange = toIndexRange(this.jsonData, this.timeRange);
+            this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
 
-                if (index === 10) {
-                    this.jsonData = yearData;
-                }
+            this.zoomWatchers.forEach(act => act(this.timeRange));
 
-                this.indexRange = toIndexRange(this.jsonData, this.timeRange);
-                this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
-
-                this.zoomWatchers.forEach(act => act(this.timeRange));
-
-                if (index === 1) return;
-                zooming(index - 1);
-            });
-        };
-
-        zooming(20);
+            if (index === 1) return true;
+        });
     }
 
     zommingTimesOver(
@@ -393,33 +379,26 @@ export class DataService {
         weekData: JsonData,
         zoomingTime: ZoomingTime,
     ) {
-        const zooming = (index: number) => {
-            requestAnimationFrame(() => {
+        zooming(1, increment, index => {
+            zoomingTime();
 
-                zoomingTime(1);
+            this.indexRange = toIndexRange(this.jsonData, this.timeRange);
+            this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
+            this.zoomWatchers.forEach(act => act(this.timeRange, (16 - index) / 10));
+
+            if (index === 16) {
+                this.jsonData = weekData;
+                this.visibility = weekData.columns.map(() => true);
 
                 this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                 this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
-                this.zoomWatchers.forEach(act => act(this.timeRange, (16 - index) / 10));
 
-                if (index === 16) {
-                    this.jsonData = weekData;
-                    this.visibility = weekData.columns.map(() => true);
-
-                    this.indexRange = toIndexRange(this.jsonData, this.timeRange);
-                    this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
-
-                    this.isBars = false;
-                    this.toFactory = (jsonData, lineWidth, opacity) => toChartItemsFactory(jsonData, toPolylineItemOver, lineWidth, opacity);
-                    this.singletonZoomWatchers.forEach(act => act(true));
-                    return;
-                }
-
-                zooming(index + 1);
-            });
-        };
-
-        zooming(1);
+                this.isBars = false;
+                this.toFactory = (jsonData, lineWidth, opacity) => toChartItemsFactory(jsonData, toPolylineItemOver, lineWidth, opacity);
+                this.singletonZoomWatchers.forEach(act => act(true));
+                return true;
+            }
+        });
     }
 
     simpleZooming(
@@ -431,38 +410,33 @@ export class DataService {
         const mergeJsonForSimpleZoom = mergeJsonForSimpleZoomOver(
             yearData, weekData, this.miniMap.timeRange, endTimeRange,
         );
-        const zooming = (index: number) => {
-            requestAnimationFrame(() => {
 
-                zoomingTime(index > 14 ? 3 : 1);
+        zooming(1, increment, index => {
+            zoomingTime(index > 14 ? 3 : 1);
 
-                if (index === 11) {
-                    this.jsonData = mergeJsonForSimpleZoom(12);
-                }
+            if (index === 11) {
+                this.jsonData = mergeJsonForSimpleZoom(12);
+            }
 
-                if (index === 14) {
-                    this.jsonData = mergeJsonForSimpleZoom(6);
-                }
+            if (index === 14) {
+                this.jsonData = mergeJsonForSimpleZoom(6);
+            }
 
-                if (index === 17) {
-                    this.jsonData = mergeJsonForSimpleZoom(3);
-                }
+            if (index === 17) {
+                this.jsonData = mergeJsonForSimpleZoom(3);
+            }
 
-                if (index === 20) {
-                    this.jsonData = weekData;
-                }
+            if (index === 20) {
+                this.jsonData = weekData;
+            }
 
-                this.indexRange = toIndexRange(this.jsonData, this.timeRange);
-                this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
+            this.indexRange = toIndexRange(this.jsonData, this.timeRange);
+            this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
 
-                this.zoomWatchers.forEach(act => act(this.timeRange));
+            this.zoomWatchers.forEach(act => act(this.timeRange));
 
-                if (index === 20) return;
-                zooming(index + 1);
-            });
-        };
-
-        zooming(1);
+            if (index === 20) return true;
+        });
     }
 
     private zoomWatchers: ((timeRange: Range, opacity?: number) => void)[] = [];
@@ -506,21 +480,16 @@ export class DataService {
     pieZoomingMiniMap(endTimeRange: Range, endTimeMiniMapRange: Range) {
         const frames = 16;
         const zoomingTime = this.zommingTimesOver(endTimeRange, endTimeMiniMapRange, frames);
-        const zooming = (index: number) => {
-            requestAnimationFrame(() => {
 
-                zoomingTime();
+        zooming(1, increment, index => {
+            zoomingTime();
 
-                this.indexRange = toIndexRange(this.jsonData, this.timeRange);
-                this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
-                this.pieZoomWatchers.forEach(act => act(this.timeRange));
+            this.indexRange = toIndexRange(this.jsonData, this.timeRange);
+            this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
+            this.pieZoomWatchers.forEach(act => act(this.timeRange));
 
-                if (index === frames) return;
-
-                zooming(index + 1);
-            });
-        };
-        zooming(1);
+            if (index === frames) return true;
+        });
     }
     private drawPieWatchers: ((percents: number[], endIndexRange: Range) => void)[] = [];
     onDrawPie(act: (percents: number[], endIndexRange: Range) => void) {
@@ -562,4 +531,22 @@ type ZoomFunc = (data: JsonData, indexRange: Range, timeRange: Range, vision: bo
 function toUrl(url: string, time: number): string {
     const d = new Date(time);
     return `./json/${url}/${d.getUTCFullYear()}-${('0' + (d.getMonth() + 1)).slice(-2)}/${('0' + d.getDate()).slice(-2)}.json`;
+}
+
+function increment(i: number) {
+    return i + 1;
+}
+
+function decrement(i: number) {
+    return i - 1;
+}
+
+function zooming(index: number, update: (index: number) => number, use: (index: number) => void | true) {
+    function zooming(i: number) {
+        requestAnimationFrame(() => {
+            if (use(i)) return;
+            zooming(update(i));
+        });
+    }
+    zooming(index);
 }
