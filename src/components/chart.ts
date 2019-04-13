@@ -63,8 +63,13 @@ export function toChart(
         return currentMax.length > 1 ? currentMax[index - 1] : currentMax[0];
     }
 
-    let chartItems = settings.itemsFactory(settings.jsonData, 2, 1);
-    chartItems.draw(settings.use, context, settings.indexRange, toCurrentMax, viewport);
+    const initStandartFactory = (toMax = toCurrentMax) => {
+        const factory = settings.itemsFactory(settings.jsonData, 2, 1);
+        factory.draw(settings.use, context, settings.indexRange, toMax, viewport);
+        return factory;
+    }
+
+    let chartFactory = initStandartFactory();
 
     toPopUp(element, settings, toCurrentMax);
 
@@ -79,16 +84,14 @@ export function toChart(
         countMaxValue(frames);
     });
 
-    function rerenderAfterChangeFactory() {
-        chartItems = settings.itemsFactory(settings.jsonData, 2, 1);
-        chartItems.draw(settings.use, context, settings.indexRange, () => targetMax[0], viewport);
-    }
-    settings.onChangeFactory(rerenderAfterChangeFactory);
+    settings.onChangeFactory(() => {
+        chartFactory = initStandartFactory(() => targetMax[0]);
+    });
 
     settings.onZoom((_, opacity) => {
         const zoomingMax = settings.toMaxVisibleValue(settings.indexRange);
         context.clearRect(0, 0, canvas.width, canvas.height);
-        chartItems.scale(
+        chartFactory.scale(
             settings.use, context, settings.indexRange,
             i => zoomingMax.length > 1 ? zoomingMax[i - 1] : zoomingMax[0],
             viewport, opacity,
@@ -96,12 +99,12 @@ export function toChart(
     });
 
     settings.onTimeRangeChange(kind => {
-        chartItems.setRange(settings.indexRange);
+        chartFactory.setRange(settings.indexRange);
         drawCharts(kind);
     });
 
     settings.onVisibilityChange(visible => {
-        chartItems.setVisible(visible);
+        chartFactory.setVisible(visible);
         drawCharts('visible');
     });
 
@@ -140,7 +143,6 @@ export function toChart(
             (target, current) => Math.round((target - current) / 10)
         );
 
-
         scaleChart(0, 10);
         redrawLines(deltaMax, 10);
         countMaxValue(10);
@@ -151,7 +153,7 @@ export function toChart(
         lastUpdateChart = requestAnimationFrame(() => {
             context.clearRect(0, 0, canvas.width, canvas.height);
 
-            chartItems.scale(settings.use, context, settings.indexRange, toCurrentMax, viewport);
+            chartFactory.scale(settings.use, context, settings.indexRange, toCurrentMax, viewport);
 
             if (index === frames) return;
             return scaleChart(index + 1, frames);
@@ -230,23 +232,22 @@ export function toChart(
     settings.onDrawPie((persets, endIndexRange) => {
         disabled = true;
         lineContext.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
-        pie.drawPie(persets, endIndexRange).then(() => {
-            chartItems = toPieFactoryOver(settings.jsonData, settings.visibility);
-            chartItems.draw(settings.use, context, endIndexRange, toCurrentMax, viewport);
+        pie.drawPie(persets).then(() => {
+            chartFactory = toPieFactoryOver(settings.jsonData, settings.visibility);
+            chartFactory.draw(settings.use, context, endIndexRange, toCurrentMax, viewport);
         });
     });
 
     settings.onDrawPersent(persets => {
         disabled = false;
         pie.drawPersents(persets).then(() => {
-            chartItems = settings.itemsFactory(settings.jsonData, 2, 1);
-            chartItems.draw(settings.use, context, settings.indexRange, toCurrentMax, viewport);
+            chartFactory = initStandartFactory();
             lines.forEach(line => line.drw(lineContext));
         });
     });
 
     settings.onHover((_, hovers) => {
-        chartItems.setHover(hovers);
+        chartFactory.setHover(hovers);
         scaleChart(0, 20);
     });
 }

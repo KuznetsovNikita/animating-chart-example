@@ -1,5 +1,5 @@
 import { scaleAngle, toAngle, toRadian } from '../data/common';
-import { JsonData, Range, Viewport } from '../data/models';
+import { JsonData, Viewport } from '../data/models';
 
 export function pieAnimator(
     canvas: HTMLCanvasElement,
@@ -14,7 +14,7 @@ export function pieAnimator(
     const halfPi = Math.PI / 2;
     const dxPie = height / 100;
 
-    function drawPie(persets: number[], endIndexRange: Range): Promise<void> {
+    function drawPie(persets: number[]): Promise<void> {
 
         return new Promise(resolve => {
             let round = 0;
