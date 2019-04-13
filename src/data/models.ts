@@ -15,7 +15,6 @@ export type TimeColumn = ['x', ...Array<number>];
 
 export type MaxMin = [number, number];
 
-
 export interface Dict<T> {
     [key: string]: T;
 }

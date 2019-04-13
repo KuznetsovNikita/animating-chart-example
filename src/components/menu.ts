@@ -1,4 +1,4 @@
-import { DataService } from 'src/data/service';
+import { DataService } from 'src/models/service';
 import { toDiv, toggleClass } from '../data/common';
 
 export function toMenu(

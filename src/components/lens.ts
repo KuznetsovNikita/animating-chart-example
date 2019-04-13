@@ -1,5 +1,5 @@
 import { Range } from 'src/data/models';
-import { DataService } from 'src/data/service';
+import { DataService } from 'src/models/service';
 import { toDiv } from '../data/common';
 
 export function drawLens(

@@ -1,10 +1,12 @@
-import { toAreaFactoryOver } from '../components/factories/area-factory';
-import { toPoligonFactoryOver } from '../components/factories/poligon-factory';
-import { toPolylineFactoryOver } from '../components/factories/polyline-factory';
-import { recountAndUseChartBySumm, recountAndUsePercentChart, recountAndUseSimplePintsChart, recountDoubleMax, recountMaxBySumm, recountPercent, recountSimpleMax, recountSimpleMaxAndMin } from './adapters';
-import { toScales } from './common';
-import { ChartItem, ChartItemsFactory, JsonData, MaxMin, Range, ScalesChartItem, UseDataFunction, Viewport } from './models';
-import { dayStyle, nightStyle } from './style';
+import { toAreaFactoryOver } from '../components/factories/area-item-factory';
+import { toPoligonFactoryOver } from '../components/factories/poligon-item-factory';
+import { toPolylineFactoryOver } from '../components/factories/polyline-item-factory';
+import { toScalableChartItemsOver } from '../components/factories/scalable-factory';
+import { toChartItemsOver } from '../components/factories/simple-factory';
+import { recountAndUseChartBySumm, recountAndUsePercentChart, recountAndUseSimplePintsChart, recountDoubleMax, recountMaxBySumm, recountPercent, recountSimpleMax, recountSimpleMaxAndMin } from '../data/adapters';
+import { toScales } from '../data/common';
+import { ChartItemsFactory, JsonData, MaxMin, Range, UseDataFunction, Viewport } from '../data/models';
+import { dayStyle, nightStyle } from '../data/style';
 
 interface MiniMap {
     viewport: Viewport;
@@ -13,122 +15,6 @@ interface MiniMap {
 }
 
 export type ChangeKind = 'left' | 'right' | 'move' | 'visible';
-
-export function toScalesItemOver(jsonData: JsonData, toItem: (color: string) => ScalesChartItem, scales: number[]): ChartItemsFactory {
-    const items: ScalesChartItem[] = [];
-    // const scales: number[] = [];
-    const actions: ('none' | 'in' | 'out')[] = [];
-
-    for (let i = 1; i < jsonData.columns.length; i++) {
-        const key = jsonData.columns[i][0];
-        items.push(toItem(jsonData.colors[key]));
-        //   scales.push(1);
-        actions.push('none');
-    }
-
-    function drw(
-        use: UseDataFunction, context: CanvasRenderingContext2D, _indexRange: Range,
-        toMax: (index: number) => MaxMin, viewport: Viewport,
-        opacity?: number,
-    ) {
-        items.forEach((item, index) => {
-            item.drw(
-                use, context, index + 1, toMax(index + 1)[1],
-                toMax(index + 1)[0], viewport, scales, opacity,
-            );
-        });
-    }
-
-    function setVisible(visible: boolean[]) {
-        for (let i = 1; i < visible.length; i++) {
-            actions[i - 1] = visible[i] ? 'in' : 'out';
-        }
-    }
-
-    function sc(
-        use: UseDataFunction, context: CanvasRenderingContext2D, _indexRange: Range,
-        toMax: (index: number) => MaxMin, viewport: Viewport, opacity?: number,
-    ) {
-        actions.forEach((action, index) => {
-            if (action === 'in') {
-                scales[index] = Math.min(1, scales[index] + 0.1);
-                if (scales[index] === 1) actions[index] = 'none';
-            }
-
-            if (action === 'out') {
-                scales[index] = Math.max(0, scales[index] - 0.1);
-                if (scales[index] === 0) actions[index] = 'none';
-            }
-        });
-
-        items.forEach((item, index) => {
-            if (scales[index] !== 0) {
-                item.drw(
-                    use, context, index + 1, toMax(index + 1)[1],
-                    toMax(index + 1)[0], viewport, scales, opacity,
-                );
-            }
-        });
-    }
-
-    return {
-        draw: drw,
-        setVisible: setVisible,
-        scale: sc,
-        setRange: () => { },
-        setHover: () => { },
-    };
-}
-
-function toItemsOver(
-    jsonData: JsonData,
-    toItem: (color: string, lineWidth?: number, opacity?: number) => ChartItem,
-    lineWidth?: number,
-    opacity?: number,
-): ChartItemsFactory {
-    const items: ChartItem[] = [];
-
-    for (let i = 1; i < jsonData.columns.length; i++) {
-        const key = jsonData.columns[i][0];
-        items.push(toItem(jsonData.colors[key], lineWidth, opacity));
-    }
-
-
-
-    function drw(
-        use: UseDataFunction, context: CanvasRenderingContext2D, _indexRange: Range,
-        toMax: (index: number) => MaxMin, viewport: Viewport,
-    ) {
-        items.forEach((item, index) => {
-            item.drw(use, context, index + 1, toMax(index + 1)[1], toMax(index + 1)[0], viewport);
-        });
-    }
-
-    function setVisible(visible: boolean[]) {
-        for (let i = 1; i < visible.length; i++) {
-            items[i - 1].set(visible[i]);
-        }
-    }
-
-
-
-    function sc(
-        use: UseDataFunction, context: CanvasRenderingContext2D, _indexRange: Range,
-        toMax: (index: number) => MaxMin, viewport: Viewport,
-    ) {
-        items.forEach((item, index) => {
-            item.sc(use, context, index + 1, toMax(index + 1)[1], toMax(index + 1)[0], viewport);
-        });
-    }
-
-    return {
-        draw: drw,
-        setVisible: setVisible,
-        scale: sc,
-        setRange: () => { },
-        setHover: () => { },
-    };
-}
 
 export interface Adapter {
     use: (
@@ -140,8 +26,6 @@ export interface Adapter {
     ) => void;
     toMax: (jsonData: JsonData, visibility: boolean[], indexRange: Range) => MaxMin[];
 }
-
-
 
 export const day = 1000 * 60 * 60 * 24;
 
@@ -201,7 +85,7 @@ export class DataService {
 
         this.viewport = {
             width,
-            height: Math.round(width * (jsonData.percentage ? 0.8 : 0.6)),
+            height: Math.round(width * (jsonData.percentage ? 0.7 : 0.6)),
         };
 
         this.miniMap = {
@@ -224,7 +108,7 @@ export class DataService {
 
         if (jsonData.y_scaled) {
             this.zIndex = '-1';
-            this.itemsFactory = (jsonData, lineWidth, opacity) => toItemsOver(jsonData, toPolylineFactoryOver, lineWidth, opacity);
+            this.itemsFactory = (jsonData, lineWidth, opacity) => toChartItemsOver(jsonData, toPolylineFactoryOver, lineWidth, opacity);
             this.adapter = {
                 use: recountAndUseSimplePintsChart,
                 toMax: recountDoubleMax,
@@ -232,7 +116,7 @@ export class DataService {
         }
         else if (jsonData.percentage) {
             this.zIndex = '1';
-            this.itemsFactory = jsonData => toScalesItemOver(jsonData, toAreaFactoryOver, toScales(this.visibility));
+            this.itemsFactory = jsonData => toScalableChartItemsOver(jsonData, toAreaFactoryOver, toScales(this.visibility));
             this.adapter = {
                 use: recountAndUsePercentChart,
                 toMax: () => [[100, 0]],
@@ -240,7 +124,7 @@ export class DataService {
         }
         else if (jsonData.stacked) {
             this.zIndex = '1';
-            this.itemsFactory = jsonData => toScalesItemOver(jsonData, toPoligonFactoryOver, toScales(this.visibility));
+            this.itemsFactory = jsonData => toScalableChartItemsOver(jsonData, toPoligonFactoryOver, toScales(this.visibility));
             this.adapter = {
                 use: recountAndUseChartBySumm,
                 toMax: recountMaxBySumm,
@@ -248,7 +132,7 @@ export class DataService {
         }
         else if (this.isSingleton) {
             this.zIndex = '1';
-            this.itemsFactory = jsonData => toScalesItemOver(jsonData, toPoligonFactoryOver, toScales(this.visibility));
+            this.itemsFactory = jsonData => toScalableChartItemsOver(jsonData, toPoligonFactoryOver, toScales(this.visibility));
             this.adapter = {
                 use: recountAndUseSimplePintsChart,
                 toMax: recountSimpleMax,
@@ -256,7 +140,7 @@ export class DataService {
         }
         else {
             this.zIndex = '-1';
-            this.itemsFactory = (jsonData, lineWidth, opacity) => toItemsOver(jsonData, toPolylineFactoryOver, lineWidth, opacity);
+            this.itemsFactory = (jsonData, lineWidth, opacity) => toChartItemsOver(jsonData, toPolylineFactoryOver, lineWidth, opacity);
             this.adapter = {
                 use: recountAndUseSimplePintsChart,
                 toMax: recountSimpleMaxAndMin,
@@ -309,7 +193,7 @@ export class DataService {
         this.adapter.use(
             this.jsonData, index, this.visibility, this.indexRange, this.timeRange,
             vp, min, max, use, scales,
-        )
+        );
     }
 
     useMin: UseDataFunction = (
@@ -320,7 +204,7 @@ export class DataService {
         this.adapter.use(
             this.jsonData, index, this.visibility, this.miniMap.indexRange, this.miniMap.timeRange,
             vp, min, max, use, scales,
-        )
+        );
     }
 
     asSoonAsLoading: Promise<JsonData>;
@@ -341,7 +225,7 @@ export class DataService {
         if (this.isPercentage) return this.percentageUnZoom();
         this.isZoom = false;
 
-        const { yearData, miniMapTimeRange, timeRange, indexRange } = this.yearDatas
+        const { yearData, miniMapTimeRange, timeRange, indexRange } = this.yearDatas;
 
         const frames = 16;
 
@@ -357,7 +241,7 @@ export class DataService {
 
             this.miniMap.timeRange.start += dMSr / freezer;
             this.miniMap.timeRange.end += dMEr / freezer;
-        }
+        };
 
         if (this.isSingleton) {
             this.zoomStart(yearData, indexRange, timeRange, yearData.columns.map(() => true));
@@ -388,7 +272,7 @@ export class DataService {
                     this.visibility = yearData.columns.map(() => true);
 
                     this.isBars = true;
-                    this.itemsFactory = jsonData => toScalesItemOver(jsonData, toPoligonFactoryOver, toScales(this.visibility));
+                    this.itemsFactory = jsonData => toScalableChartItemsOver(jsonData, toPoligonFactoryOver, toScales(this.visibility));
 
                     this.changeFactoryWatchers.forEach(act => act(false));
                 }
@@ -403,7 +287,7 @@ export class DataService {
 
                 zooming(index - 1);
             });
-        }
+        };
 
         zooming(frames);
     }
@@ -446,7 +330,7 @@ export class DataService {
                 if (index === 1) return;
                 zooming(index - 1);
             });
-        }
+        };
 
         zooming(20);
     }
@@ -460,7 +344,7 @@ export class DataService {
             timeRange: copyRange(this.timeRange),
             miniMapIndexRange: copyRange(this.miniMap.indexRange),
             miniMapTimeRange: copyRange(this.miniMap.timeRange),
-        }
+        };
 
         this.asSoonAsLoading.then(weekData => {
             this.isZoom = true;
@@ -486,7 +370,7 @@ export class DataService {
 
                 this.miniMap.timeRange.start += dMSr / freezer;
                 this.miniMap.timeRange.end += dMEr / freezer;
-            }
+            };
 
             if (this.isSingleton) {
                 this.zoomStart(weekData, endIndexRange, endTimeRange, weekData.columns.map(() => true));
@@ -496,7 +380,7 @@ export class DataService {
                 this.zoomStart(weekData, endIndexRange, endTimeRange, this.visibility);
                 this.simpleZooming(endTimeRange, this.jsonData, weekData, increment);
             }
-        })
+        });
     }
 
     singletonZoomin(
@@ -520,14 +404,14 @@ export class DataService {
                     this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
 
                     this.isBars = false;
-                    this.itemsFactory = (jsonData, lineWidth, opacity) => toItemsOver(jsonData, toPolylineFactoryOver, lineWidth, opacity);
+                    this.itemsFactory = (jsonData, lineWidth, opacity) => toChartItemsOver(jsonData, toPolylineFactoryOver, lineWidth, opacity);
                     this.changeFactoryWatchers.forEach(act => act(true));
                     return;
                 }
 
                 zooming(index + 1);
             });
-        }
+        };
 
         zooming(1);
     }
@@ -540,7 +424,7 @@ export class DataService {
     ) {
         const mergeJsonForSimpleZoom = mergeJsonForSimpleZoomOver(
             yearData, weekData, this.miniMap.timeRange, endTimeRange,
-        )
+        );
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
 
@@ -570,7 +454,7 @@ export class DataService {
                 if (index === 20) return;
                 zooming(index + 1);
             });
-        }
+        };
 
         zooming(1);
     }
@@ -589,7 +473,7 @@ export class DataService {
     }
 
     zoomStart(data: JsonData, indexRange: Range, timeRange: Range, vision: boolean[]) {
-        this.zoomStartWatchers.forEach(act => act(data, indexRange, timeRange, vision))
+        this.zoomStartWatchers.forEach(act => act(data, indexRange, timeRange, vision));
     }
 
     percentageZoom() {
@@ -599,7 +483,7 @@ export class DataService {
             timeRange: copyRange(this.timeRange),
             miniMapIndexRange: copyRange(this.miniMap.indexRange),
             miniMapTimeRange: copyRange(this.miniMap.timeRange),
-        }
+        };
 
         this.isZoom = true;
 
@@ -611,7 +495,7 @@ export class DataService {
         const endTimeMiniMapRange = {
             start: Math.max(this.zoomedTime - 3 * day, time[1]),
             end: Math.min(this.zoomedTime + 4 * day, time[time.length - 1] as number),
-        }
+        };
 
         const percents = recountPercent(this.jsonData, endIndexRange.start, toScales(this.visibility));
         this.drawPieWatchers.forEach(act => act(percents, endIndexRange));
@@ -633,7 +517,7 @@ export class DataService {
 
             this.miniMap.timeRange.start += dMSr;
             this.miniMap.timeRange.end += dMEr;
-        }
+        };
 
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
@@ -648,7 +532,7 @@ export class DataService {
 
                 zooming(index + 1);
             });
-        }
+        };
 
         zooming(1);
     }
@@ -696,7 +580,7 @@ interface YearsData {
     miniMapIndexRange: Range;
 }
 
-type ZoomFunc = (data: JsonData, indexRange: Range, timeRange: Range, vision: boolean[]) => void
+type ZoomFunc = (data: JsonData, indexRange: Range, timeRange: Range, vision: boolean[]) => void;
 
 function copyRange(range: Range): Range {
     return { start: range.start, end: range.end };
@@ -710,7 +594,7 @@ function mergeJsonForSimpleZoomOver(
     yearData: JsonData,
     weekData: JsonData,
     currnetTimeRange: Range,
-    weekTimeRange: Range
+    weekTimeRange: Range,
 ) {
 
     return function (splitter: 3 | 6 | 12): JsonData {
@@ -728,7 +612,7 @@ function mergeJsonForSimpleZoomOver(
                 if (name === 'x') {
 
                     const values2 = values.reduce((acc, item, i) => {
-                        if (i % splitter == 0) acc.push(item);
+                        if (i % splitter === 0) acc.push(item);
                         return acc;
                     }, []);
 
@@ -743,7 +627,7 @@ function mergeJsonForSimpleZoomOver(
                     const scale = toScals(splitter);
 
                     let values2 = values.reduce((acc, item, i) => {
-                        if (i % splitter == 0) {
+                        if (i % splitter === 0) {
                             acc.push(item);
                         }
                         else {
@@ -761,13 +645,13 @@ function mergeJsonForSimpleZoomOver(
                         ...items.slice(0, range.start).map(item => item / scale),
                         ...values2,
                         ...items.slice(range.end, items.length - 1).map(item => item / scale),
-                    ]
+                    ];
                 }
 
 
             }) as any,
-        }
-    }
+        };
+    };
 
 }
 
@@ -792,7 +676,7 @@ function toIndexRangeZoom(time: number[], timeRange: Range): Range {
 
 function toUrl(url: string, time: number): string {
     const d = new Date(time);
-    return `./json/${url}/${d.getUTCFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}/${("0" + d.getDate()).slice(-2)}.json`;
+    return `./json/${url}/${d.getUTCFullYear()}-${('0' + (d.getMonth() + 1)).slice(-2)}/${('0' + d.getDate()).slice(-2)}.json`;
 }
 
 

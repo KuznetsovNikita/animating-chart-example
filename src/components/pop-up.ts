@@ -1,7 +1,7 @@
 import { MaxMin } from 'src/data/models';
 import { recountPercent } from '../data/adapters';
 import { toDiv, toggleClass, toScales } from '../data/common';
-import { DataService, day } from '../data/service';
+import { DataService, day } from '../models/service';
 import { PopUpBlock, toPopUpBlock } from './pop-up-block';
 
 interface Elements {

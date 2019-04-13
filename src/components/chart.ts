@@ -1,6 +1,6 @@
 import { MaxMin, Range } from 'src/data/models';
 import { devicePixelRatio, drawConvas, map2MaxMin, mapMaxMin, scaleAngle, toAngle, toRadian } from '../data/common';
-import { ChangeKind, DataService } from '../data/service';
+import { ChangeKind, DataService } from '../models/service';
 import { toPieItemsFactoryOver } from './factories/pie-factory';
 import { Line, LineValue, ln } from './line';
 import { toPopUp } from './pop-up';

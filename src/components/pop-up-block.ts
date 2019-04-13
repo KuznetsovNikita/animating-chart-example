@@ -1,5 +1,5 @@
 import { days, month, toDiv, toggleClass } from '../data/common';
-import { DataService } from '../data/service';
+import { DataService } from '../models/service';
 
 export interface PopUpBlock {
     setPersent: (persents: number[], hovers: number[], offsetX: number, offsetY: number) => void;

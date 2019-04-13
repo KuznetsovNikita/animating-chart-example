@@ -1,5 +1,5 @@
 import { drawContainer } from './components/container';
-import { DataService } from './data/service';
+import { DataService } from './models/service';
 import './style/index.css';
 
 function init() {

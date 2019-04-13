@@ -1,6 +1,6 @@
 import { MaxMin } from 'src/data/models';
 import { drawConvas, map2MaxMin, mapMaxMin, toDiv, toggleClass } from '../data/common';
-import { DataService } from '../data/service';
+import { DataService } from '../models/service';
 import { drawLens } from './lens';
 
 export function toMiniMap(

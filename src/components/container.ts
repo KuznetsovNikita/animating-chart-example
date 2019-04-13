@@ -1,5 +1,5 @@
 import { toDiv } from '../data/common';
-import { DataService } from '../data/service';
+import { DataService } from '../models/service';
 import { toChart } from './chart';
 import { toHeader } from './header';
 import { toMenu } from './menu';

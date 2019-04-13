@@ -1,4 +1,4 @@
-import { ChangeKind, DataService } from 'src/data/service';
+import { ChangeKind, DataService } from 'src/models/service';
 import { devicePixelRatio, drawConvas, month } from '../data/common';
 import { Range } from '../data/models';
 
