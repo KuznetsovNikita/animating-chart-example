@@ -229,7 +229,17 @@ export class DataService {
     }
 
     isZoom = false;
+
     yearDatas: YearsData = null;
+    storeYearsDatas() {
+        this.yearDatas = {
+            yearData: this.jsonData,
+            indexRange: copyRange(this.indexRange),
+            timeRange: copyRange(this.timeRange),
+            miniMapIndexRange: copyRange(this.miniMap.indexRange),
+            miniMapTimeRange: copyRange(this.miniMap.timeRange),
+        };
+    }
 
     unzoom() {
         if (this.isPercentage) return this.percentageUnZoom();
@@ -238,29 +248,16 @@ export class DataService {
         const { yearData, miniMapTimeRange, timeRange, indexRange } = this.yearDatas;
 
         const frames = 16;
-
-        const dSr = (timeRange.start - this.timeRange.start) / frames;
-        const dEr = (timeRange.end - this.timeRange.end) / frames;
-
-        const dMSr = (miniMapTimeRange.start - this.miniMap.timeRange.start) / frames;
-        const dMEr = (miniMapTimeRange.end - this.miniMap.timeRange.end) / frames;
-
-        const increment = (freezer: number) => {
-            this.timeRange.start += dSr / freezer;
-            this.timeRange.end += dEr / freezer;
-
-            this.miniMap.timeRange.start += dMSr / freezer;
-            this.miniMap.timeRange.end += dMEr / freezer;
-        };
+        const zoomingTime = this.zommingTimesOver(timeRange, miniMapTimeRange, frames);
 
         if (this.isSingleton) {
             this.zoomStart(yearData, indexRange, timeRange, yearData.columns.map(() => true));
-            this.singletonUnzooming(frames, yearData, increment);
+            this.singletonUnzooming(frames, yearData, zoomingTime);
 
         }
         else {
             this.zoomStart(yearData, indexRange, timeRange, this.visibility);
-            this.simpleUnzooming(yearData, this.jsonData, increment);
+            this.simpleUnzooming(yearData, this.jsonData, zoomingTime);
         }
 
     }
@@ -344,63 +341,62 @@ export class DataService {
 
         zooming(20);
     }
+
+    zommingTimesOver(
+        endTimeRange: Range,
+        endTimeMiniMapRange: Range,
+        frames: number,
+    ): Increment {
+        const dSr = (endTimeRange.start - this.timeRange.start) / frames;
+        const dEr = (endTimeRange.end - this.timeRange.end) / frames;
+
+        const dMSr = (endTimeMiniMapRange.start - this.miniMap.timeRange.start) / frames;
+        const dMEr = (endTimeMiniMapRange.end - this.miniMap.timeRange.end) / frames;
+
+        return (freezer = 1) => {
+            this.timeRange.start += dSr / freezer;
+            this.timeRange.end += dEr / freezer;
+
+            this.miniMap.timeRange.start += dMSr / freezer;
+            this.miniMap.timeRange.end += dMEr / freezer;
+        };
+    }
+
     zoom() {
 
         if (this.isPercentage) return this.percentageZoom();
 
-        this.yearDatas = {
-            yearData: this.jsonData,
-            indexRange: copyRange(this.indexRange),
-            timeRange: copyRange(this.timeRange),
-            miniMapIndexRange: copyRange(this.miniMap.indexRange),
-            miniMapTimeRange: copyRange(this.miniMap.timeRange),
-        };
+        this.storeYearsDatas();
 
         this.asSoonAsLoading.then(weekData => {
             this.isZoom = true;
 
-            const time = weekData.columns[0];
-            const firstTime = time[1];
-            const lastTime = time[time.length - 1] as number;
-
+            const [time] = weekData.columns;
             const endTimeRange = { start: this.zoomedTime, end: this.zoomedTime + day };
             const endIndexRange = toIndexRange(weekData, endTimeRange);
+            const endTimeMiniMapRange = { start: time[1], end: time[time.length - 1] as number };
 
-            const frames = 16;
-
-            const dSr = (endTimeRange.start - this.timeRange.start) / frames;
-            const dEr = (endTimeRange.end - this.timeRange.end) / frames;
-
-            const dMSr = (firstTime - this.miniMap.timeRange.start) / frames;
-            const dMEr = (lastTime - this.miniMap.timeRange.end) / frames;
-
-            const increment = (freezer: number) => {
-                this.timeRange.start += dSr / freezer;
-                this.timeRange.end += dEr / freezer;
-
-                this.miniMap.timeRange.start += dMSr / freezer;
-                this.miniMap.timeRange.end += dMEr / freezer;
-            };
+            const zoomingTime = this.zommingTimesOver(endTimeRange, endTimeMiniMapRange, 16);
 
             if (this.isSingleton) {
                 this.zoomStart(weekData, endIndexRange, endTimeRange, weekData.columns.map(() => true));
-                this.singletonZoomin(weekData, increment);
+                this.singletonZoomin(weekData, zoomingTime);
             }
             else {
                 this.zoomStart(weekData, endIndexRange, endTimeRange, this.visibility);
-                this.simpleZooming(endTimeRange, this.jsonData, weekData, increment);
+                this.simpleZooming(endTimeRange, this.jsonData, weekData, zoomingTime);
             }
         });
     }
 
     singletonZoomin(
         weekData: JsonData,
-        increment: Increment,
+        zoomingTime: Increment,
     ) {
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
 
-                increment(1);
+                zoomingTime(1);
 
                 this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                 this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
@@ -430,7 +426,7 @@ export class DataService {
         endTimeRange: Range,
         yearData: JsonData,
         weekData: JsonData,
-        increment: Increment,
+        zoomingTime: Increment,
     ) {
         const mergeJsonForSimpleZoom = mergeJsonForSimpleZoomOver(
             yearData, weekData, this.miniMap.timeRange, endTimeRange,
@@ -438,7 +434,7 @@ export class DataService {
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
 
-                increment(index > 14 ? 3 : 1);
+                zoomingTime(index > 14 ? 3 : 1);
 
                 if (index === 11) {
                     this.jsonData = mergeJsonForSimpleZoom(12);
@@ -487,13 +483,7 @@ export class DataService {
     }
 
     percentageZoom() {
-        this.yearDatas = {
-            yearData: this.jsonData,
-            indexRange: copyRange(this.indexRange),
-            timeRange: copyRange(this.timeRange),
-            miniMapIndexRange: copyRange(this.miniMap.indexRange),
-            miniMapTimeRange: copyRange(this.miniMap.timeRange),
-        };
+        this.storeYearsDatas();
 
         this.isZoom = true;
 
@@ -515,35 +505,21 @@ export class DataService {
 
     pieZoomingMiniMap(endTimeRange: Range, endTimeMiniMapRange: Range) {
         const frames = 16;
-        const dSr = (endTimeRange.start - this.timeRange.start) / frames;
-        const dEr = (endTimeRange.end - this.timeRange.end) / frames;
-
-        const dMSr = (endTimeMiniMapRange.start - this.miniMap.timeRange.start) / frames;
-        const dMEr = (endTimeMiniMapRange.end - this.miniMap.timeRange.end) / frames;
-
-        const increment = () => {
-            this.timeRange.start += dSr;
-            this.timeRange.end += dEr;
-
-            this.miniMap.timeRange.start += dMSr;
-            this.miniMap.timeRange.end += dMEr;
-        };
-
+        const zoomingTime = this.zommingTimesOver(endTimeRange, endTimeMiniMapRange, frames);
         const zooming = (index: number) => {
             requestAnimationFrame(() => {
 
-                increment();
+                zoomingTime();
 
                 this.indexRange = toIndexRange(this.jsonData, this.timeRange);
                 this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
                 this.pieZoomWatchers.forEach(act => act(this.timeRange));
 
-                if (index === 16) return;
+                if (index === frames) return;
 
                 zooming(index + 1);
             });
         };
-
         zooming(1);
     }
     private drawPieWatchers: ((percents: number[], endIndexRange: Range) => void)[] = [];
@@ -569,7 +545,6 @@ export class DataService {
         this.pieZoomWatchers.push(act);
     }
 
-
     hover(persents: number[], hovers: number[], offsetX: number, offsetY: number, shouldClose: boolean) {
         this.hoverWatchers.forEach(act => act(persents, hovers, offsetX, offsetY, shouldClose));
     }
@@ -580,7 +555,7 @@ export class DataService {
     }
 }
 
-type Increment = (freezer: number) => void;
+type Increment = (freezer?: number) => void;
 
 type ZoomFunc = (data: JsonData, indexRange: Range, timeRange: Range, vision: boolean[]) => void;
 
