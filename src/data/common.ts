@@ -1,4 +1,4 @@
-import { MaxMin } from './models';
+import { MaxMin, Range } from './models';
 
 export const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 export const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -123,4 +123,8 @@ export function roundPercentageTotals(persent: number[]) {
         persent[index] = persent[index] - (totalPercentage - 100);
     }
     return persent;
+}
+
+export function copyRange(range: Range): Range {
+    return { start: range.start, end: range.end };
 }

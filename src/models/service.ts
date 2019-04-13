@@ -4,7 +4,9 @@ import { toPolylineFactoryOver } from '../components/factories/polyline-item-fac
 import { toScalableChartItemsOver } from '../components/factories/scalable-factory';
 import { toChartItemsOver } from '../components/factories/simple-factory';
 import { recountAndUseChartBySumm, recountAndUsePercentChart, recountAndUseSimplePintsChart, recountDoubleMax, recountMaxBySumm, recountPercent, recountSimpleMax, recountSimpleMaxAndMin } from '../data/adapters';
-import { toScales } from '../data/common';
+import { copyRange, toScales } from '../data/common';
+import { toIndexRange } from '../data/index-range';
+import { mergeJsonForSimpleZoomOver } from '../data/merge-simple-zoom';
 import { ChartItemsFactory, JsonData, MaxMin, Range, UseDataFunction, Viewport } from '../data/models';
 import { dayStyle, nightStyle } from '../data/style';
 
@@ -12,6 +14,14 @@ interface MiniMap {
     viewport: Viewport;
     indexRange: Range;
     timeRange: Range;
+}
+
+interface YearsData {
+    yearData: JsonData;
+    timeRange: Range;
+    indexRange: Range;
+    miniMapTimeRange: Range;
+    miniMapIndexRange: Range;
 }
 
 export type ChangeKind = 'left' | 'right' | 'move' | 'visible';
@@ -154,7 +164,7 @@ export class DataService {
 
     setTimeRange(kind: ChangeKind, timeRange: Range) {
 
-        this.indexRange = toIndexRange(this.jsonData, timeRange, kind, this.timeRange, this.indexRange);
+        this.indexRange = toIndexRange(this.jsonData, timeRange); //, kind, this.timeRange, this.indexRange);
         this.timeRange = timeRange;
 
 
@@ -572,218 +582,9 @@ export class DataService {
 
 type Increment = (freezer: number) => void;
 
-interface YearsData {
-    yearData: JsonData;
-    timeRange: Range;
-    indexRange: Range;
-    miniMapTimeRange: Range;
-    miniMapIndexRange: Range;
-}
-
 type ZoomFunc = (data: JsonData, indexRange: Range, timeRange: Range, vision: boolean[]) => void;
-
-function copyRange(range: Range): Range {
-    return { start: range.start, end: range.end };
-}
-
-function toScals(splitter: 3 | 6 | 12) {
-    return splitter === 12 ? 2 : splitter === 6 ? 4 : 8;
-}
-
-function mergeJsonForSimpleZoomOver(
-    yearData: JsonData,
-    weekData: JsonData,
-    currnetTimeRange: Range,
-    weekTimeRange: Range,
-) {
-
-    return function (splitter: 3 | 6 | 12): JsonData {
-        const { start, end } = toIndexRange(yearData, currnetTimeRange);
-        const columns = yearData.columns.map(column => column.slice(start, end) as number[]);
-
-        const range = toIndexRangeZoom(columns[0], weekTimeRange);
-
-        return {
-            ...weekData,
-            columns: columns.map((items, index) => {
-
-                const [name, ...values] = weekData.columns[index];
-
-                if (name === 'x') {
-
-                    const values2 = values.reduce((acc, item, i) => {
-                        if (i % splitter === 0) acc.push(item);
-                        return acc;
-                    }, []);
-
-                    return [
-                        name,
-                        ...items.slice(0, range.start),
-                        ...values2,
-                        ...items.slice(range.end, items.length - 1),
-                    ];
-                }
-                else {
-                    const scale = toScals(splitter);
-
-                    let values2 = values.reduce((acc, item, i) => {
-                        if (i % splitter === 0) {
-                            acc.push(item);
-                        }
-                        else {
-                            acc[acc.length - 1] += item;
-                        }
-                        return acc;
-                    }, [] as number[]);
-
-                    if (splitter === 12) {
-                        const prev = items[range.start] / scale;
-                        values2 = values2.map(item => item > prev ? item / 1.5 : item * 1.5);
-                    }
-                    return [
-                        name,
-                        ...items.slice(0, range.start).map(item => item / scale),
-                        ...values2,
-                        ...items.slice(range.end, items.length - 1).map(item => item / scale),
-                    ];
-                }
-
-
-            }) as any,
-        };
-    };
-
-}
-
-function toIndexRangeZoom(time: number[], timeRange: Range): Range {
-    let start = 1;
-    while (time[start] < timeRange.start) {
-        start++;
-    }
-    start = Math.max(start - 2, 1);
-
-    let end = time.length - 1;
-    while (time[end] > timeRange.end) {
-        end--;
-    }
-    end = Math.min(end + 3, time.length - 1);
-
-    return {
-        start,
-        end,
-    };
-}
 
 function toUrl(url: string, time: number): string {
     const d = new Date(time);
     return `./json/${url}/${d.getUTCFullYear()}-${('0' + (d.getMonth() + 1)).slice(-2)}/${('0' + d.getDate()).slice(-2)}.json`;
-}
-
-
-function toIndexRange(
-    jsonData: JsonData, timeRange: Range,
-    kind: ChangeKind = 'visible',
-    oldTime?: Range, oldIndex?: Range,
-): Range {
-
-    const time = jsonData.columns[0];
-
-    // test.start();
-
-    let start = 1;
-    while (time[start] < timeRange.start) {
-        start++;
-    }
-    start = Math.max(start - 1, 1);
-
-    let end = time.length - 1;
-    while (time[end] > timeRange.end) {
-        end--;
-    }
-    end = Math.min(end + 1, time.length - 1);
-
-    return {
-        start,
-        end,
-    };
-
-    // test.end();
-
-    // test2.start();
-
-    // switch (kind) {
-    //     case 'visible': {
-    //         let start = 1;
-    //         while (time[start] < timeRange.start) {
-    //             start++;
-    //         }
-    //         start = Math.max(start - 1, 1);
-
-    //         let end = time.length - 1;
-    //         while (time[end] > timeRange.end) {
-    //             end--;
-    //         }
-    //         end = Math.min(end + 1, time.length - 1);
-    //         // break;
-    //         return { start, end };
-    //     }
-    //     case 'right': {
-    //         let start = oldIndex.start;
-    //         let end = oldIndex.end;
-
-    //         if (timeRange.end > oldTime.end) {
-    //             const max = time.length - 1;
-    //             while (end < max && time[end] < timeRange.end) {
-    //                 start += 1;
-    //             }
-    //         }
-    //         else {
-    //             while (time[end] > timeRange.end) {
-    //                 start -= 1;
-    //             }
-    //         }
-    //         //break;
-    //         return { start, end };
-    //     }
-    //     case 'left': {
-    //         let start = oldIndex.start;
-    //         if (timeRange.start > oldTime.start) {
-    //             while (time[start] < timeRange.start) {
-    //                 start += 1;
-    //             }
-    //         }
-    //         else {
-    //             while (start > 1 && time[start] > timeRange.start) {
-    //                 start -= 1;
-    //             }
-    //         }
-    //         let end = oldIndex.end;
-    //         // break;
-    //         return { start, end };
-    //     }
-    //     case 'move': {
-    //         let start = oldIndex.start;
-    //         const length = oldIndex.end - oldIndex.start;
-    //         if (timeRange.start > oldTime.start) {
-    //             const max = time.length - length - 1;
-    //             while (start < max && time[start] < timeRange.start) {
-    //                 start += 1;
-    //             }
-    //         }
-    //         else {
-    //             while (start > 1 && time[start] > timeRange.start) {
-    //                 start -= 1;
-    //             }
-    //         }
-
-    //         let end = start + length;
-    //         //break;
-    //         return { start, end };
-    //     }
-    // }
-    // test2.end();
-    // return {
-    //     start,
-    //     end,
-    // };
 }
