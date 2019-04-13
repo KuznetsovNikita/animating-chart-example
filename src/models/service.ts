@@ -1,9 +1,9 @@
-import { toScalableFactoryOver } from '../components/factories/scalable-factory';
-import { toChartItemsFactoryOver } from '../components/factories/simple-factory';
+import { toScalableFactory } from '../components/factories/scalable-factory';
+import { toChartItemsFactory } from '../components/factories/simple-factory';
 import { toAreaItemOver } from '../components/items/area-item';
 import { toPoligonItemOver } from '../components/items/poligon-item';
 import { toPolylineItemOver } from '../components/items/polyline-item';
-import { recountAndUseChartBySumm, recountAndUsePercentChart, recountAndUseSimplePintsChart, recountDoubleMax, recountMaxBySumm, recountPercent, recountSimpleMax, recountSimpleMaxAndMin } from '../data/adapters';
+import { recountAndUseChartBySumm, recountAndUsePercentChartOver, recountAndUseSimplePintsChart, recountDoubleMax, recountMaxBySumm, recountPercent, recountSimpleMax, recountSimpleMaxAndMin } from '../data/adapters';
 import { copyRange, toScales } from '../data/common';
 import { toIndexRange } from '../data/index-range';
 import { mergeJsonForSimpleZoomOver } from '../data/merge-simple-zoom';
@@ -118,7 +118,7 @@ export class DataService {
 
         if (jsonData.y_scaled) {
             this.zIndex = '-1';
-            this.itemsFactory = (jsonData, lineWidth, opacity) => toChartItemsFactoryOver(jsonData, toPolylineItemOver, lineWidth, opacity);
+            this.itemsFactory = (jsonData, lineWidth, opacity) => toChartItemsFactory(jsonData, toPolylineItemOver, lineWidth, opacity);
             this.adapter = {
                 use: recountAndUseSimplePintsChart,
                 toMax: recountDoubleMax,
@@ -126,15 +126,15 @@ export class DataService {
         }
         else if (jsonData.percentage) {
             this.zIndex = '1';
-            this.itemsFactory = jsonData => toScalableFactoryOver(jsonData, toAreaItemOver, toScales(this.visibility));
+            this.itemsFactory = jsonData => toScalableFactory(jsonData, toAreaItemOver, toScales(this.visibility));
             this.adapter = {
-                use: recountAndUsePercentChart,
+                use: recountAndUsePercentChartOver(true),
                 toMax: () => [[100, 0]],
             };
         }
         else if (jsonData.stacked) {
             this.zIndex = '1';
-            this.itemsFactory = jsonData => toScalableFactoryOver(jsonData, toPoligonItemOver, toScales(this.visibility));
+            this.itemsFactory = jsonData => toScalableFactory(jsonData, toPoligonItemOver, toScales(this.visibility));
             this.adapter = {
                 use: recountAndUseChartBySumm,
                 toMax: recountMaxBySumm,
@@ -142,7 +142,7 @@ export class DataService {
         }
         else if (this.isSingleton) {
             this.zIndex = '1';
-            this.itemsFactory = jsonData => toScalableFactoryOver(jsonData, toPoligonItemOver, toScales(this.visibility));
+            this.itemsFactory = jsonData => toScalableFactory(jsonData, toPoligonItemOver, toScales(this.visibility));
             this.adapter = {
                 use: recountAndUseSimplePintsChart,
                 toMax: recountSimpleMax,
@@ -150,7 +150,7 @@ export class DataService {
         }
         else {
             this.zIndex = '-1';
-            this.itemsFactory = (jsonData, lineWidth, opacity) => toChartItemsFactoryOver(jsonData, toPolylineItemOver, lineWidth, opacity);
+            this.itemsFactory = (jsonData, lineWidth, opacity) => toChartItemsFactory(jsonData, toPolylineItemOver, lineWidth, opacity);
             this.adapter = {
                 use: recountAndUseSimplePintsChart,
                 toMax: recountSimpleMaxAndMin,
@@ -282,7 +282,7 @@ export class DataService {
                     this.visibility = yearData.columns.map(() => true);
 
                     this.isBars = true;
-                    this.itemsFactory = jsonData => toScalableFactoryOver(jsonData, toPoligonItemOver, toScales(this.visibility));
+                    this.itemsFactory = jsonData => toScalableFactory(jsonData, toPoligonItemOver, toScales(this.visibility));
 
                     this.changeFactoryWatchers.forEach(act => act(false));
                 }
@@ -414,7 +414,7 @@ export class DataService {
                     this.miniMap.indexRange = toIndexRange(this.jsonData, this.miniMap.timeRange);
 
                     this.isBars = false;
-                    this.itemsFactory = (jsonData, lineWidth, opacity) => toChartItemsFactoryOver(jsonData, toPolylineItemOver, lineWidth, opacity);
+                    this.itemsFactory = (jsonData, lineWidth, opacity) => toChartItemsFactory(jsonData, toPolylineItemOver, lineWidth, opacity);
                     this.changeFactoryWatchers.forEach(act => act(true));
                     return;
                 }

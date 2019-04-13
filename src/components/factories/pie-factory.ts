@@ -4,7 +4,7 @@ import { devicePixelRatio, map2, roundPercentageTotals, toPieAngle } from '../..
 import { ChartItemsFactory, JsonData, MaxMin, Range, UseDataFunction, Viewport } from '../../data/models';
 
 
-export function toPieFactoryOver(jsonData: JsonData, vision: boolean[]): ChartItemsFactory {
+export function toPieFactory(jsonData: JsonData, vision: boolean[]): ChartItemsFactory {
     const scales: number[] = [];
     const actions: ('none' | 'in' | 'out')[] = [];
 

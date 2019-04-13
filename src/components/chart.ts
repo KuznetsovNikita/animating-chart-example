@@ -1,7 +1,7 @@
 import { MaxMin } from 'src/data/models';
 import { devicePixelRatio, drawConvas, map2MaxMin, mapMaxMin } from '../data/common';
 import { ChangeKind, DataService } from '../models/service';
-import { toPieFactoryOver } from './factories/pie-factory';
+import { toPieFactory } from './factories/pie-factory';
 import { Line, LineValue, ln } from './line';
 import { pieAnimator } from './pie-animator';
 import { toPopUp } from './pop-up';
@@ -233,7 +233,7 @@ export function toChart(
         disabled = true;
         lineContext.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
         pie.drawPie(persets).then(() => {
-            chartFactory = toPieFactoryOver(settings.jsonData, settings.visibility);
+            chartFactory = toPieFactory(settings.jsonData, settings.visibility);
             chartFactory.draw(settings.use, context, endIndexRange, toCurrentMax, viewport);
         });
     });

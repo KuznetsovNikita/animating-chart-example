@@ -119,37 +119,41 @@ export function recountMaxBySumm(jsonData: JsonData, visibility: boolean[], inde
     return [[Math.ceil(max / 10) * 10, 0]];
 }
 
-export function recountAndUsePercentChart(
-    jsonData: JsonData,
-    index: number, _visibility: boolean[], indexRange: Range, timeRange: Range,
-    vp: Viewport, _min: number, _max: number,
+export function recountAndUsePercentChartOver(ignoreStep: boolean) {
+    return function (
+        jsonData: JsonData,
+        index: number, _visibility: boolean[], indexRange: Range, timeRange: Range,
+        vp: Viewport, _min: number, _max: number,
 
-    use: (topX: number, topY: number, botX: number, botY: number) => void,
-    scales?: number[],
-) {
-    const times = jsonData.columns[0];
-    const dx = vp.width / (timeRange.end - timeRange.start);
+        use: (topX: number, topY: number, botX: number, botY: number) => void,
+        scales?: number[],
+    ) {
+        const times = jsonData.columns[0];
+        const dx = vp.width / (timeRange.end - timeRange.start);
 
-    for (let i = indexRange.start; i <= indexRange.end; i++) {
-        const x = ((times[i] as number) - timeRange.start) * dx * devicePixelRatio;
+        let botX = 0;
+        for (let i = indexRange.start; i <= indexRange.end; i++) {
+            const x = ((times[i] as number) - timeRange.start) * dx * devicePixelRatio;
 
-        let botY = 0;
-        let totalY = 0;
-        let y = 0;
+            let botY = 0;
+            let totalY = 0;
+            let y = 0;
 
-        for (let j = 1; j < jsonData.columns.length; j++) {
-            const line = jsonData.columns[j][i] as number * scales[j - 1];
-            if (j < index) {
-                botY += line;
+            for (let j = 1; j < jsonData.columns.length; j++) {
+                const line = jsonData.columns[j][i] as number * scales[j - 1];
+                if (j < index) {
+                    botY += line;
+                }
+                if (j <= index) {
+                    y += line;
+                }
+                totalY += line;
             }
-            if (j <= index) {
-                y += line;
-            }
-            totalY += line;
+
+            use(x, (y / totalY * vp.height) * devicePixelRatio, ignoreStep ? x : botX, (botY / totalY * vp.height) * devicePixelRatio);
+            botX = x;
         }
-
-        use(x, (y / totalY * vp.height) * devicePixelRatio, x, (botY / totalY * vp.height) * devicePixelRatio);
-    }
+    };
 }
 
 export function recountPercent(

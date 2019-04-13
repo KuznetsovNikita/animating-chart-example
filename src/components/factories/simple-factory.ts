@@ -1,6 +1,6 @@
 import { ChartItem, ChartItemsFactory, JsonData, MaxMin, Range, UseDataFunction, Viewport } from '../../data/models';
 
-export function toChartItemsFactoryOver(
+export function toChartItemsFactory(
     jsonData: JsonData,
     toItem: (color: string, lineWidth?: number, opacity?: number) => ChartItem,
     lineWidth?: number,

@@ -1,6 +1,9 @@
-import { MaxMin } from 'src/data/models';
-import { drawConvas, map2MaxMin, mapMaxMin, toDiv, toggleClass } from '../data/common';
+import { recountAndUsePercentChartOver } from '../data/adapters';
+import { drawConvas, map2MaxMin, mapMaxMin, toDiv, toggleClass, toScales } from '../data/common';
+import { MaxMin } from '../data/models';
 import { DataService } from '../models/service';
+import { toScalableFactory } from './factories/scalable-factory';
+import { toPoligonItemOver } from './items/poligon-item';
 import { drawLens } from './lens';
 
 export function toMiniMap(
@@ -39,13 +42,17 @@ function toMiniMapCanvas(
         return currentMax.length > 1 ? currentMax[index - 1] : currentMax[0];
     }
 
-    const chartItems = settings.itemsFactory(settings.jsonData, 1, 1);
-    chartItems.draw(settings.useMin, context, settings.indexRange, toCurrentMax, miniMap.viewport);
+    function initChartFactory() {
+        const factory = settings.itemsFactory(settings.jsonData, 1, 1);
+        factory.draw(settings.useMin, context, settings.indexRange, toCurrentMax, miniMap.viewport);
+        return factory;
+    }
+    let chartFactory = initChartFactory();
 
     function zooimng() {
         currentMax = settings.toMaxVisibleValue(settings.miniMap.indexRange);
         context.clearRect(0, 0, canvas.width, canvas.height);
-        chartItems.draw(
+        chartFactory.draw(
             settings.useMin, context, settings.indexRange,
             toCurrentMax, miniMap.viewport,
         );
@@ -55,7 +62,7 @@ function toMiniMapCanvas(
     settings.onPieZoom(zooimng);
 
     settings.onVisibilityChange(visible => {
-        chartItems.setVisible(visible);
+        chartFactory.setVisible(visible);
         drawCharts();
     });
 
@@ -77,7 +84,7 @@ function toMiniMapCanvas(
         lastUpdateCall = requestAnimationFrame(() => {
             context.clearRect(0, 0, canvas.width, canvas.height);
 
-            chartItems.scale(
+            chartFactory.scale(
                 settings.useMin, context, settings.indexRange,
                 toCurrentMax, miniMap.viewport,
             );
@@ -92,4 +99,16 @@ function toMiniMapCanvas(
             return scale(index + 1);
         });
     }
+
+
+    settings.onDrawPie(() => {
+        settings.adapter.use = recountAndUsePercentChartOver(false);
+        chartFactory = toScalableFactory(settings.jsonData, toPoligonItemOver, toScales(settings.visibility));
+        chartFactory.draw(settings.useMin, context, settings.indexRange, toCurrentMax, miniMap.viewport);
+    });
+
+    settings.onDrawPersent(() => {
+        settings.adapter.use = recountAndUsePercentChartOver(true);
+        chartFactory = initChartFactory();
+    });
 }

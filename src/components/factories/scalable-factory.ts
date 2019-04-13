@@ -1,6 +1,6 @@
 import { ChartItemsFactory, JsonData, MaxMin, Range, ScalableChartItem, UseDataFunction, Viewport } from '../../data/models';
 
-export function toScalableFactoryOver(
+export function toScalableFactory(
     jsonData: JsonData,
     toItem: (color: string) => ScalableChartItem,
     scales: number[],
