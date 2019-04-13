@@ -25,18 +25,18 @@ export type UseDataFunction = (
     scales?: number[],
 ) => void;
 
-export type ChartItemFunction = (
+export type ItemDrawFunction = (
     use: UseDataFunction, context: CanvasRenderingContext2D,
     index: number, min: number, max: number, viewport: Viewport,
 ) => void;
 
 export interface ChartItem {
-    drw: ChartItemFunction;
+    drw: ItemDrawFunction;
     set: (value: boolean) => void;
-    sc: ChartItemFunction;
+    sc: ItemDrawFunction;
 }
 
-export interface ScalesChartItem {
+export interface ScalableChartItem {
     drw: (
         use: UseDataFunction, context: CanvasRenderingContext2D,
         index: number, min: number, max: number, viewport: Viewport,
@@ -44,17 +44,17 @@ export interface ScalesChartItem {
     ) => void;
 }
 
-export type ChartsItemFunction = (
+export type ChartDrawFunction = (
     use: UseDataFunction, context: CanvasRenderingContext2D, index: Range,
     toMax: (index: number) => MaxMin, viewport: Viewport, opacity?: number,
 ) => void;
 
 export interface ChartItemsFactory {
-    draw: ChartsItemFunction;
+    draw: ChartDrawFunction;
     setVisible: (visible: boolean[]) => void;
     setRange: (indexRange: Range) => void;
     setHover: (hovers: number[]) => void;
-    scale: ChartsItemFunction;
+    scale: ChartDrawFunction;
 }
 
 export interface JsonData {

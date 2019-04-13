@@ -1,11 +1,11 @@
-import { ChartItemsFactory, JsonData, MaxMin, Range, ScalesChartItem, UseDataFunction, Viewport } from '../../data/models';
+import { ChartItemsFactory, JsonData, MaxMin, Range, ScalableChartItem, UseDataFunction, Viewport } from '../../data/models';
 
 export function toScalableChartItemsOver(
     jsonData: JsonData,
-    toItem: (color: string) => ScalesChartItem,
+    toItem: (color: string) => ScalableChartItem,
     scales: number[],
 ): ChartItemsFactory {
-    const items: ScalesChartItem[] = [];
+    const items: ScalableChartItem[] = [];
     // const scales: number[] = [];
     const actions: ('none' | 'in' | 'out')[] = [];
 

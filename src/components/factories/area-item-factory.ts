@@ -1,8 +1,8 @@
-import { ScalesChartItem, UseDataFunction, Viewport } from 'src/data/models';
+import { ScalableChartItem, UseDataFunction, Viewport } from 'src/data/models';
 
 export function toAreaFactoryOver(
     color: string,
-): ScalesChartItem {
+): ScalableChartItem {
 
     function drw(
         use: UseDataFunction, context: CanvasRenderingContext2D,

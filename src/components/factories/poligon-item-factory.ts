@@ -1,8 +1,8 @@
-import { ScalesChartItem, UseDataFunction, Viewport } from '../../data/models';
+import { ScalableChartItem, UseDataFunction, Viewport } from '../../data/models';
 
 export function toPoligonFactoryOver(
     color: string,
-): ScalesChartItem {
+): ScalableChartItem {
 
     function drw(
         use: UseDataFunction, context: CanvasRenderingContext2D,
