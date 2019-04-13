@@ -4,7 +4,7 @@ import { toAreaItemOver } from '../components/items/area-item';
 import { toPoligonItemOver } from '../components/items/poligon-item';
 import { toPolylineItemOver } from '../components/items/polyline-item';
 import { recountAndUseChartBySumm, recountAndUsePercentChartOver, recountAndUseSimplePintsChart, recountDoubleMax, recountMaxBySumm, recountPercent, recountSimpleMax, recountSimpleMaxAndMin } from '../data/adapters';
-import { copyRange, toScales } from '../data/common';
+import { copyRange, day, toScales } from '../data/common';
 import { toIndexRange } from '../data/index-range';
 import { mergeJsonForSimpleZoomOver } from '../data/merge-simple-zoom';
 import { ChartItemsFactory, JsonData, MaxMin, Range, UseDataFunction, Viewport } from '../data/models';
@@ -26,7 +26,7 @@ interface YearsData {
 
 export type ChangeKind = 'left' | 'right' | 'move' | 'visible';
 
-export interface Adapter {
+interface Adapter {
     use: (
         jsonData: JsonData,
         index: number, visibility: boolean[], indexRange: Range, timeRange: Range,
@@ -37,10 +37,7 @@ export interface Adapter {
     toMax: (jsonData: JsonData, visibility: boolean[], indexRange: Range) => MaxMin[];
 }
 
-export const day = 1000 * 60 * 60 * 24;
-
 export class DataService {
-    public lines = 5;
 
     public timeRange: Range;
     public indexRange: Range;
@@ -167,7 +164,6 @@ export class DataService {
         this.indexRange = toIndexRange(this.jsonData, timeRange); //, kind, this.timeRange, this.indexRange);
         this.timeRange = timeRange;
 
-
         this.timeChangeWatchers.forEach(act => act(kind, timeRange));
     }
 
@@ -219,12 +215,12 @@ export class DataService {
 
     asSoonAsLoading: Promise<JsonData>;
     zoomedTime: number;
-    loadingData(time: number) {
 
+    loadingData(time: number): Promise<void> {
         this.zoomedTime = time;
+        if (this.isPercentage) return Promise.resolve();
 
-        if (this.isPercentage) return;
-        this.asSoonAsLoading = fetch(toUrl(this.url, time))
+        return this.asSoonAsLoading = fetch(toUrl(this.url, time))
             .then(response => response.json());
     }
 

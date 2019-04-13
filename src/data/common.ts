@@ -2,6 +2,7 @@ import { MaxMin, Range } from './models';
 
 export const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 export const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+export const day = 1000 * 60 * 60 * 24;
 
 export const devicePixelRatio = window.devicePixelRatio;
 

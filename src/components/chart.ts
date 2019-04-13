@@ -169,7 +169,7 @@ export function toChart(
             return {
                 dx: viewport.height / (max - min),
                 lastLine,
-                dOneLine: (lastLine - min) / settings.lines,
+                dOneLine: (lastLine - min) / 5, // Lines count.
                 color: colors[columns[i + 1][0]],
                 isShow: settings.visibility[i + 1],
                 label: min,

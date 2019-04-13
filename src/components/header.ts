@@ -1,5 +1,5 @@
-import { days, month, toDiv } from '../data/common';
-import { DataService, day } from '../models/service';
+import { day, days, month, toDiv } from '../data/common';
+import { DataService } from '../models/service';
 
 function formatTime(settings: DataService): string {
     if (settings.isZoom) {

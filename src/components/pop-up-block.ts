@@ -1,7 +1,8 @@
-import { days, month, roundPercentageTotals, toDiv, toggleClass } from '../data/common';
+import { days, devicePixelRatio, drawConvas, month, roundPercentageTotals, toDiv, toggleClass, toRadian } from '../data/common';
 import { DataService } from '../models/service';
 
 export interface PopUpBlock {
+    setLoading: (loading: Promise<void>) => void;
     setPersent: (persents: number[], hovers: number[], offsetX: number, offsetY: number) => void;
     setData: (time: number, index: number, positionX: number) => void;
     setVisibility: (vision: boolean[]) => void;
@@ -19,6 +20,77 @@ interface Row {
     isShow: boolean;
 }
 
+interface Icon {
+    start: () => void;
+    end: () => void;
+    destroy: () => void;
+}
+
+function toIcon(
+    container: HTMLDivElement,
+): Icon {
+
+    const canvas = drawConvas(container, 20, 20, 'icon');
+    const context = canvas.getContext('2d');
+    context.strokeStyle = '#d2d5d7';
+    context.lineWidth = 2 * devicePixelRatio;
+
+    const { width, height } = canvas;
+    const center = height / 2;
+    const r = height / 2 - 2 * devicePixelRatio;
+    const p = Math.sqrt(2) / 2 * r;
+
+    let start = 315;
+    let length = 90;
+
+    let lastUpdate;
+    function spin() {
+        lastUpdate = setTimeout(() => {
+            start += 5;
+            if (start === 360) {
+                start = 0;
+            }
+            drawLoading();
+            spin();
+        }, 20);
+    }
+
+    function drawLoading() {
+        context.clearRect(0, 0, width, height);
+        context.beginPath();
+        context.arc(center, center, r, toRadian(start), toRadian(start + length));
+        context.stroke();
+    }
+
+    function draw() {
+        context.clearRect(0, 0, width, height);
+        context.beginPath();
+        context.moveTo(center + p, center - p);
+        context.lineTo(center + r, center);
+        context.lineTo(center + p, center + p);
+        context.stroke();
+    }
+
+    draw();
+
+    return {
+        start: () => {
+            spin();
+        },
+        end: () => {
+            clearTimeout(lastUpdate);
+            start = 315;
+            draw();
+        },
+        destroy: () => {
+            clearTimeout(lastUpdate);
+            container.removeChild(canvas);
+            container = null;
+        },
+    };
+}
+
+
 export function toPopUpBlock(
     setting: DataService,
     container: HTMLDivElement,
@@ -28,25 +100,29 @@ export function toPopUpBlock(
 
     const panel = toDiv(container, 'panel');
 
-    panel.onclick = (_event: MouseEvent) => {
+    let isLoading = false;
+    panel.onclick = (event: MouseEvent) => {
         setting.isZoom ? setting.unzoom() : setting.zoom();
         event.stopPropagation();
+
+        if (isLoading && icon) {
+            icon.start();
+        }
     };
 
 
     function destroy() {
         panel.onclick = null;
+        icon && icon.destroy();
     }
 
     let date: HTMLDivElement;
+    let icon: Icon | null = null;
     if (!setting.isZoom || !setting.isPercentage) {
 
         date = toDiv(panel, 'date');
-
-        const icon = toDiv(panel, 'icon');
-        icon.innerHTML = '&#10095;';
+        icon = toIcon(panel);
     }
-
 
     const { columns: [_, ...lines], names, colors } = setting.jsonData;
 
@@ -109,6 +185,14 @@ export function toPopUpBlock(
         });
     }
 
+    function setLoading(loading: Promise<void>) {
+        isLoading = true;
+        loading.then(() => {
+            isLoading = false;
+            icon && icon.end();
+        });
+    }
+
     function setData(time: number, index: number, positionX: number) {
 
         const d = new Date(time);
@@ -168,6 +252,7 @@ export function toPopUpBlock(
 
 
     return {
+        setLoading,
         setData,
         setPersent,
         setVisibility,

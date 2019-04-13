@@ -1,7 +1,7 @@
 import { MaxMin } from 'src/data/models';
 import { recountPercent } from '../data/adapters';
-import { toDiv, toggleClass, toScales } from '../data/common';
-import { DataService, day } from '../models/service';
+import { day, toDiv, toggleClass, toScales } from '../data/common';
+import { DataService } from '../models/service';
 import { PopUpBlock, toPopUpBlock } from './pop-up-block';
 
 interface Elements {
@@ -109,7 +109,6 @@ export function toPopUp(
         toggleClass(container, shouldClose, 'invisible');
     });
 
-
     let oldTime: number | null = null;
     let lastUpdate: number;
     const onDrawPopUp = (offsetX: number, offsetY: number, shouldLoad: boolean) => {
@@ -134,7 +133,9 @@ export function toPopUp(
             }
 
             if (shouldLoad && !setting.isZoom) {
-                setting.loadingData(setting.isBars ? time + day : time);
+                elements.block.setLoading(
+                    setting.loadingData(setting.isBars ? time + day : time)
+                );
             }
 
             if (time !== oldTime) {

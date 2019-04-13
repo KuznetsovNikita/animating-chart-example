@@ -99,9 +99,9 @@
     }
     
     .icon {
-        font: 100 16px sans-serif;
-        color: #D2D5D7;
-        float: right;
+        position: absolute;
+        right: 10px;
+        top: 8px;
     }
 }
 
