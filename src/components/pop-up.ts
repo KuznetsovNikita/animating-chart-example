@@ -324,12 +324,16 @@ export function toPopUp(
         if (isShow) return;
         isShow = true;
         container.classList.remove('invisible');
+        if (setting.isZoom && setting.isPercentage) return;
         container.classList.add('animation');
+
+
     }
 
     function hidePopUp() {
         isShow = false;
-        container.classList.remove('animation');
         container.classList.add('invisible');
+        container.classList.remove('animation');
+        if (setting.isZoom && setting.isPercentage) return;
     }
 }

@@ -164,7 +164,7 @@ export function recountPercent(
     const result: number[] = [];
 
     for (let j = 1; j < jsonData.columns.length; j++) {
-        result.push(jsonData.columns[j][startIndex] as number * scales[j - 1]);
+        result.push(jsonData.columns[j][startIndex + 2] as number * scales[j - 1]);
     }
 
     const total = result.reduce((t, i) => t + i, 0);

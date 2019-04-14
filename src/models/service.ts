@@ -454,6 +454,7 @@ export class DataService {
 
         this.isZoom = true;
 
+        this.zoomedTime = this.zoomedTime - day;
         const endTimeRange = { start: this.zoomedTime, end: this.zoomedTime + day };
         const endIndexRange = toIndexRange(this.jsonData, endTimeRange);
 

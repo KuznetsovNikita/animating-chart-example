@@ -3,7 +3,7 @@ import { DataService } from '../models/service';
 
 function formatTime(settings: DataService): string {
     if (settings.isZoom) {
-        const d = new Date(settings.timeRange.start + (settings.isPercentage ? 0 : day / 2));
+        const d = new Date(settings.timeRange.start + (settings.isPercentage ? day : day / 2));
         return `${days[d.getUTCDay()]}, ${d.getUTCDate()} ${month[d.getMonth()]} ${d.getFullYear()}`;
     }
     else {
