@@ -24,6 +24,7 @@
         "ts-loader": "^5.3.3",
         "tslint": "^5.15.0",
         "typescript": "^3.3.3333",
+        "url-loader": "^1.1.2",
         "webpack": "^4.29.6",
         "webpack-cli": "^3.2.3",
         "webpack-dev-server": "^3.2.1"
