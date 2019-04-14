@@ -511,15 +511,21 @@ export class DataService {
         this.hoverWatchers.forEach(act => act(persents, hovers, offsetX, offsetY, shouldClose));
     }
 
-    private hoverWatchers: ((persents: number[], hovers: number[], offsetX: number, offsetY: number, shouldClose: boolean) => void)[] = [];
-    onHover(act: (persents: number[], hovers: number[], offsetX: number, offsetY: number, shouldClose: boolean) => void) {
+    private hoverWatchers: HoverFunc[] = [];
+    onHover(act: HoverFunc) {
         this.hoverWatchers.push(act);
     }
+
+    offHover(act: HoverFunc) {
+        this.hoverWatchers = this.hoverWatchers.filter(item => item !== act);
+    }
 }
+
 
 type ZoomingTime = (freezer?: number) => void;
 
 type ZoomFunc = (data: JsonData, indexRange: Range, timeRange: Range, vision: boolean[]) => void;
+type HoverFunc = (persents: number[], hovers: number[], offsetX: number, offsetY: number, shouldClose: boolean) => void;
 
 function toUrl(url: string, time: number): string {
     const d = new Date(time);

@@ -247,7 +247,7 @@ export function toPopUpBlock(
             item.value.innerHTML = `${item.num}%`;
         });
 
-        panel.style.transform = `translate(${offsetX - 85}px, ${offsetY - 50}px)`;
+        panel.style.transform = `translate(${offsetX - 85}px, ${offsetY - 70}px)`;
     }
 
 

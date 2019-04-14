@@ -31,7 +31,10 @@ export function pieAnimator(
 
                     context.clearRect(0, 0, canvas.width, canvas.height);
 
-                    if (index === 19) return resolve();
+                    if (index === 19) {
+                        resolve();
+                        return;
+                    }
 
                     context.save();
                     clip(round);
@@ -92,7 +95,10 @@ export function pieAnimator(
 
                     round += dRound;
 
-                    if (index === 0) return resolve();
+                    if (index === 0) {
+                        resolve();
+                        return;
+                    }
                     renderFrame(index - 1);
                 });
             };

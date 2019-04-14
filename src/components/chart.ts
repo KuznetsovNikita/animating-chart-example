@@ -235,10 +235,12 @@ export function toChart(
         pie.drawPie(persets).then(() => {
             chartFactory = toPieFactory(settings.jsonData, settings.visibility);
             chartFactory.draw(settings.use, context, endIndexRange, toCurrentMax, viewport);
+            settings.onHover(onHover);
         });
     });
 
     settings.onDrawPersent(persets => {
+        settings.offHover(onHover);
         disabled = false;
         pie.drawPersents(persets).then(() => {
             chartFactory = initStandartFactory();
@@ -246,8 +248,8 @@ export function toChart(
         });
     });
 
-    settings.onHover((_, hovers) => {
+    function onHover(_: number[], hovers: number[]) {
         chartFactory.setHover(hovers);
         scaleChart(0, 20);
-    });
+    }
 }
