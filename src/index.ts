@@ -1,7 +1,6 @@
 import { drawContainer } from './components/container';
 import { DataService } from './models/service';
 import './polyfills/promise/polyfill';
-import './polyfills/svginnerhtml';
 import './style/index.css';
 
 function init() {

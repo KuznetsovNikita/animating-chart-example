@@ -134,7 +134,7 @@ export function toPopUp(
 
             if (shouldLoad && !setting.isZoom) {
                 elements.block.setLoading(
-                    setting.loadingData(setting.isBars ? time + day : time)
+                    setting.loadingData(setting.isBars ? time + day : time),
                 );
             }
 

@@ -72,10 +72,16 @@ function drawCheckbox(
 ): Checkbox {
     const element = toDiv(container, 'checkbox');
 
+    const point = toDiv(element, 'point');
+    const outer = toDiv(point, 'outer');
+    outer.style.backgroundColor = color;
+    const border = toDiv(point, 'border');
+    border.style.borderColor = color;
+    const inner = toDiv(point, 'inner');
+    inner.style.backgroundColor = color;
+    toDiv(point, 'icon');
+
     element.innerHTML += name;
-    requestAnimationFrame(() => {
-        element.appendChild(drawIcon(color, element.clientWidth));
-    });
 
     let isLongPress = false;
     let timer = null;
@@ -119,11 +125,4 @@ function drawCheckbox(
         setValue,
         destroy,
     };
-}
-
-function drawIcon(color: string, width: number) {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.innerHTML += `<circle class="shadow" cx="22" cy="21" r="${width}" style="fill: ${color};"></circle><circle cx="22" cy="21" r="13" style="fill: ${color};"></circle>`;
-    svg.innerHTML += '<polyline class="check-mark" points="16,21.5 20,25.5 27,17.5"></polyline><circle class="cover" cx="22" cy="21" r="12"></circle>';
-    return svg;
 }
