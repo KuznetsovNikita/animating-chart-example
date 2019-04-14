@@ -29,6 +29,7 @@ export function toPopUp(
 
     const container = toDiv(element, 'pop-up');
 
+    let isShow = false;
     let isPiePopUp = false;
     let isTouchEvents = false;
 
@@ -107,7 +108,7 @@ export function toPopUp(
 
     setting.onHover((persents, hovers, offsetX, offsetY, shouldClose) => {
         elements.block.setPersent(persents, hovers, offsetX, offsetY);
-        toggleClass(container, shouldClose, 'invisible');
+        shouldClose ? hidePopUp() : showPopUp();
     });
 
     let oldTime: number | null = null;
@@ -148,7 +149,7 @@ export function toPopUp(
     };
 
     function cleanUp() {
-        container.classList.add('invisible');
+        hidePopUp();
         if (!isTouchEvents) {
             element.addEventListener('mousemove', onMouseMove);
         }
@@ -254,7 +255,7 @@ export function toPopUp(
     function createPopUp() {
         const { columns: [_, ...lines], colors } = setting.jsonData;
 
-        container.classList.add('invisible');
+        hidePopUp();
 
         if (setting.isBars) {
             elements = {
@@ -316,6 +317,19 @@ export function toPopUp(
             elements.line[1].style.width = (setting.timeRange.end - next) * dx + 'px';
             elements.block.setData(time + (setting.isBars && !setting.isZoom ? day : 0), index + 1, x);
         }
+        showPopUp();
+    }
+
+    function showPopUp() {
+        if (isShow) return;
+        isShow = true;
         container.classList.remove('invisible');
+        container.classList.add('animation');
+    }
+
+    function hidePopUp() {
+        isShow = false;
+        container.classList.remove('animation');
+        container.classList.add('invisible');
     }
 }

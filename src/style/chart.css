@@ -29,7 +29,6 @@
 }
 
 .pop-up {
-
     .line {
         position: absolute;
         top: 0;
@@ -103,6 +102,11 @@
         right: 10px;
         top: 8px;
     }
+    &.animation {
+        .panel {
+            transition: all .3s ease;
+        }
+    } 
 }
 
 .night {
