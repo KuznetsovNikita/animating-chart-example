@@ -53,6 +53,7 @@ export function toPopUp(
         cleanUp();
         destroyElements();
         createPopUp();
+        elements.block.setVisibility(setting.visibility);
         isPiePopUp = false;
     });
 

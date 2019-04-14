@@ -177,7 +177,7 @@ export function toPopUpBlock(
 
     function updatePersent() {
         const total = values.reduce((s, i) => i.isShow ? s + i.num : s, 0);
-        const persents = roundPercentageTotals(values.map(item => item.num / total * 100));
+        const persents = roundPercentageTotals(values.map(item => item.isShow ? item.num / total * 100 : 0));
         values.forEach((item, i) => {
             if (item.isShow) {
                 item.name.innerHTML = `<b>${persents[i]}%</b> ${item.nameVal}`;
