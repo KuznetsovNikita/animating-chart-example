@@ -25,6 +25,7 @@
     margin: 0 20px 20px 0;
 
     overflow: hidden;
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
     position: relative;
 
     color: #565b5d;
