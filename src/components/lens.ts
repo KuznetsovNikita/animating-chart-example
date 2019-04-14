@@ -63,39 +63,33 @@ export function drawLens(
         const startLeft = (settings.timeRange.start - miniMap.timeRange.start) * dX;
 
         function moveAt(clientX: number) {
-            switch (target) {
-                case left: {
-                    if (disabled) return;
-                    const newLeft = Math.min(Math.max(startLeft + clientX - startX, 0), startLeft + startWidth - 20);
-                    if (newLeft === startLeft) return;
 
-                    settings.setTimeRange('left', {
-                        start: Math.floor(miniMap.timeRange.start + newLeft / dX),
-                        end: settings.timeRange.end,
-                    });
-                    break;
-                }
-                case right: {
-                    if (disabled) return;
-                    const newWidth = Math.min(width - startLeft, Math.max(20, startWidth + clientX - startX));
-                    if (newWidth === startWidth) return;
+            if (target === left && !disabled) {
+                const newLeft = Math.min(Math.max(startLeft + clientX - startX, 0), startLeft + startWidth - 20);
+                if (newLeft === startLeft) return;
 
-                    settings.setTimeRange('right', {
-                        start: settings.timeRange.start,
-                        end: Math.floor(miniMap.timeRange.start + (startLeft + newWidth) / dX),
-                    });
-                    break;
-                }
-                default: {
-                    const newLeft = Math.min(Math.max(startLeft + clientX - startX, 0), width - startWidth);
-                    if (newLeft === startLeft) return;
+                settings.setTimeRange('left', {
+                    start: Math.floor(miniMap.timeRange.start + newLeft / dX),
+                    end: settings.timeRange.end,
+                });
+            }
+            else if (target === right && !disabled) {
+                const newWidth = Math.min(width - startLeft, Math.max(20, startWidth + clientX - startX));
+                if (newWidth === startWidth) return;
 
-                    settings.setTimeRange('move', {
-                        start: Math.floor(miniMap.timeRange.start + newLeft / dX),
-                        end: Math.floor(miniMap.timeRange.start + (newLeft + startWidth) / dX),
-                    });
-                    break;
-                }
+                settings.setTimeRange('right', {
+                    start: settings.timeRange.start,
+                    end: Math.floor(miniMap.timeRange.start + (startLeft + newWidth) / dX),
+                });
+            }
+            else {
+                const newLeft = Math.min(Math.max(startLeft + clientX - startX, 0), width - startWidth);
+                if (newLeft === startLeft) return;
+
+                settings.setTimeRange('move', {
+                    start: Math.floor(miniMap.timeRange.start + newLeft / dX),
+                    end: Math.floor(miniMap.timeRange.start + (newLeft + startWidth) / dX),
+                });
             }
         }
 
