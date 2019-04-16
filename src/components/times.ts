@@ -33,7 +33,7 @@ export function toTimes(
 
     settings.onChangeStyle(() => {
         context.fillStyle = settings.style.text;
-        redraw()
+        redraw();
     });
 
     let globalAlpha = 1;
@@ -82,8 +82,8 @@ export function toTimes(
 
     function formatValue(date: Date): string {
         return settings.isZoom
-            ? `${("0" + (date.getUTCHours())).slice(-2)}:00`
-            : `${date.getUTCDate()} ${month[date.getUTCMonth()].slice(0, 3)}`
+            ? `${('0' + (date.getUTCHours())).slice(-2)}:00`
+            : `${date.getUTCDate()} ${month[date.getUTCMonth()].slice(0, 3)}`;
     }
 
     function drawTime(index: number) {
@@ -219,7 +219,7 @@ export function toTimes(
             (toValue(index) - toValue(startIndex)) * dy < minSpace
         ) {
             let newEnd = startIndex;
-            while (toLeftByIndex(newEnd) <= width + viewportSpace) {
+            while (hasValue(newEnd) && toLeftByIndex(newEnd) <= width + viewportSpace) {
                 newEnd += newDelta;
             }
 
